@@ -4,7 +4,7 @@ import connectDB from '@/lib/db-connection';
 import Blog from '@/lib/models/blog';
 import { calculateReadTime } from '@/lib/readTime';
 import { slugify } from '@/lib/slugify';
-import { getCachedBlogs, cacheBlogs, checkRateLimit } from '@/lib/rate-limit';
+import { checkRateLimit } from '@/lib/rate-limit';
 import { cacheGet, cacheSet } from '@/lib/redis-cache';
 
 // Ensure content has valid TipTap structure
@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
     }));
     
     // Cache for 30 minutes
-    await cacheSet(cacheKey, fixedBlogs, { ttl: 1800 });
+    await cacheSet(cacheKey, fixedBlogs, { ttl: 'warm' });
     
     return NextResponse.json(fixedBlogs);
   } catch (error) {
@@ -125,7 +125,7 @@ export async function POST(request: NextRequest) {
     await blog.save();
     
     // Invalidate cache
-    await cacheSet(`blogs:${status}`, null, { ttl: 1 });
+    await cacheSet(`blogs:${status || 'draft'}`, {} as any, { ttl: 'hot' });
     
     const savedBlog = blog.toObject();
     return NextResponse.json({

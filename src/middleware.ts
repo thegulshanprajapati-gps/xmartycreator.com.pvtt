@@ -1,11 +1,10 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { checkRateLimit, checkIPBlocklist, blockIP, authRateLimiter, getViolationCount } from '@/lib/rate-limit';
-import { detectBot } from '@/lib/bot-detection';
 import { getSessionFromRequest } from '@/lib/session';
 
 export const config = {
-  matcher: ['/admin/:path*', '/xmartyadmin'],
+  matcher: ['/admin/:path*', '/xmartyadmin', '/api/:path*'],
 };
 
 function getClientIP(req: NextRequest): string {
@@ -16,17 +15,43 @@ function getClientIP(req: NextRequest): string {
   );
 }
 
+// Bot detection patterns
+const BOT_PATTERNS = [
+  /bot/i,
+  /crawler/i,
+  /spider/i,
+  /scraper/i,
+  /curl/i,
+  /wget/i,
+  /python/i,
+  /java(?!script)/i,
+];
+
+function isBot(userAgent: string): boolean {
+  return BOT_PATTERNS.some(pattern => pattern.test(userAgent));
+}
+
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const ip = getClientIP(req);
+  const userAgent = req.headers.get('user-agent') || '';
   const rateLimitEnabled = process.env.RATE_LIMIT_ENABLED !== 'false';
 
-  // Check blocklist
+  // 1. Check blocklist
   if (rateLimitEnabled && await checkIPBlocklist(ip)) {
     return new NextResponse('Access Denied', { status: 429 });
   }
 
-  // Rate limit auth endpoints
+  // 2. Bot detection
+  if (process.env.BOT_DETECTION_ENABLED !== 'false' && isBot(userAgent)) {
+    const violations = await getViolationCount(`bot:${ip}`);
+    if (violations > 10) {
+      await blockIP(ip, 3600);
+      return new NextResponse('Access Denied', { status: 403 });
+    }
+  }
+
+  // 3. Rate limit auth endpoints
   if (pathname === '/xmartyadmin' && req.method === 'POST') {
     const identifier = `auth:${ip}`;
     const limit = await checkRateLimit(identifier, authRateLimiter);
@@ -40,20 +65,31 @@ export async function middleware(req: NextRequest) {
     }
   }
 
-  // Session validation
-  const session = await getSessionFromRequest(req);
+  // 4. Add client IP to headers for downstream processing
+  const requestHeaders = new Headers(req.headers);
+  requestHeaders.set('x-client-ip', ip);
+  requestHeaders.set('x-is-bot', isBot(userAgent) ? 'true' : 'false');
 
-  // If user is logged in and tries to access login page, redirect to dashboard
-  if (session.isLoggedIn && pathname === '/xmartyadmin') {
-    return NextResponse.redirect(new URL('/admin/dashboard', req.url));
+  // 5. Session validation for admin routes
+  if (pathname.startsWith('/admin') || pathname === '/xmartyadmin') {
+    const session = await getSessionFromRequest(req);
+
+    // If user is logged in and tries to access login page, redirect to dashboard
+    if (session.isLoggedIn && pathname === '/xmartyadmin') {
+      return NextResponse.redirect(new URL('/admin/dashboard', req.url));
+    }
+
+    // If user is not logged in and tries to access any admin page
+    if (!session.isLoggedIn && pathname.startsWith('/admin')) {
+      const loginUrl = new URL('/xmartyadmin', req.url);
+      loginUrl.searchParams.set('unauthorized', 'true');
+      return NextResponse.redirect(loginUrl);
+    }
   }
 
-  // If user is not logged in and tries to access any admin page (except the login page itself)
-  if (!session.isLoggedIn && pathname.startsWith('/admin')) {
-    const loginUrl = new URL('/xmartyadmin', req.url);
-    loginUrl.searchParams.set('unauthorized', 'true');
-    return NextResponse.redirect(loginUrl);
-  }
-
-  return NextResponse.next();
+  return NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  });
 }

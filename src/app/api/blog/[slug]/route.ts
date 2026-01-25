@@ -56,7 +56,7 @@ export async function GET(
       contentJSON: validateAndFixContent(blog.content),
     };
     
-    await cacheSet(cacheKey, blogtData, { ttl: 3600 });
+    await cacheSet(cacheKey, blogtData, { ttl: 'cold' });
     
     return NextResponse.json(blogtData);
   } catch (error) {
