@@ -12,23 +12,24 @@ import type { Metadata, ResolvingMetadata } from 'next';
 import Image from 'next/image';
 import { BlogDetailClient } from './blog-detail-client';
 import { Footer } from '@/components/layout/footer';
+import type { BlogPost } from '@/types/blog';
 
 export const revalidate = BLOG_REVALIDATION_INTERVAL;
 export const dynamicParams = true; // Allow on-demand generation
 
-async function getBlogForISR(slug: string) {
+async function getBlogForISR(slug: string): Promise<BlogPost | null> {
   const cacheKey = `blog:${slug}`;
   
-  const cached = await cacheGet(cacheKey);
+  const cached = await cacheGet<BlogPost>(cacheKey);
   if (cached) return cached;
 
   await connectDB();
   const blog = await Blog.findOne({ slug, status: 'published' })
     .maxTimeMS(3000)
-    .lean();
+    .lean() as BlogPost | null;
 
   if (blog) {
-    await cacheSet(cacheKey, blog, { ttl: 3600 });
+    await cacheSet(cacheKey, blog, { ttl: 'cold' });
   }
 
   return blog;
@@ -48,7 +49,6 @@ export async function generateMetadata(
     title: blog.metaTitle || blog.title,
     description: blog.metaDescription || blog.excerpt,
     keywords: blog.metaKeywords,
-    canonical: `https://xmartycreator.com/blog/${blog.slug}`,
     openGraph: {
       title: blog.title,
       description: blog.excerpt,

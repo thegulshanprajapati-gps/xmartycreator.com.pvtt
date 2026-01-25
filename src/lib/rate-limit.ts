@@ -1,11 +1,10 @@
 import { Ratelimit } from '@upstash/ratelimit';
-import { Redis } from '@upstash/redis';
+import { Redis } from '@upstash/redis/edge'
 
-const redis = new Redis({
+export const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
   token: process.env.UPSTASH_REDIS_REST_TOKEN!,
-});
-
+})
 // Main rate limiter for API routes
 export const apiRateLimiter = new Ratelimit({
   redis,

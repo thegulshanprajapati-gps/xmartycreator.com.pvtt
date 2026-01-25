@@ -5,6 +5,8 @@ const redis = new Redis({
   token: process.env.UPSTASH_REDIS_REST_TOKEN || '',
 });
 
+export { redis };
+
 export type CacheTTL = 
   | 'hot' // 5 minutes (300s) - frequently updated
   | 'warm' // 30 minutes (1800s) - moderately updated
@@ -117,6 +119,16 @@ export async function getPageViews(slug: string): Promise<number> {
 export async function getLikes(slug: string): Promise<number> {
   try {
     const count = await redis.get(`likes:${slug}`);
+    return (count as number) || 0;
+  } catch {
+    return 0;
+  }
+}
+
+// Counter utility for metrics
+export async function getCounter(key: string): Promise<number> {
+  try {
+    const count = await redis.get(key);
     return (count as number) || 0;
   } catch {
     return 0;

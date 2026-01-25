@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import connectDB from '@/lib/db-connection';
-import redis from '@/lib/redis-cache';
+import { redis } from '@/lib/redis-cache';
 import Blog from '@/lib/models/blog';
 import mongoose from 'mongoose';
 

@@ -21,9 +21,6 @@ export async function ensureDBConnection() {
       connectTimeoutMS: 30000,
       retryWrites: true,
       retryReads: true,
-      maxCommitTransactionWaitTimeMS: 10000,
-      // Connection pooling for serverless
-      serverMonitoringMode: 'auto',
     });
 
     console.log('✅ [DB] MongoDB connected with optimized pooling');
