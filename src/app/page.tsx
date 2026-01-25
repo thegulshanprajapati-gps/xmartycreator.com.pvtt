@@ -9,7 +9,39 @@ export const metadata: Metadata = {
   title: 'Home',
 };
 
-const DEFAULT_HOME_CONTENT = {
+type HomeContent = {
+  hero: {
+    title: string;
+    description: string;
+    buttons: {
+      primary: { text: string; link: string };
+      secondary: { text: string; link: string };
+    };
+  };
+  featuredCourses: {
+    title: string;
+    description: string;
+    courses: { title: string; description: string; imageId: string }[];
+  };
+  whyChooseUs: {
+    title: string;
+    description: string;
+    features: { title: string; description: string }[];
+  };
+  testimonials: {
+    title: string;
+    description: string;
+    reviews: {
+      name: string;
+      role: string;
+      testimonial: string;
+      rating: number;
+      avatar: string;
+    }[];
+  };
+};
+
+const DEFAULT_HOME_CONTENT: HomeContent = {
   hero: { title: 'Learn & Grow', description: 'Master new skills with our expert courses', buttons: { primary: { text: 'Get Started', link: '/courses' }, secondary: { text: 'Join Community', link: '#' }}},
   featuredCourses: { 
     title: 'Featured Courses', 
@@ -24,17 +56,23 @@ const DEFAULT_HOME_CONTENT = {
   testimonials: { title: '', description: '', reviews: [] },
 };
 
-async function getHomeContent() {
+async function getHomeContent(): Promise<HomeContent> {
   try {
     const content = await getPageContent('home');
     
-    if (Object.keys(content).length > 0) {
+    // Validate the content structure has required properties
+    if (
+      Object.keys(content).length > 0 &&
+      content.hero &&
+      content.featuredCourses &&
+      Array.isArray(content.featuredCourses.courses)
+    ) {
       console.log('✅ [Home Page] Home content loaded successfully');
-      console.log('📊 [Home Page] Featured Courses:', content.featuredCourses?.courses?.length || 0);
-      return content;
+      console.log('📊 [Home Page] Featured Courses:', content.featuredCourses.courses?.length || 0);
+      return content as HomeContent;
     }
     
-    console.log('⚠️  [Home Page] No home content found, using default');
+    console.log('⚠️  [Home Page] No valid home content found, using default');
     return DEFAULT_HOME_CONTENT;
   } catch (error) {
     console.error("❌ [Home Page] Failed to fetch home content:", error);

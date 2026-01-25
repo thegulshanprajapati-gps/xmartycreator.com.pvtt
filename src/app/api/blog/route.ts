@@ -32,43 +32,60 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { title, contentJSON, contentHTML, excerpt, author, authorImage, coverImage, tags, metaTitle, metaDescription, status } = body;
+    console.log('Blog POST received:', JSON.stringify(body, null, 2));
+    
+    // Accept both htmlContent and contentHTML
+    const htmlContent = body.htmlContent || body.contentHTML;
+    const { title, content, excerpt, author, authorImage, coverImage, tags, metaTitle, metaDescription, metaKeywords, status } = body;
 
-    if (!title || !contentHTML || !author) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    // Detailed validation logging
+    const missingFields: string[] = [];
+    if (!title) missingFields.push('title');
+    if (!htmlContent) missingFields.push('htmlContent');
+    if (!author) missingFields.push('author');
+    if (!excerpt) missingFields.push('excerpt');
+
+    if (missingFields.length > 0) {
+      const errorMsg = `Missing required fields: ${missingFields.join(', ')}`;
+      console.error(errorMsg);
+      return NextResponse.json({ error: errorMsg }, { status: 400 });
     }
 
     const slug = slugify(title);
+    console.log(`Generated slug: "${slug}" from title: "${title}"`);
+    
     const existing = await Blog.findOne({ slug });
     if (existing) {
       return NextResponse.json({ error: 'Slug already exists' }, { status: 400 });
     }
 
-    const readTime = calculateReadTime(contentHTML);
+    const readTime = calculateReadTime(htmlContent);
 
     const blog = new Blog({
       title,
       slug,
-      contentJSON,
-      contentHTML,
+      content: content || {},
+      htmlContent,
       excerpt,
       author,
       authorImage: authorImage || '',
-      coverImage: coverImage || '',
+      coverImage: coverImage || { url: '', alt: '' },
       tags: tags || [],
       readTime,
       metaTitle: metaTitle || title,
       metaDescription: metaDescription || excerpt,
+      metaKeywords: metaKeywords || [],
       status: status || 'draft',
-      viewCount: 0,
+      views: 0,
+      likes: 0,
       publishedAt: status === 'published' ? new Date() : null,
-      createdAt: new Date(),
-      updatedAt: new Date(),
     });
 
     await blog.save();
     return NextResponse.json(blog, { status: 201 });
   } catch (error) {
-    return NextResponse.json({ error: 'Failed to create blog' }, { status: 500 });
+    console.error('Blog POST error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Failed to create blog';
+    return NextResponse.json({ error: 'Failed to create blog', details: errorMessage }, { status: 500 });
   }
 }

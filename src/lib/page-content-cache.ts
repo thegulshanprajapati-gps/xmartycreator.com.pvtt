@@ -36,8 +36,31 @@ export async function getPageContent(slug: string, freshCache = false): Promise<
       console.log(`✅ [DB] Content found and cached for slug: "${slug}"`);
       // Ensure content is JSON-serializable (removes MongoDB ObjectId and Date objects)
       const serializedContent = JSON.parse(JSON.stringify(page.content));
-      pageContentCache.set(slug, { content: serializedContent, timestamp: now });
-      return serializedContent;
+      // Ensure the content has required structure properties
+      const validatedContent: PageContent = {
+        hero: serializedContent.hero || {},
+        featuredCourses: {
+          title: serializedContent.featuredCourses?.title || '',
+          description: serializedContent.featuredCourses?.description || '',
+          courses: Array.isArray(serializedContent.featuredCourses?.courses) ? serializedContent.featuredCourses.courses : [],
+          ...serializedContent.featuredCourses,
+        },
+        whyChooseUs: {
+          title: serializedContent.whyChooseUs?.title || '',
+          description: serializedContent.whyChooseUs?.description || '',
+          features: Array.isArray(serializedContent.whyChooseUs?.features) ? serializedContent.whyChooseUs.features : [],
+          ...serializedContent.whyChooseUs,
+        },
+        testimonials: {
+          title: serializedContent.testimonials?.title || '',
+          description: serializedContent.testimonials?.description || '',
+          reviews: Array.isArray(serializedContent.testimonials?.reviews) ? serializedContent.testimonials.reviews : [],
+          ...serializedContent.testimonials,
+        },
+        ...serializedContent,
+      };
+      pageContentCache.set(slug, { content: validatedContent, timestamp: now });
+      return validatedContent;
     }
 
     console.log(`⚠️  [DB] No content found for slug: "${slug}"`);

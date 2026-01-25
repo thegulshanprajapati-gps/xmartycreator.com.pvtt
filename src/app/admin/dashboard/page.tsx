@@ -49,19 +49,40 @@ async function getHomeContent(): Promise<HomeContent> {
     const db = client.db('myapp');
     const page = await db.collection('pages').findOne({ slug: 'home' });
     
-    if (page?.content) {
-      console.log('✅ [Admin] Home content found');
-      return page.content;
-    }
-    
-    console.log('⚠️  [Admin] No home content found, using defaults');
-    // Return a default structure if not found
-    return {
+    // Default structure to ensure all required properties exist
+    const defaultContent: HomeContent = {
       hero: { title: '', description: '', buttons: { primary: { text: '', link: '' }, secondary: { text: '', link: '' }}},
       featuredCourses: { title: '', description: '', courses: [] },
       whyChooseUs: { title: '', description: '', features: [] },
       testimonials: { title: '', description: '', reviews: [] },
     };
+
+    if (page?.content) {
+      console.log('✅ [Admin] Home content found');
+      // Merge database content with defaults to ensure all properties exist
+      const mergedContent: HomeContent = {
+        hero: page.content.hero || defaultContent.hero,
+        featuredCourses: {
+          title: page.content.featuredCourses?.title || '',
+          description: page.content.featuredCourses?.description || '',
+          courses: Array.isArray(page.content.featuredCourses?.courses) ? page.content.featuredCourses.courses : [],
+        },
+        whyChooseUs: {
+          title: page.content.whyChooseUs?.title || '',
+          description: page.content.whyChooseUs?.description || '',
+          features: Array.isArray(page.content.whyChooseUs?.features) ? page.content.whyChooseUs.features : [],
+        },
+        testimonials: {
+          title: page.content.testimonials?.title || '',
+          description: page.content.testimonials?.description || '',
+          reviews: Array.isArray(page.content.testimonials?.reviews) ? page.content.testimonials.reviews : [],
+        },
+      };
+      return mergedContent;
+    }
+    
+    console.log('⚠️  [Admin] No home content found, using defaults');
+    return defaultContent;
   } catch (error) {
     console.error('❌ [Admin] Failed to fetch home content:', error);
     // Return a default structure if the fetch fails

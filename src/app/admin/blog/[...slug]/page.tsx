@@ -194,34 +194,41 @@ export default function BlogEditorPage() {
       const method = isEditMode ? 'PUT' : 'POST';
       const endpoint = isEditMode ? `/api/blog/${params.slug}` : '/api/blog';
 
+      const payload = {
+        ...blog,
+        status,
+      };
+
+      console.log('Sending blog payload:', payload);
+
       const res = await fetch(endpoint, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...blog,
-          status,
-        }),
+        body: JSON.stringify(payload),
       });
 
+      const responseData = await res.json();
+      console.log('Response status:', res.status, 'Data:', responseData);
+
       if (res.ok) {
-        const saved = await res.json();
         toast({
           title: 'Success',
           description: `Blog ${status === 'published' ? 'published' : 'saved'} successfully`,
         });
 
         if (!isEditMode) {
-          router.push(`/admin/blog/${saved.slug}/edit`);
+          router.push(`/admin/blog/${responseData.slug}/edit`);
         } else {
-          setBlog(saved);
+          setBlog(responseData);
         }
 
         setPublishDialog(false);
       } else {
-        const error = await res.json();
+        const errorMessage = responseData?.error || responseData?.details || 'Failed to save blog';
+        console.error('API Error:', res.status, errorMessage);
         toast({
-          title: 'Error',
-          description: error.error || 'Failed to save blog',
+          title: `Error ${res.status}`,
+          description: errorMessage,
           variant: 'destructive',
         });
       }
@@ -229,7 +236,7 @@ export default function BlogEditorPage() {
       console.error('Error saving blog:', error);
       toast({
         title: 'Error',
-        description: 'Failed to save blog',
+        description: error instanceof Error ? error.message : 'Failed to save blog',
         variant: 'destructive',
       });
     } finally {
@@ -366,6 +373,21 @@ export default function BlogEditorPage() {
                   }
                   placeholder="Describe the image"
                 />
+              </div>
+
+              <div>
+                <Label htmlFor="excerpt">Excerpt *</Label>
+                <Textarea
+                  id="excerpt"
+                  value={blog.excerpt}
+                  onChange={e => setBlog(prev => ({ ...prev, excerpt: e.target.value }))}
+                  placeholder="Brief summary of your blog post (auto-generated from content, but you can edit)"
+                  rows={3}
+                  maxLength={160}
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  {blog.excerpt.length} / 160
+                </p>
               </div>
             </CardContent>
           </Card>

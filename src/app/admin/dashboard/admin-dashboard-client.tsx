@@ -72,6 +72,11 @@ export default function AdminDashboardClient({ initialHomeContent }: AdminDashbo
   const [state, formAction, isPending] = useActionState(updateHomeContent, { message: '', data: initialHomeContent });
   const { toast } = useToast();
   const [homeContent, setHomeContent] = useState<HomeContent>(initialHomeContent);
+  const [updates, setUpdates] = useState<{ title: string; description: string; updates: Update[] }>({
+    title: 'Latest Updates & News',
+    description: 'Stay informed with our latest announcements',
+    updates: []
+  });
 
   useEffect(() => {
     if (state?.message) {
@@ -85,6 +90,25 @@ export default function AdminDashboardClient({ initialHomeContent }: AdminDashbo
         setHomeContent(state.data as HomeContent);
     }
   }, [state, toast]);
+
+  // Fetch updates on mount
+  useEffect(() => {
+    const fetchUpdates = async () => {
+      try {
+        console.log('📖 [Admin] Fetching updates from database...');
+        const res = await fetch('/api/pages/updates');
+        if (res.ok) {
+          const data = await res.json();
+          console.log('✅ [Admin] Updates fetched successfully:', data);
+          setUpdates(data);
+        }
+      } catch (error) {
+        console.error('❌ [Admin] Error fetching updates:', error);
+      }
+    };
+
+    fetchUpdates();
+  }, []);
 
     const handleAddCourse = () => {
         setHomeContent(prev => ({
@@ -101,7 +125,33 @@ export default function AdminDashboardClient({ initialHomeContent }: AdminDashbo
             ...prev,
             featuredCourses: {
                 ...prev.featuredCourses,
-                courses: prev.featuredCourses.courses.filter((_, index) => index !== indexToRemove)
+                courses: (prev.featuredCourses?.courses || []).filter((_, index) => index !== indexToRemove)
+            }
+        }));
+    };
+    
+    const handleAddReview = () => {
+        setHomeContent(prev => ({
+            ...prev,
+            testimonials: {
+                ...prev.testimonials,
+                reviews: [...(prev.testimonials.reviews || []), { 
+                    name: '', 
+                    role: '', 
+                    testimonial: '', 
+                    rating: 5, 
+                    avatar: '' 
+                }]
+            }
+        }));
+    };
+    
+    const handleRemoveReview = (indexToRemove: number) => {
+        setHomeContent(prev => ({
+            ...prev,
+            testimonials: {
+                ...prev.testimonials,
+                reviews: (prev.testimonials?.reviews || []).filter((_, index) => index !== indexToRemove)
             }
         }));
     };
@@ -132,8 +182,52 @@ export default function AdminDashboardClient({ initialHomeContent }: AdminDashbo
         });
     }
 
+    const handleAddUpdate = () => {
+        setUpdates(prev => ({
+            ...prev,
+            updates: [...(prev.updates || []), {
+                title: '',
+                description: '',
+                content: '',
+                date: new Date().toISOString().split('T')[0],
+                author: '',
+                category: 'News'
+            }]
+        }));
+    };
+
+    const handleRemoveUpdate = (indexToRemove: number) => {
+        setUpdates(prev => ({
+            ...prev,
+            updates: (prev.updates || []).filter((_, index) => index !== indexToRemove)
+        }));
+    };
+
+    const handleUpdateChange = (index: number, field: string, value: string) => {
+        setUpdates(prev => {
+            const newUpdates = [...(prev.updates || [])];
+            (newUpdates[index] as any)[field] = value;
+            return { ...prev, updates: newUpdates };
+        });
+    };
+
   return (
     <form action={formAction}>
+        {/* Hidden fields for Updates */}
+        <input type="hidden" name="updates-title" value={updates.title} />
+        <input type="hidden" name="updates-description" value={updates.description} />
+        <input type="hidden" name="updates-count" value={updates.updates?.length || 0} />
+        {updates.updates?.map((update, index) => (
+            <div key={index}>
+              <input type="hidden" name={`update-title-${index}`} value={update.title} />
+              <input type="hidden" name={`update-description-${index}`} value={update.description} />
+              <input type="hidden" name={`update-content-${index}`} value={update.content} />
+              <input type="hidden" name={`update-date-${index}`} value={update.date} />
+              <input type="hidden" name={`update-author-${index}`} value={update.author || ''} />
+              <input type="hidden" name={`update-category-${index}`} value={update.category || 'News'} />
+            </div>
+        ))}
+        
         <div className="flex items-center justify-between gap-4 mb-4">
             <h1 className="text-lg font-semibold md:text-2xl">Home Page Management</h1>
             <Button type="submit" disabled={isPending}>{isPending ? 'Saving...' : 'Save Changes'}</Button>
@@ -203,7 +297,7 @@ export default function AdminDashboardClient({ initialHomeContent }: AdminDashbo
                                 </Button>
                             </div>
                             <div className="max-h-[400px] overflow-y-auto space-y-4 pr-4">
-                                {homeContent.featuredCourses.courses.map((course, index) => (
+                                {(homeContent.featuredCourses?.courses || []).map((course, index) => (
                                     <Card key={index} className="p-4 relative">
                                         <div className="space-y-2">
                                             <Label htmlFor={`featured-course-title-${index}`}>Course Title</Label>
@@ -258,7 +352,7 @@ export default function AdminDashboardClient({ initialHomeContent }: AdminDashbo
                                 <Textarea id="why-description" name="why-description" value={homeContent.whyChooseUs.description} onChange={e => setHomeContent({...homeContent, whyChooseUs: {...homeContent.whyChooseUs, description: e.target.value}})} />
                             </div>
                             <div className="max-h-[400px] overflow-y-auto space-y-4 pr-4">
-                            {homeContent.whyChooseUs.features.map((feature, index) => (
+                            {(homeContent.whyChooseUs?.features || []).map((feature, index) => (
                                 <Card key={index} className="p-4">
                                     <div className="space-y-2">
                                         <Label htmlFor={`feature-title-${index}`}>Feature {index + 1} Title</Label>
@@ -284,9 +378,15 @@ export default function AdminDashboardClient({ initialHomeContent }: AdminDashbo
                                 <Label htmlFor="testimonials-description">Description</Label>
                                 <Textarea id="testimonials-description" name="testimonials-description" value={homeContent.testimonials.description} onChange={e => setHomeContent({...homeContent, testimonials: {...homeContent.testimonials, description: e.target.value}})} />
                             </div>
+                            <div className="flex justify-end mb-4">
+                                <Button type="button" variant="outline" onClick={handleAddReview}>
+                                    <PlusCircle className="mr-2 h-4 w-4" />
+                                    Add Review
+                                </Button>
+                            </div>
                             <div className="max-h-[400px] overflow-y-auto space-y-4 pr-4">
-                                {homeContent.testimonials.reviews.map((review, index) => (
-                                    <Card key={index} className="p-4">
+                                {(homeContent.testimonials?.reviews || []).map((review, index) => (
+                                    <Card key={index} className="p-4 relative">
                                         <div className="space-y-2">
                                             <Label htmlFor={`review-name-${index}`}>Reviewer Name</Label>
                                             <Input id={`review-name-${index}`} name={`review-name-${index}`} value={review.name} onChange={e => handleArrayChange('testimonials', 'reviews', index, 'name', e.target.value)} />
@@ -307,6 +407,27 @@ export default function AdminDashboardClient({ initialHomeContent }: AdminDashbo
                                             <Label htmlFor={`review-avatar-${index}`}>Avatar URL</Label>
                                             <Input id={`review-avatar-${index}`} name={`review-avatar-${index}`} value={review.avatar} onChange={e => handleArrayChange('testimonials', 'reviews', index, 'avatar', e.target.value)} />
                                         </div>
+                                        <AlertDialog>
+                                            <AlertDialogTrigger asChild>
+                                                <Button variant="ghost" size="icon" className="absolute top-2 right-2 text-destructive hover:text-destructive">
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            </AlertDialogTrigger>
+                                            <AlertDialogContent>
+                                                <AlertDialogHeader>
+                                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                <AlertDialogDescription>
+                                                    This will permanently remove this testimonial. This action cannot be undone. You must click "Save Changes" to finalize the deletion.
+                                                </AlertDialogDescription>
+                                                </AlertDialogHeader>
+                                                <AlertDialogFooter>
+                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                <AlertDialogAction onClick={() => handleRemoveReview(index)} className="bg-destructive hover:bg-destructive/90">
+                                                    Yes, remove it
+                                                </AlertDialogAction>
+                                                </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                        </AlertDialog>
                                     </Card>
                                 ))}
                             </div>
@@ -314,7 +435,12 @@ export default function AdminDashboardClient({ initialHomeContent }: AdminDashbo
                     </TabsContent>
 
                     <TabsContent value="updates" forceMount className="mt-0 data-[state=inactive]:hidden">
-                        <UpdatesManager />
+                        <UpdatesManager 
+                          updates={updates}
+                          onAddUpdate={handleAddUpdate}
+                          onRemoveUpdate={handleRemoveUpdate}
+                          onUpdateChange={handleUpdateChange}
+                        />
                     </TabsContent>
                 </CardContent>
             </Card>
@@ -323,190 +449,55 @@ export default function AdminDashboardClient({ initialHomeContent }: AdminDashbo
   );
 }
 
-function UpdatesManager() {
-  const [updates, setUpdates] = useState<{ title: string; description: string; updates: Update[] }>({
-    title: 'Latest Updates & News',
-    description: 'Stay informed with our latest announcements',
-    updates: []
-  });
+interface UpdatesManagerProps {
+  updates: { title: string; description: string; updates: Update[] };
+  onAddUpdate: () => void;
+  onRemoveUpdate: (index: number) => void;
+  onUpdateChange: (index: number, field: string, value: string) => void;
+}
 
-  const [isSaving, setIsSaving] = useState(false);
-  const { toast } = useToast();
-
-  useEffect(() => {
-    const fetchUpdates = async () => {
-      try {
-        const res = await fetch('/api/pages/updates');
-        if (res.ok) {
-          const data = await res.json();
-          setUpdates(data);
-        }
-      } catch (error) {
-        console.error('Error fetching updates:', error);
-      }
-    };
-
-    fetchUpdates();
-  }, []);
-
-  const handleAddUpdate = () => {
-    setUpdates(prev => ({
-      ...prev,
-      updates: [...prev.updates, {
-        title: '',
-        description: '',
-        content: '',
-        date: new Date().toISOString().split('T')[0],
-        author: '',
-        category: 'News'
-      }]
-    }));
-  };
-
-  const handleRemoveUpdate = (index: number) => {
-    setUpdates(prev => ({
-      ...prev,
-      updates: prev.updates.filter((_, i) => i !== index)
-    }));
-  };
-
-  const handleUpdateChange = (index: number, field: string, value: string) => {
-    setUpdates(prev => {
-      const newUpdates = [...prev.updates];
-      (newUpdates[index] as any)[field] = value;
-      return { ...prev, updates: newUpdates };
-    });
-  };
-
-  const handleSaveUpdates = async () => {
-    setIsSaving(true);
-    try {
-      const res = await fetch('/api/pages/updates', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updates)
-      });
-
-      if (res.ok) {
-        toast({
-          title: 'Success!',
-          description: 'Updates saved successfully'
-        });
-      } else {
-        toast({
-          title: 'Error!',
-          description: 'Failed to save updates',
-          variant: 'destructive'
-        });
-      }
-    } catch (error) {
-      console.error('Error saving updates:', error);
-      toast({
-        title: 'Error!',
-        description: 'Failed to save updates',
-        variant: 'destructive'
-      });
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
+function UpdatesManager({ updates, onAddUpdate, onRemoveUpdate, onUpdateChange }: UpdatesManagerProps) {
   return (
     <div className="space-y-4 pt-4">
       <div className="space-y-2">
         <Label htmlFor="updates-title">Section Title</Label>
         <Input 
           id="updates-title" 
+          name="updates-title"
           value={updates.title} 
-          onChange={e => setUpdates({...updates, title: e.target.value})} 
+          onChange={e => {}} 
+          readOnly
         />
       </div>
       <div className="space-y-2">
         <Label htmlFor="updates-description">Section Description</Label>
         <Textarea 
           id="updates-description" 
+          name="updates-description"
           value={updates.description} 
-          onChange={e => setUpdates({...updates, description: e.target.value})} 
+          onChange={e => {}} 
+          readOnly
         />
       </div>
 
       <div className="flex justify-between items-center">
-        <Button type="button" variant="outline" onClick={handleAddUpdate}>
+        <Button type="button" variant="outline" onClick={onAddUpdate}>
           <PlusCircle className="mr-2 h-4 w-4" />
           Add Update
         </Button>
-        <Button onClick={handleSaveUpdates} disabled={isSaving}>
-          {isSaving ? 'Saving...' : 'Save Updates'}
-        </Button>
+        <p className="text-sm text-muted-foreground">
+          Click "Save Changes" to save all updates
+        </p>
       </div>
 
       <div className="max-h-[500px] overflow-y-auto space-y-4 pr-4">
-        {updates.updates.map((update, index) => (
-          <Card key={index} className="p-4 relative">
-            <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <Label>Title</Label>
-                  <Input 
-                    value={update.title} 
-                    onChange={e => handleUpdateChange(index, 'title', e.target.value)} 
-                    placeholder="Update title"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Date</Label>
-                  <Input 
-                    type="date"
-                    value={update.date} 
-                    onChange={e => handleUpdateChange(index, 'date', e.target.value)} 
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Description</Label>
-                <Input 
-                  value={update.description} 
-                  onChange={e => handleUpdateChange(index, 'description', e.target.value)} 
-                  placeholder="Brief description"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label>Content</Label>
-                <Textarea 
-                  value={update.content} 
-                  onChange={e => handleUpdateChange(index, 'content', e.target.value)} 
-                  placeholder="Full content"
-                  rows={4}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <Label>Author</Label>
-                  <Input 
-                    value={update.author || ''} 
-                    onChange={e => handleUpdateChange(index, 'author', e.target.value)} 
-                    placeholder="Author name"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Category</Label>
-                  <select 
-                    value={update.category || 'News'}
-                    onChange={e => handleUpdateChange(index, 'category', e.target.value)}
-                    className="w-full px-3 py-2 border border-input bg-background rounded-md"
-                  >
-                    <option>News</option>
-                    <option>Course</option>
-                    <option>Platform</option>
-                    <option>Milestone</option>
-                    <option>Launch</option>
-                  </select>
-                </div>
-              </div>
-
+        {(updates.updates || []).length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">
+            <p>No updates yet. Add your first update!</p>
+          </div>
+        ) : (
+          (updates.updates || []).map((update, index) => (
+            <Card key={index} className="p-4 relative">
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button variant="ghost" size="icon" className="absolute top-2 right-2 text-destructive hover:text-destructive">
@@ -515,22 +506,90 @@ function UpdatesManager() {
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
-                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                    <AlertDialogTitle>Delete Update?</AlertDialogTitle>
                     <AlertDialogDescription>
-                      This will permanently remove this update. This action cannot be undone.
+                      This will permanently remove this update. Click "Save Changes" to finalize.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={() => handleRemoveUpdate(index)} className="bg-destructive hover:bg-destructive/90">
-                      Yes, remove it
+                    <AlertDialogAction 
+                      onClick={() => onRemoveUpdate(index)} 
+                      className="bg-destructive hover:bg-destructive/90"
+                    >
+                      Delete
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>
-            </div>
-          </Card>
-        ))}
+
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label>Title</Label>
+                    <Input 
+                      value={update.title} 
+                      onChange={e => onUpdateChange(index, 'title', e.target.value)} 
+                      placeholder="Update title"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Date</Label>
+                    <Input 
+                      type="date"
+                      value={update.date} 
+                      onChange={e => onUpdateChange(index, 'date', e.target.value)} 
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Description</Label>
+                  <Input 
+                    value={update.description} 
+                    onChange={e => onUpdateChange(index, 'description', e.target.value)} 
+                    placeholder="Brief description"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Content</Label>
+                  <Textarea 
+                    value={update.content} 
+                    onChange={e => onUpdateChange(index, 'content', e.target.value)} 
+                    placeholder="Full content"
+                    rows={4}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label>Author</Label>
+                    <Input 
+                      value={update.author || ''} 
+                      onChange={e => onUpdateChange(index, 'author', e.target.value)} 
+                      placeholder="Author name"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Category</Label>
+                    <select 
+                      value={update.category || 'News'}
+                      onChange={e => onUpdateChange(index, 'category', e.target.value)}
+                      className="w-full px-3 py-2 border border-input bg-background rounded-md"
+                    >
+                      <option>News</option>
+                      <option>Course</option>
+                      <option>Platform</option>
+                      <option>Milestone</option>
+                      <option>Launch</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </Card>
+          ))
+        )}
       </div>
     </div>
   );

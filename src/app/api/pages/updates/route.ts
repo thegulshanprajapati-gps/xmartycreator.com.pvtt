@@ -11,19 +11,26 @@ export async function GET(request: NextRequest) {
     const updatesDoc = await pagesCollection.findOne({ slug: 'updates' });
 
     if (updatesDoc && updatesDoc.content) {
+      console.log('✅ [API] Updates page content found');
       return NextResponse.json(updatesDoc.content, { status: 200 });
     }
 
-    // If not found, return 404 (frontend will use fallback)
-    return NextResponse.json(
-      { error: 'Updates not found' },
-      { status: 404 }
-    );
+    // If not found, return default content with 200 status (frontend won't crash)
+    console.log('⚠️  [API] Updates content not found, returning defaults');
+    return NextResponse.json({
+      title: 'Latest Updates & News',
+      description: 'Stay informed with our latest announcements',
+      updates: []
+    }, { status: 200 });
   } catch (error) {
-    console.error('Error fetching updates:', error);
+    console.error('❌ [API] Error fetching updates:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch updates' },
-      { status: 500 }
+      {
+        title: 'Latest Updates & News',
+        description: 'Stay informed with our latest announcements',
+        updates: []
+      },
+      { status: 200 }
     );
   }
 }

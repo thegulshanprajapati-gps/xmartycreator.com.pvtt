@@ -37,10 +37,13 @@ export async function PUT(
     }
 
     const body = await request.json();
-    const { title, contentJSON, contentHTML, excerpt, author, authorImage, coverImage, tags, metaTitle, metaDescription, status } = body;
+    const { title, content, htmlContent, contentHTML, excerpt, author, authorImage, coverImage, tags, metaTitle, metaDescription, metaKeywords, status } = body;
 
-    if (!title || !contentHTML || !author) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    // Accept both htmlContent and contentHTML
+    const finalHtmlContent = htmlContent || contentHTML;
+
+    if (!title || !finalHtmlContent || !author || !excerpt) {
+      return NextResponse.json({ error: `Missing required fields: title, htmlContent, author, excerpt` }, { status: 400 });
     }
 
     const blog = await Blog.findOne({ slug: params.slug });
@@ -56,20 +59,21 @@ export async function PUT(
       }
     }
 
-    const readTime = calculateReadTime(contentHTML);
+    const readTime = calculateReadTime(finalHtmlContent);
 
     blog.title = title;
     blog.slug = newSlug;
-    blog.contentJSON = contentJSON;
-    blog.contentHTML = contentHTML;
+    blog.content = content || {};
+    blog.htmlContent = finalHtmlContent;
     blog.excerpt = excerpt;
     blog.author = author;
     blog.authorImage = authorImage || '';
-    blog.coverImage = coverImage || '';
+    blog.coverImage = coverImage || { url: '', alt: '' };
     blog.tags = tags || [];
     blog.readTime = readTime;
     blog.metaTitle = metaTitle || title;
     blog.metaDescription = metaDescription || excerpt;
+    blog.metaKeywords = metaKeywords || [];
     blog.status = status || 'draft';
     blog.updatedAt = new Date();
     if (status === 'published' && !blog.publishedAt) {
@@ -79,7 +83,8 @@ export async function PUT(
     await blog.save();
     return NextResponse.json(blog);
   } catch (error) {
-    return NextResponse.json({ error: 'Failed to update blog' }, { status: 500 });
+    console.error('Blog PUT error:', error);
+    return NextResponse.json({ error: 'Failed to update blog', details: error instanceof Error ? error.message : String(error) }, { status: 500 });
   }
 }
 

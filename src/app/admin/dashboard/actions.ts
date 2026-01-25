@@ -93,6 +93,26 @@ function getFeaturedCoursesFromFormData(formData: FormData) {
     return courses;
 }
 
+function getUpdatesFromFormData(formData: FormData) {
+    const updates = [];
+    const count = Number(formData.get('updates-count') || 0);
+    
+    for (let index = 0; index < count; index++) {
+        const title = formData.get(`update-title-${index}`) as string;
+        if (title) {
+            updates.push({
+                title,
+                description: formData.get(`update-description-${index}`) as string,
+                content: formData.get(`update-content-${index}`) as string,
+                date: formData.get(`update-date-${index}`) as string,
+                author: formData.get(`update-author-${index}`) as string,
+                category: formData.get(`update-category-${index}`) as string || 'News',
+            });
+        }
+    }
+    return updates;
+}
+
 function getBlogPostsFromFormData(formData: FormData) {
     const posts = [];
     let index = 0;
@@ -150,20 +170,37 @@ export async function updateHomeContent(prevState: { message: string, data: any 
             },
         };
 
+        // Extract updates from form data
+        const updatesData = {
+            title: formData.get('updates-title') as string,
+            description: formData.get('updates-description') as string,
+            updates: getUpdatesFromFormData(formData),
+        };
+
         const client = await clientPromise;
         const db = client.db('myapp');
         
+        // Save home content
         await db.collection('pages').updateOne(
             { slug: 'home' },
             { $set: { slug: 'home', content: newContent } },
             { upsert: true }
         );
 
+        // Save updates separately
+        await db.collection('pages').updateOne(
+            { slug: 'updates' },
+            { $set: { slug: 'updates', content: updatesData, updatedAt: new Date() } },
+            { upsert: true }
+        );
+
         revalidatePath('/');
         revalidatePath('/admin/dashboard');
+        revalidatePath('/admin/dashboard/testimonials');
         
         console.log('✅ [Admin] Home content updated successfully');
-        return { message: 'Home page content updated successfully!', data: newContent };
+        console.log(`✅ [Admin] Updates saved: ${updatesData.updates.length} updates`);
+        return { message: 'Home page content and updates saved successfully!', data: newContent };
     } catch (error: any) {
         console.error('❌ [Admin] Failed to update home content:', error);
         return { message: `Failed to update home page content: ${error.message}`, data: prevState.data };

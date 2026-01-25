@@ -108,8 +108,8 @@ export function validateBlogData(data: any): { valid: boolean; errors: string[] 
     errors.push('Excerpt must be 160 characters or less');
   }
   
-  if (!data.content) {
-    errors.push('Content is required');
+  if (!data.htmlContent || data.htmlContent.trim().length === 0) {
+    errors.push('Content is required (write something in the editor)');
   }
   
   if (!data.author || data.author.trim().length === 0) {

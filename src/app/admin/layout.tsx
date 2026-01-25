@@ -16,6 +16,7 @@ import {
   LineChart,
   UserPlus,
   GalleryVertical,
+  MessageSquare,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -36,6 +37,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 const navItems = [
     { href: '/admin/dashboard', label: 'Home Page', icon: Home },
     { href: '/admin/dashboard/about', label: 'About Page', icon: Info },
+    { href: '/admin/dashboard/testimonials', label: 'Testimonials', icon: MessageSquare },
     { href: '/admin/dashboard/blog', label: 'Blog Page', icon: Newspaper },
     { href: '/admin/courses', label: 'Courses', icon: BookOpen },
     { href: '/admin/dashboard/community', label: 'Community Page', icon: Users },

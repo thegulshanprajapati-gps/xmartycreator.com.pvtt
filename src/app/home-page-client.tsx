@@ -117,7 +117,7 @@ export default function HomePageClient({ initialHomeContent }: HomePageClientPro
 
   const heroImage = PlaceHolderImages.find((img) => img.id === 'hero-1');
 
-  const featuredCourses = initialHomeContent.featuredCourses.courses.map(course => ({
+  const featuredCourses = (initialHomeContent?.featuredCourses?.courses || []).map(course => ({
       ...course,
       image: PlaceHolderImages.find((img) => img.id === course.imageId),
       link: '/courses',
@@ -131,7 +131,7 @@ export default function HomePageClient({ initialHomeContent }: HomePageClientPro
     });
   }, [featuredCourses]);
 
-  const whyChooseUs = initialHomeContent.whyChooseUs.features.map((feature, index) => {
+  const whyChooseUs = (initialHomeContent?.whyChooseUs?.features || []).map((feature, index) => {
     const icons = [<Laptop className="h-8 w-8 text-primary" />, <MessageCircleQuestion className="h-8 w-8 text-primary" />, <Milestone className="h-8 w-8 text-primary" />, <Award className="h-8 w-8 text-primary" />];
     return {
       ...feature,
@@ -139,7 +139,7 @@ export default function HomePageClient({ initialHomeContent }: HomePageClientPro
     }
   });
   
-  const initialReviews = initialHomeContent.testimonials.reviews.map(r => ({...r, avatar: r.avatar || `https://api.dicebear.com/8.x/adventurer/svg?seed=${r.name.replace(/\s/g, '')}`}));
+  const initialReviews = (initialHomeContent?.testimonials?.reviews || []).map(r => ({...r, avatar: r.avatar || `https://api.dicebear.com/8.x/adventurer/svg?seed=${r.name.replace(/\s/g, '')}`}));
   const [testimonials, setTestimonials] = useState<Review[]>(initialReviews);
 
 
@@ -194,22 +194,22 @@ export default function HomePageClient({ initialHomeContent }: HomePageClientPro
                 >
                   <h1 
                     className="font-headline text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl"
-                    dangerouslySetInnerHTML={{ __html: initialHomeContent.hero.title || '' }}
+                    dangerouslySetInnerHTML={{ __html: initialHomeContent?.hero?.title || 'Learn & Grow' }}
                   >
                   </h1>
                   <p className="max-w-[600px] text-gray-200 md:text-muted-foreground md:text-xl">
-                    {initialHomeContent.hero.description}
+                    {initialHomeContent?.hero?.description || 'Master new skills with our expert courses'}
                   </p>
                   <div className="flex flex-col gap-2 min-[400px]:flex-row pt-4 self-center md:flex-row md:self-start">
                     <Button asChild size="lg" onClick={() => trackLinkClick('Hero-Youtube')}>
-                      <Link href={initialHomeContent.hero.buttons.primary.link || '#'}>
-                        {initialHomeContent.hero.buttons.primary.text}
+                      <Link href={initialHomeContent?.hero?.buttons?.primary?.link || '/courses'}>
+                        {initialHomeContent?.hero?.buttons?.primary?.text || 'Get Started'}
                       </Link>
                     </Button>
                      <Button asChild size="lg" variant="secondary" className="bg-white/80 text-black hover:bg-white md:bg-secondary md:text-secondary-foreground md:hover:bg-secondary/80" onClick={() => trackLinkClick('Hero-Community')}>
-                      <Link href={initialHomeContent.hero.buttons.secondary.link || '#'}>
+                      <Link href={initialHomeContent?.hero?.buttons?.secondary?.link || '#'}>
                         <Users className="mr-2 h-6 w-6" />
-                        {initialHomeContent.hero.buttons.secondary.text}
+                        {initialHomeContent?.hero?.buttons?.secondary?.text || 'Join Community'}
                       </Link>
                     </Button>
                   </div>
@@ -246,7 +246,7 @@ export default function HomePageClient({ initialHomeContent }: HomePageClientPro
                 <h2 className="font-headline text-3xl font-bold tracking-tighter sm:text-5xl text-destructive dark:text-foreground">
                   Featured Courses (Total: {featuredCourses.length})
                 </h2>
-                {initialHomeContent.featuredCourses.description && (
+                {initialHomeContent?.featuredCourses?.description && (
                   <p className="max-w-[900px] text-muted-foreground md:text-xl">
                     {initialHomeContent.featuredCourses.description}
                   </p>
@@ -381,7 +381,7 @@ export default function HomePageClient({ initialHomeContent }: HomePageClientPro
           </motion.section>
 
           {/* Why Choose Us Section */}
-          {initialHomeContent.whyChooseUs.title && (
+          {initialHomeContent?.whyChooseUs?.title && (
           <motion.section 
             className="w-full py-12 md:py-16"
             initial="hidden"
@@ -392,10 +392,10 @@ export default function HomePageClient({ initialHomeContent }: HomePageClientPro
             <div className="container mx-auto px-4 md:px-6">
               <div className="flex flex-col items-center justify-center space-y-4 text-center mb-12">
                   <h2 className="font-headline text-3xl font-bold tracking-tighter sm:text-5xl text-destructive dark:text-foreground">
-                      {initialHomeContent.whyChooseUs.title}
+                      {initialHomeContent?.whyChooseUs?.title}
                   </h2>
                   <p className="max-w-[900px] text-muted-foreground md:text-xl">
-                      {initialHomeContent.whyChooseUs.description}
+                      {initialHomeContent?.whyChooseUs?.description}
                   </p>
               </div>
               <div className="mx-auto grid justify-items-center gap-8 sm:grid-cols-2 md:gap-12 lg:max-w-5xl lg:grid-cols-2">
@@ -418,7 +418,7 @@ export default function HomePageClient({ initialHomeContent }: HomePageClientPro
           )}
 
           {/* Testimonials Section */}
-          {initialHomeContent.testimonials.title && (
+          {initialHomeContent?.testimonials?.title && (
           <motion.section 
             className="w-full py-12 md:py-16 bg-accent/50"
             initial="hidden"
@@ -429,10 +429,10 @@ export default function HomePageClient({ initialHomeContent }: HomePageClientPro
             <div className="container mx-auto px-4 md:px-6">
               <div className="flex flex-col items-center justify-center space-y-4 text-center mb-12">
                 <h2 className="font-headline text-3xl font-bold tracking-tighter sm:text-5xl text-destructive dark:text-foreground">
-                  {initialHomeContent.testimonials.title}
+                  {initialHomeContent?.testimonials?.title}
                 </h2>
                 <p className="max-w-[900px] text-muted-foreground md:text-xl">
-                  {initialHomeContent.testimonials.description}
+                  {initialHomeContent?.testimonials?.description}
                 </p>
               </div>
               <Carousel
