@@ -2,7 +2,6 @@
   "buildCommand": "npm run build",
   "outputDirectory": ".next",
   "framework": "nextjs",
-  "nodeVersion": "20.x",
   "env": {
     "MONGODB_URI": "@mongodb_uri",
     "MONGO_URI": "@mongo_uri",
