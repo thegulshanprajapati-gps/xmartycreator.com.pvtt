@@ -68,11 +68,20 @@ export default function EditBlogPage() {
       setBlog(data);
       setContentJSON(data.content || data.contentJSON || { type: 'doc', content: [] });
       setContentHTML(data.htmlContent || data.contentHTML || '');
+      
+      // Handle coverImage - can be string or object
+      let coverImage = '';
+      if (typeof data.coverImage === 'string') {
+        coverImage = data.coverImage;
+      } else if (data.coverImage?.url) {
+        coverImage = data.coverImage.url;
+      }
+      
       setFormData({
         title: data.title || '',
         author: data.author || '',
         authorImage: data.authorImage || '',
-        coverImage: data.coverImage || '',
+        coverImage: coverImage,
         excerpt: data.excerpt || '',
         tags: data.tags?.join(', ') || '',
         metaTitle: data.metaTitle || '',

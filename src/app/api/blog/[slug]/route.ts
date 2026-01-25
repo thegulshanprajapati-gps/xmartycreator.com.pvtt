@@ -37,7 +37,7 @@ export async function GET(
     if (!rateLimit.success) {
       return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 });
     }
-
+    
     // Cache check
     const cacheKey = `blog:${slug}`;
     const cached = await cacheGet(cacheKey);
@@ -47,6 +47,7 @@ export async function GET(
 
     await connectDB();
     const blog = await Blog.findOne({ slug })
+      .select('+content +htmlContent') // Explicitly fetch content fields
       .maxTimeMS(3000)
       .lean();
 
@@ -106,7 +107,9 @@ export async function PUT(
     }
 
     await connectDB();
-    const blog = await Blog.findOne({ slug }).maxTimeMS(3000);
+    const blog = await Blog.findOne({ slug })
+      .select('+content +htmlContent') // Explicitly fetch content for potential use
+      .maxTimeMS(3000);
     
     if (!blog) {
       return NextResponse.json({ error: 'Blog not found' }, { status: 404 });
@@ -122,6 +125,14 @@ export async function PUT(
 
     const readTime = calculateReadTime(finalHtmlContent);
 
+    // Handle coverImage - convert string URL to object format
+    let coverImageData = {};
+    if (typeof coverImage === 'string' && coverImage) {
+      coverImageData = { url: coverImage, alt: title };
+    } else if (coverImage && typeof coverImage === 'object') {
+      coverImageData = coverImage;
+    }
+
     blog.title = title;
     blog.slug = newSlug;
     blog.content = finalContent;
@@ -129,7 +140,7 @@ export async function PUT(
     blog.excerpt = excerpt;
     blog.author = author;
     blog.authorImage = authorImage || '';
-    blog.coverImage = coverImage || {};
+    blog.coverImage = coverImageData;
     blog.tags = tags || [];
     blog.readTime = readTime;
     blog.metaTitle = metaTitle || title;
@@ -148,8 +159,13 @@ export async function PUT(
 
     await blog.save();
     
-    // Invalidate cache
+    // Invalidate cache for both old and new slug
     await cacheSet(`blog:${slug}`, null as any, { ttl: 'hot' });
+    if (newSlug !== slug) {
+      await cacheSet(`blog:${newSlug}`, null as any, { ttl: 'hot' });
+    }
+    // Also invalidate published/draft blogs list
+    await cacheSet(`blogs:${blog.status}`, [] as any, { ttl: 'hot' });
     
     const savedBlog = blog.toObject();
     return NextResponse.json({

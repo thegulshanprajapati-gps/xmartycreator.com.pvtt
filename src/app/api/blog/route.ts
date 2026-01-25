@@ -105,6 +105,14 @@ export async function POST(request: NextRequest) {
 
     const readTime = calculateReadTime(htmlContent);
 
+    // Handle coverImage - convert string URL to object format
+    let coverImageData = {};
+    if (typeof coverImage === 'string' && coverImage) {
+      coverImageData = { url: coverImage, alt: title };
+    } else if (coverImage && typeof coverImage === 'object') {
+      coverImageData = coverImage;
+    }
+
     const blog = new Blog({
       title,
       slug,
@@ -113,7 +121,7 @@ export async function POST(request: NextRequest) {
       excerpt,
       author,
       authorImage: authorImage || '',
-      coverImage: coverImage || {},
+      coverImage: coverImageData,
       tags: tags || [],
       readTime,
       metaTitle: metaTitle || title,
