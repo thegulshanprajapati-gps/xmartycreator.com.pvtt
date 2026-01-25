@@ -3,6 +3,7 @@ import { PT_Sans } from 'next/font/google';
 import './globals.css';
 import { Suspense, ReactNode } from 'react';
 import RootLayoutClient from './root-layout-client';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 
 export const metadata: Metadata = {
   title: {
@@ -36,6 +37,7 @@ export default function RootLayout({
       </head>
       <body className={`font-body antialiased ${ptSans.variable}`}>
         <RootLayoutClient>{children}</RootLayoutClient>
+        <SpeedInsights />
       </body>
     </html>
   );
