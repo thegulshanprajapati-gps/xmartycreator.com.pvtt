@@ -51,10 +51,14 @@ export default function EditBlogPage() {
   const loadBlog = async () => {
     try {
       const res = await fetch(`/api/blog/${params.id}`);
+      if (!res.ok) {
+        console.error('Failed to load blog');
+        return;
+      }
       const data = await res.json();
       setBlog(data);
-      setContentJSON(data.contentJSON || {});
-      setContentHTML(data.contentHTML || '');
+      setContentJSON(data.content || data.contentJSON || { type: 'doc', content: [] });
+      setContentHTML(data.htmlContent || data.contentHTML || '');
       setFormData({
         title: data.title || '',
         author: data.author || '',
@@ -78,13 +82,15 @@ export default function EditBlogPage() {
     setSubmitting(true);
 
     try {
-      const response = await fetch(`/api/blog/${params.id}`, {
+      const response = await fetch(`/api/blog/${blog?.slug}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title: formData.title,
-          contentJSON,
-          contentHTML,
+          content: contentJSON,
+          contentJSON: contentJSON,
+          htmlContent: contentHTML,
+          contentHTML: contentHTML,
           excerpt: formData.excerpt,
           author: formData.author,
           authorImage: formData.authorImage,
@@ -98,9 +104,14 @@ export default function EditBlogPage() {
 
       if (response.ok) {
         router.push('/admin/blog');
+      } else {
+        const error = await response.json();
+        console.error('Error:', error);
+        alert(error.error || 'Failed to update blog');
       }
     } catch (error) {
       console.error('Error updating blog:', error);
+      alert('Failed to update blog');
     } finally {
       setSubmitting(false);
     }
@@ -156,10 +167,10 @@ export default function EditBlogPage() {
         <div>
           <label className="text-sm font-medium mb-2 block">Content *</label>
           <TipTapEditor
-            value={formData.title}
-            onChange={(data) => {
-              setContentJSON(data.json);
-              setContentHTML(data.html);
+            initialContent={contentJSON}
+            onChange={(json, html) => {
+              setContentJSON(json);
+              setContentHTML(html);
             }}
           />
         </div>

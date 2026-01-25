@@ -5,6 +5,18 @@ import Blog from '@/lib/models/blog';
 import { calculateReadTime } from '@/lib/readTime';
 import { slugify } from '@/lib/slugify';
 
+// Ensure content has valid TipTap structure
+function validateAndFixContent(content: any) {
+  if (!content || typeof content !== 'object') {
+    return { type: 'doc', content: [] };
+  }
+  if (content.type === 'doc' && Array.isArray(content.content)) {
+    return content;
+  }
+  // If it's empty or malformed, return default
+  return { type: 'doc', content: [] };
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: { slug: string } }
@@ -20,9 +32,16 @@ export async function GET(
       return NextResponse.json({ error: 'Blog not found' }, { status: 404 });
     }
 
-    return NextResponse.json(blog);
+    // Fix content structure and add contentJSON for compatibility
+    const blogData = blog.toObject();
+    return NextResponse.json({
+      ...blogData,
+      content: validateAndFixContent(blogData.content),
+      contentJSON: validateAndFixContent(blogData.content),
+    });
   } catch (error) {
-    return NextResponse.json({ error: 'Failed to fetch blog' }, { status: 500 });
+    console.error('Blog GET error:', error);
+    return NextResponse.json({ error: 'Failed to fetch blog', details: error instanceof Error ? error.message : String(error) }, { status: 500 });
   }
 }
 
@@ -37,9 +56,10 @@ export async function PUT(
     }
 
     const body = await request.json();
-    const { title, content, htmlContent, contentHTML, excerpt, author, authorImage, coverImage, tags, metaTitle, metaDescription, metaKeywords, status } = body;
+    const { title, content, contentJSON, htmlContent, contentHTML, excerpt, author, authorImage, coverImage, tags, metaTitle, metaDescription, metaKeywords, status } = body;
 
-    // Accept both htmlContent and contentHTML
+    // Accept both field name variations
+    const finalContent = validateAndFixContent(content || contentJSON || {});
     const finalHtmlContent = htmlContent || contentHTML;
 
     if (!title || !finalHtmlContent || !author || !excerpt) {
@@ -63,7 +83,7 @@ export async function PUT(
 
     blog.title = title;
     blog.slug = newSlug;
-    blog.content = content || {};
+    blog.content = finalContent;
     blog.htmlContent = finalHtmlContent;
     blog.excerpt = excerpt;
     blog.author = author;
@@ -81,7 +101,14 @@ export async function PUT(
     }
 
     await blog.save();
-    return NextResponse.json(blog);
+    
+    // Return blog with fixed content structure
+    const savedBlog = blog.toObject();
+    return NextResponse.json({
+      ...savedBlog,
+      content: validateAndFixContent(savedBlog.content),
+      contentJSON: validateAndFixContent(savedBlog.content),
+    });
   } catch (error) {
     console.error('Blog PUT error:', error);
     return NextResponse.json({ error: 'Failed to update blog', details: error instanceof Error ? error.message : String(error) }, { status: 500 });
@@ -105,7 +132,8 @@ export async function DELETE(
 
     return NextResponse.json({ message: 'Blog deleted' });
   } catch (error) {
-    return NextResponse.json({ error: 'Failed to delete blog' }, { status: 500 });
+    console.error('Blog DELETE error:', error);
+    return NextResponse.json({ error: 'Failed to delete blog', details: error instanceof Error ? error.message : String(error) }, { status: 500 });
   }
 }
 

@@ -43,8 +43,31 @@ interface TipTapEditorProps {
   editable?: boolean;
 }
 
+// Validate and fix content structure for TipTap
+function validateAndFixContent(content: any) {
+  if (!content || typeof content !== 'object') {
+    return undefined; // Let TipTap use its default
+  }
+  
+  // Check if it has proper TipTap doc structure
+  if (content.type === 'doc' && Array.isArray(content.content)) {
+    return content;
+  }
+  
+  // If it's an empty object or has no type, use TipTap's default
+  if (Object.keys(content).length === 0) {
+    return undefined;
+  }
+  
+  // Try to use it as-is, TipTap will handle it
+  return content;
+}
+
 export function TipTapEditor({ initialContent, onChange, editable = true }: TipTapEditorProps) {
   const [mounted, setMounted] = useState(false);
+  
+  // Validate content before passing to editor
+  const validatedContent = validateAndFixContent(initialContent);
 
   const editor = useEditor({
     extensions: [
@@ -70,7 +93,7 @@ export function TipTapEditor({ initialContent, onChange, editable = true }: TipT
         lowlight,
       }),
     ],
-    content: initialContent || '<p>Start writing your blog post...</p>',
+    content: validatedContent || '<p>Start writing your blog post...</p>',
     editable,
     onUpdate: ({ editor }) => {
       const json = editor.getJSON();

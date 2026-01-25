@@ -35,8 +35,10 @@ export default function NewBlogPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title: formData.title,
-          contentJSON,
-          contentHTML,
+          content: contentJSON,
+          contentJSON: contentJSON,
+          htmlContent: contentHTML,
+          contentHTML: contentHTML,
           excerpt: formData.excerpt,
           author: formData.author,
           authorImage: formData.authorImage,
@@ -50,10 +52,15 @@ export default function NewBlogPage() {
 
       if (response.ok) {
         const blog = await response.json();
-        router.push(`/admin/blog/${blog._id}/edit`);
+        router.push(`/admin/blog/${blog.slug}/edit`);
+      } else {
+        const error = await response.json();
+        console.error('Error:', error);
+        alert(error.error || 'Failed to create blog');
       }
     } catch (error) {
       console.error(error);
+      alert('Failed to create blog');
     } finally {
       setLoading(false);
     }
