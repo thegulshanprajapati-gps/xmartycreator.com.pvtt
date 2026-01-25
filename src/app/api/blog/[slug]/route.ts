@@ -121,8 +121,13 @@ export async function PUT(
     blog.metaKeywords = metaKeywords || [];
     blog.status = status || 'draft';
     blog.updatedAt = new Date();
+    // Set publishedAt when first publishing
     if (status === 'published' && !blog.publishedAt) {
       blog.publishedAt = new Date();
+    }
+    // Clear publishedAt when unpublishing
+    if (status === 'draft' && body.publishedAt === null) {
+      blog.publishedAt = null;
     }
 
     await blog.save();

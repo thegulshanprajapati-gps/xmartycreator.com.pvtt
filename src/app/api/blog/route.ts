@@ -124,11 +124,13 @@ export async function POST(request: NextRequest) {
 
     await blog.save();
     
-    // Invalidate cache
-    await cacheSet(`blogs:${status || 'draft'}`, {} as any, { ttl: 'hot' });
+    // Invalidate cache for this status
+    const statusToInvalidate = status || 'draft';
+    await cacheSet(`blogs:${statusToInvalidate}`, [] as any, { ttl: 'hot' });
     
     const savedBlog = blog.toObject();
     return NextResponse.json({
+      slug: savedBlog.slug,
       ...savedBlog,
       content: validateAndFixContent(savedBlog.content),
       contentJSON: validateAndFixContent(savedBlog.content),

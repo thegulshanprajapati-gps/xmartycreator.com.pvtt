@@ -47,8 +47,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { useToast } from '@/hooks/use-toast';
 
 export default function AdminBlogPage() {
+  const { toast } = useToast();
   const [blogs, setBlogs] = useState<BlogPost[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -74,7 +76,9 @@ export default function AdminBlogPage() {
       const res = await fetch(`/api/blog?${params.toString()}`);
       if (res.ok) {
         const data = await res.json();
-        setBlogs(data.posts);
+        // API returns array directly, not wrapped in {posts}
+        const blogs = Array.isArray(data) ? data : data.posts || [];
+        setBlogs(blogs);
       }
     } catch (error) {
       console.error('Error fetching blogs:', error);
@@ -89,9 +93,26 @@ export default function AdminBlogPage() {
       if (res.ok) {
         setBlogs(blogs.filter(b => b.slug !== slug));
         setDeleteDialog({ open: false });
+        toast({
+          title: 'Success',
+          description: 'Blog deleted successfully',
+          variant: 'default',
+        });
+      } else {
+        const error = await res.json();
+        toast({
+          title: 'Error',
+          description: error.error || 'Failed to delete blog',
+          variant: 'destructive',
+        });
       }
     } catch (error) {
       console.error('Error deleting blog:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to delete blog',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -104,15 +125,33 @@ export default function AdminBlogPage() {
         body: JSON.stringify({
           ...blog,
           status: newStatus,
+          publishedAt: newStatus === 'published' ? new Date() : null,
         }),
       });
 
       if (res.ok) {
         const updated = await res.json();
         setBlogs(blogs.map(b => (b.slug === blog.slug ? updated : b)));
+        toast({
+          title: 'Success',
+          description: `Blog ${newStatus === 'published' ? 'published' : 'unpublished'} successfully`,
+          variant: 'default',
+        });
+      } else {
+        const error = await res.json();
+        toast({
+          title: 'Error',
+          description: error.error || 'Failed to update blog status',
+          variant: 'destructive',
+        });
       }
     } catch (error) {
       console.error('Error updating blog status:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update blog status',
+        variant: 'destructive',
+      });
     }
   };
 

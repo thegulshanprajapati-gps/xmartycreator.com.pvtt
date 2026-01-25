@@ -7,12 +7,15 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Loader2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 export default function NewBlogPage() {
   const router = useRouter();
+  const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [contentJSON, setContentJSON] = useState({});
   const [contentHTML, setContentHTML] = useState('');
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [formData, setFormData] = useState({
     title: '',
     author: '',
@@ -25,8 +28,38 @@ export default function NewBlogPage() {
     status: 'draft' as 'draft' | 'published',
   });
 
+  const validateForm = (): boolean => {
+    const newErrors: Record<string, string> = {};
+
+    if (!formData.title.trim()) {
+      newErrors.title = 'Title is required';
+    }
+    if (!contentHTML.trim()) {
+      newErrors.content = 'Content is required';
+    }
+    if (!formData.author.trim()) {
+      newErrors.author = 'Author name is required';
+    }
+    if (!formData.excerpt.trim()) {
+      newErrors.excerpt = 'Excerpt is required';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!validateForm()) {
+      toast({
+        title: 'Validation Error',
+        description: 'Please fill in all required fields',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -52,15 +85,28 @@ export default function NewBlogPage() {
 
       if (response.ok) {
         const blog = await response.json();
+        toast({
+          title: 'Success',
+          description: 'Blog created successfully',
+          variant: 'default',
+        });
         router.push(`/admin/blog/${blog.slug}/edit`);
       } else {
         const error = await response.json();
         console.error('Error:', error);
-        alert(error.error || 'Failed to create blog');
+        toast({
+          title: 'Error',
+          description: error.error || 'Failed to create blog',
+          variant: 'destructive',
+        });
       }
     } catch (error) {
       console.error(error);
-      alert('Failed to create blog');
+      toast({
+        title: 'Error',
+        description: 'Failed to create blog',
+        variant: 'destructive',
+      });
     } finally {
       setLoading(false);
     }
@@ -72,35 +118,53 @@ export default function NewBlogPage() {
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
-          <label className="block text-sm font-medium mb-2">Title</label>
+          <label className="block text-sm font-medium mb-2">
+            Title <span className="text-red-500">*</span>
+          </label>
           <Input
             value={formData.title}
-            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+            onChange={(e) => {
+              setFormData({ ...formData, title: e.target.value });
+              if (errors.title) setErrors({ ...errors, title: '' });
+            }}
             placeholder="Enter blog title"
-            required
+            className={errors.title ? 'border-red-500 focus:border-red-500' : ''}
           />
+          {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title}</p>}
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-2">Content</label>
-          <TipTapEditor
-            initialContent={contentJSON}
-            onChange={(json, html) => {
-              setContentJSON(json);
-              setContentHTML(html);
-            }}
-          />
+          <label className="block text-sm font-medium mb-2">
+            Content <span className="text-red-500">*</span>
+          </label>
+          <div className={errors.content ? 'border-2 border-red-500 rounded-md p-2' : ''}>
+            <TipTapEditor
+              initialContent={contentJSON}
+              onChange={(json, html) => {
+                setContentJSON(json);
+                setContentHTML(html);
+                if (errors.content) setErrors({ ...errors, content: '' });
+              }}
+            />
+          </div>
+          {errors.content && <p className="text-red-500 text-sm mt-1">{errors.content}</p>}
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium mb-2">Author Name</label>
+            <label className="block text-sm font-medium mb-2">
+              Author Name <span className="text-red-500">*</span>
+            </label>
             <Input
               value={formData.author}
-              onChange={(e) => setFormData({ ...formData, author: e.target.value })}
+              onChange={(e) => {
+                setFormData({ ...formData, author: e.target.value });
+                if (errors.author) setErrors({ ...errors, author: '' });
+              }}
               placeholder="John Doe"
-              required
+              className={errors.author ? 'border-red-500 focus:border-red-500' : ''}
             />
+            {errors.author && <p className="text-red-500 text-sm mt-1">{errors.author}</p>}
           </div>
           <div>
             <label className="block text-sm font-medium mb-2">Author Image URL</label>
@@ -122,13 +186,20 @@ export default function NewBlogPage() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-2">Excerpt</label>
+          <label className="block text-sm font-medium mb-2">
+            Excerpt <span className="text-red-500">*</span>
+          </label>
           <Textarea
             value={formData.excerpt}
-            onChange={(e) => setFormData({ ...formData, excerpt: e.target.value })}
+            onChange={(e) => {
+              setFormData({ ...formData, excerpt: e.target.value });
+              if (errors.excerpt) setErrors({ ...errors, excerpt: '' });
+            }}
             placeholder="Brief summary..."
             maxLength={160}
+            className={errors.excerpt ? 'border-red-500 focus:border-red-500' : ''}
           />
+          {errors.excerpt && <p className="text-red-500 text-sm mt-1">{errors.excerpt}</p>}
         </div>
 
         <div>

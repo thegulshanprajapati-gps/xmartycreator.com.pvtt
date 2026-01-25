@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Loader2, Trash2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 interface Blog {
   _id: string;
@@ -27,6 +28,7 @@ interface Blog {
 export default function EditBlogPage() {
   const router = useRouter();
   const params = useParams();
+  const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [blog, setBlog] = useState<Blog | null>(null);
@@ -103,15 +105,28 @@ export default function EditBlogPage() {
       });
 
       if (response.ok) {
+        toast({
+          title: 'Success',
+          description: 'Blog updated successfully',
+          variant: 'default',
+        });
         router.push('/admin/blog');
       } else {
         const error = await response.json();
         console.error('Error:', error);
-        alert(error.error || 'Failed to update blog');
+        toast({
+          title: 'Error',
+          description: error.error || 'Failed to update blog',
+          variant: 'destructive',
+        });
       }
     } catch (error) {
       console.error('Error updating blog:', error);
-      alert('Failed to update blog');
+      toast({
+        title: 'Error',
+        description: 'Failed to update blog',
+        variant: 'destructive',
+      });
     } finally {
       setSubmitting(false);
     }
@@ -120,10 +135,29 @@ export default function EditBlogPage() {
   const handleDelete = async () => {
     if (!confirm('Delete this blog?')) return;
     try {
-      await fetch(`/api/blog/${params.id}`, { method: 'DELETE' });
-      router.push('/admin/blog');
+      const res = await fetch(`/api/blog/${params.id}`, { method: 'DELETE' });
+      if (res.ok) {
+        toast({
+          title: 'Success',
+          description: 'Blog deleted successfully',
+          variant: 'default',
+        });
+        router.push('/admin/blog');
+      } else {
+        const error = await res.json();
+        toast({
+          title: 'Error',
+          description: error.error || 'Failed to delete blog',
+          variant: 'destructive',
+        });
+      }
     } catch (error) {
       console.error('Error deleting blog:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to delete blog',
+        variant: 'destructive',
+      });
     }
   };
 
