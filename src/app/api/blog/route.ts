@@ -55,9 +55,12 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     console.log('Blog POST received:', JSON.stringify(body, null, 2));
     
-    // Accept both htmlContent and contentHTML
-    const htmlContent = body.htmlContent || body.contentHTML;
-    const { title, content, excerpt, author, authorImage, coverImage, tags, metaTitle, metaDescription, metaKeywords, status } = body;
+    // Accept both htmlContent and contentHTML, and both content and contentJSON
+    const htmlContent = body.htmlContent || body.contentHTML || '';
+    const rawContent = body.content || body.contentJSON || {};
+    const content = validateAndFixContent(rawContent);
+    
+    const { title, excerpt, author, authorImage, coverImage, tags, metaTitle, metaDescription, metaKeywords, status } = body;
 
     // Detailed validation logging
     const missingFields: string[] = [];
@@ -85,7 +88,7 @@ export async function POST(request: NextRequest) {
     const blog = new Blog({
       title,
       slug,
-      content: content || {},
+      content,
       htmlContent,
       excerpt,
       author,
@@ -103,7 +106,14 @@ export async function POST(request: NextRequest) {
     });
 
     await blog.save();
-    return NextResponse.json(blog, { status: 201 });
+    
+    // Return blog with fixed content structure
+    const savedBlog = blog.toObject();
+    return NextResponse.json({
+      ...savedBlog,
+      content: validateAndFixContent(savedBlog.content),
+      contentJSON: validateAndFixContent(savedBlog.content),
+    }, { status: 201 });
   } catch (error) {
     console.error('Blog POST error:', error);
     const errorMessage = error instanceof Error ? error.message : 'Failed to create blog';
