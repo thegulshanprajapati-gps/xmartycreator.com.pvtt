@@ -3,10 +3,6 @@
   "outputDirectory": ".next",
   "framework": "nextjs",
   "env": {
-    "MONGODB_URI": "@mongodb_uri",
-    "MONGO_URI": "@mongo_uri",
-    "UPSTASH_REDIS_REST_URL": "@upstash_redis_url",
-    "UPSTASH_REDIS_REST_TOKEN": "@upstash_redis_token",
     "RATE_LIMIT_ENABLED": "true",
     "RATE_LIMIT_REQUESTS_PER_MINUTE": "120",
     "BOT_DETECTION_ENABLED": "true",
