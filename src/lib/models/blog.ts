@@ -5,12 +5,15 @@ const BlogSchema = new mongoose.Schema({
     type: String,
     required: true,
     index: true,
+    trim: true,
   },
   slug: {
     type: String,
     required: true,
     unique: true,
     lowercase: true,
+    sparse: true,
+    index: true,
   },
   excerpt: {
     type: String,
@@ -19,10 +22,12 @@ const BlogSchema = new mongoose.Schema({
   content: {
     type: Object, // TipTap JSON format
     required: true,
+    select: false, // Don't fetch by default
   },
   htmlContent: {
     type: String,
     required: true,
+    select: false, // Don't fetch by default
   },
   coverImage: {
     url: String,
@@ -31,6 +36,7 @@ const BlogSchema = new mongoose.Schema({
   author: {
     type: String,
     required: true,
+    index: true,
   },
   authorImage: {
     type: String,
@@ -54,10 +60,15 @@ const BlogSchema = new mongoose.Schema({
   metaDescription: String,
   metaKeywords: [String],
   canonicalUrl: String,
-  publishedAt: Date,
+  publishedAt: {
+    type: Date,
+    index: true,
+    sparse: true,
+  },
   updatedAt: {
     type: Date,
     default: Date.now,
+    index: true,
   },
   createdAt: {
     type: Date,
@@ -72,11 +83,24 @@ const BlogSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
-}, { timestamps: true });
+  isCached: {
+    type: Boolean,
+    default: false,
+    index: true,
+  },
+}, { timestamps: true, collection: 'blogs' });
 
-// Indexes for performance
-BlogSchema.index({ status: 1, publishedAt: -1 });
-BlogSchema.index({ tags: 1, status: 1 });
+// Compound indexes for common queries - critical for high traffic
+BlogSchema.index({ status: 1, publishedAt: -1 }, { background: true });
+BlogSchema.index({ tags: 1, status: 1 }, { background: true });
+BlogSchema.index({ author: 1, status: 1 }, { background: true });
+BlogSchema.index({ views: -1, status: 1 }, { background: true }); // Popular posts
+BlogSchema.index({ createdAt: -1, status: 1 }, { background: true });
+
+// Text index for search - optional, can be heavy under load
+BlogSchema.index({ title: 'text', excerpt: 'text' }, { background: true, sparse: true });
+
+BlogSchema.set('lean', { defaults: true });
 
 const Blog = mongoose.models.Blog || mongoose.model('Blog', BlogSchema);
 

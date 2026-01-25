@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import mongoose from 'mongoose';
-import clientPromise from '@/lib/mongodb';
+import connectDB from '@/lib/db-connection';
 import Blog from '@/lib/models/blog';
 import { calculateReadTime } from '@/lib/readTime';
 import { slugify } from '@/lib/slugify';
+import { getCachedBlogs, cacheBlogs, checkRateLimit } from '@/lib/rate-limit';
+import { cacheGet, cacheSet } from '@/lib/redis-cache';
 
 // Ensure content has valid TipTap structure
 function validateAndFixContent(content: any) {
@@ -19,50 +21,70 @@ function validateAndFixContent(content: any) {
 
 export async function GET(request: NextRequest) {
   try {
-    await clientPromise;
-    if (!mongoose.connection.readyState) {
-      await mongoose.connect(process.env.MONGODB_URI!);
+    const clientIP = request.headers.get('x-client-ip') || 'unknown';
+    const status = request.nextUrl.searchParams.get('status') || 'published';
+    
+    // Rate limiting
+    const rateLimitKey = `api:blog:${clientIP}`;
+    const rateLimit = await checkRateLimit(rateLimitKey);
+    if (!rateLimit.success) {
+      return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 });
     }
 
-    const searchParams = request.nextUrl.searchParams;
-    const status = searchParams.get('status');
+    // Cache check
+    const cacheKey = `blogs:${status}`;
+    const cached = await cacheGet(cacheKey);
+    if (cached) {
+      return NextResponse.json(cached);
+    }
+
+    // DB query
+    await connectDB();
     const query: any = {};
     if (status) query.status = status;
 
-    const blogs = await Blog.find(query).sort({ createdAt: -1 }).lean();
+    const blogs = await Blog.find(query)
+      .select('title slug excerpt author readTime status publishedAt updatedAt tags views likes') // Projection
+      .sort({ createdAt: -1 })
+      .limit(100)
+      .maxTimeMS(5000) // 5 second timeout
+      .lean();
     
-    // Fix content structure for all blogs
     const fixedBlogs = blogs.map(blog => ({
       ...blog,
       content: validateAndFixContent(blog.content),
       contentJSON: validateAndFixContent(blog.content),
     }));
     
+    // Cache for 30 minutes
+    await cacheSet(cacheKey, fixedBlogs, { ttl: 1800 });
+    
     return NextResponse.json(fixedBlogs);
   } catch (error) {
     console.error('Blog GET error:', error);
-    return NextResponse.json({ error: 'Failed to fetch blogs', details: error instanceof Error ? error.message : String(error) }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to fetch blogs' }, { status: 500 });
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    await clientPromise;
-    if (!mongoose.connection.readyState) {
-      await mongoose.connect(process.env.MONGODB_URI!);
+    const clientIP = request.headers.get('x-client-ip') || 'unknown';
+    
+    // Rate limiting - stricter for POST
+    const rateLimitKey = `api:blog:post:${clientIP}`;
+    const rateLimit = await checkRateLimit(rateLimitKey);
+    if (!rateLimit.success) {
+      return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 });
     }
 
     const body = await request.json();
-    console.log('Blog POST received:', JSON.stringify(body, null, 2));
     
-    // Accept both htmlContent and contentHTML, and both content and contentJSON
     const htmlContent = body.htmlContent || body.contentHTML || '';
     const rawContent = body.content || body.contentJSON || {};
     const content = validateAndFixContent(rawContent);
     
     const { title, excerpt, author, authorImage, coverImage, tags, metaTitle, metaDescription, metaKeywords, status } = body;
 
-    // Detailed validation logging
     const missingFields: string[] = [];
     if (!title) missingFields.push('title');
     if (!htmlContent) missingFields.push('htmlContent');
@@ -70,15 +92,13 @@ export async function POST(request: NextRequest) {
     if (!excerpt) missingFields.push('excerpt');
 
     if (missingFields.length > 0) {
-      const errorMsg = `Missing required fields: ${missingFields.join(', ')}`;
-      console.error(errorMsg);
-      return NextResponse.json({ error: errorMsg }, { status: 400 });
+      return NextResponse.json({ error: `Missing: ${missingFields.join(', ')}` }, { status: 400 });
     }
 
+    await connectDB();
     const slug = slugify(title);
-    console.log(`Generated slug: "${slug}" from title: "${title}"`);
     
-    const existing = await Blog.findOne({ slug });
+    const existing = await Blog.findOne({ slug }).maxTimeMS(3000);
     if (existing) {
       return NextResponse.json({ error: 'Slug already exists' }, { status: 400 });
     }
@@ -93,21 +113,20 @@ export async function POST(request: NextRequest) {
       excerpt,
       author,
       authorImage: authorImage || '',
-      coverImage: coverImage || { url: '', alt: '' },
+      coverImage: coverImage || {},
       tags: tags || [],
       readTime,
       metaTitle: metaTitle || title,
       metaDescription: metaDescription || excerpt,
       metaKeywords: metaKeywords || [],
       status: status || 'draft',
-      views: 0,
-      likes: 0,
-      publishedAt: status === 'published' ? new Date() : null,
     });
 
     await blog.save();
     
-    // Return blog with fixed content structure
+    // Invalidate cache
+    await cacheSet(`blogs:${status}`, null, { ttl: 1 });
+    
     const savedBlog = blog.toObject();
     return NextResponse.json({
       ...savedBlog,
@@ -116,7 +135,7 @@ export async function POST(request: NextRequest) {
     }, { status: 201 });
   } catch (error) {
     console.error('Blog POST error:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Failed to create blog';
-    return NextResponse.json({ error: 'Failed to create blog', details: errorMessage }, { status: 500 });
+    const msg = error instanceof Error ? error.message : 'Unknown error';
+    return NextResponse.json({ error: 'Failed to create blog', details: msg }, { status: 500 });
   }
 }
