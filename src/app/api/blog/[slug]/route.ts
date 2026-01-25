@@ -25,6 +25,11 @@ export async function GET(
 ) {
   try {
     const clientIP = request.headers.get('x-client-ip') || 'unknown';
+    const slug = params.slug?.toString().toLowerCase().trim();
+
+    if (!slug) {
+      return NextResponse.json({ error: 'Invalid slug' }, { status: 400 });
+    }
     
     // Rate limiting
     const rateLimitKey = `api:blog:${clientIP}`;
@@ -34,14 +39,14 @@ export async function GET(
     }
 
     // Cache check
-    const cacheKey = `blog:${params.slug}`;
+    const cacheKey = `blog:${slug}`;
     const cached = await cacheGet(cacheKey);
     if (cached) {
       return NextResponse.json(cached);
     }
 
     await connectDB();
-    const blog = await Blog.findOne({ slug: params.slug })
+    const blog = await Blog.findOne({ slug })
       .maxTimeMS(3000)
       .lean();
 
@@ -50,10 +55,11 @@ export async function GET(
     }
 
     // Cache for 1 hour
+    const blogData = blog as any;
     const blogtData = {
-      ...blog,
-      content: validateAndFixContent(blog.content),
-      contentJSON: validateAndFixContent(blog.content),
+      ...blogData,
+      content: validateAndFixContent(blogData.content),
+      contentJSON: validateAndFixContent(blogData.content),
     };
     
     await cacheSet(cacheKey, blogtData, { ttl: 'cold' });
@@ -61,7 +67,7 @@ export async function GET(
     return NextResponse.json(blogtData);
   } catch (error) {
     console.error('Blog GET error:', error);
-    return NextResponse.json({ error: 'Failed to fetch blog' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to fetch blog', details: error instanceof Error ? error.message : 'Unknown error' }, { status: 500 });
   }
 }
 
@@ -71,6 +77,11 @@ export async function PUT(
 ) {
   try {
     const clientIP = request.headers.get('x-client-ip') || 'unknown';
+    const slug = params.slug?.toString().toLowerCase().trim();
+
+    if (!slug) {
+      return NextResponse.json({ error: 'Invalid slug' }, { status: 400 });
+    }
     
     // Rate limiting - stricter for PUT
     const rateLimitKey = `api:blog:put:${clientIP}`;
@@ -86,21 +97,26 @@ export async function PUT(
     const finalHtmlContent = htmlContent || contentHTML;
 
     if (!title || !finalHtmlContent || !author || !excerpt) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+      const missing = [];
+      if (!title) missing.push('title');
+      if (!finalHtmlContent) missing.push('htmlContent');
+      if (!author) missing.push('author');
+      if (!excerpt) missing.push('excerpt');
+      return NextResponse.json({ error: `Missing required fields: ${missing.join(', ')}` }, { status: 400 });
     }
 
     await connectDB();
-    const blog = await Blog.findOne({ slug: params.slug }).maxTimeMS(3000);
+    const blog = await Blog.findOne({ slug }).maxTimeMS(3000);
     
     if (!blog) {
       return NextResponse.json({ error: 'Blog not found' }, { status: 404 });
     }
 
     const newSlug = slugify(title);
-    if (newSlug !== params.slug) {
+    if (newSlug !== slug) {
       const existing = await Blog.findOne({ slug: newSlug }).maxTimeMS(3000);
       if (existing) {
-        return NextResponse.json({ error: 'Slug already exists' }, { status: 400 });
+        return NextResponse.json({ error: 'New slug already exists' }, { status: 400 });
       }
     }
 
@@ -133,7 +149,7 @@ export async function PUT(
     await blog.save();
     
     // Invalidate cache
-    await cacheSet(`blog:${params.slug}`, null, { ttl: 1 });
+    await cacheSet(`blog:${slug}`, null as any, { ttl: 'hot' });
     
     const savedBlog = blog.toObject();
     return NextResponse.json({
@@ -143,7 +159,7 @@ export async function PUT(
     });
   } catch (error) {
     console.error('Blog PUT error:', error);
-    return NextResponse.json({ error: 'Failed to update blog' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to update blog', details: error instanceof Error ? error.message : 'Unknown error' }, { status: 500 });
   }
 }
 
@@ -153,6 +169,11 @@ export async function DELETE(
 ) {
   try {
     const clientIP = request.headers.get('x-client-ip') || 'unknown';
+    const slug = params.slug?.toString().toLowerCase().trim();
+
+    if (!slug) {
+      return NextResponse.json({ error: 'Invalid slug' }, { status: 400 });
+    }
     
     // Rate limiting - strict for DELETE
     const rateLimitKey = `api:blog:delete:${clientIP}`;
@@ -162,19 +183,19 @@ export async function DELETE(
     }
 
     await connectDB();
-    const blog = await Blog.findOneAndDelete({ slug: params.slug }).maxTimeMS(3000);
+    const blog = await Blog.findOneAndDelete({ slug }).maxTimeMS(3000);
     
     if (!blog) {
       return NextResponse.json({ error: 'Blog not found' }, { status: 404 });
     }
 
     // Invalidate cache
-    await cacheSet(`blog:${params.slug}`, null, { ttl: 1 });
+    await cacheSet(`blog:${slug}`, null as any, { ttl: 'hot' });
 
-    return NextResponse.json({ message: 'Blog deleted' });
+    return NextResponse.json({ message: 'Blog deleted', slug });
   } catch (error) {
     console.error('Blog DELETE error:', error);
-    return NextResponse.json({ error: 'Failed to delete blog' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to delete blog', details: error instanceof Error ? error.message : 'Unknown error' }, { status: 500 });
   }
 }
 

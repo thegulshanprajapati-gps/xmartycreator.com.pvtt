@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
     if (!excerpt) missingFields.push('excerpt');
 
     if (missingFields.length > 0) {
-      return NextResponse.json({ error: `Missing: ${missingFields.join(', ')}` }, { status: 400 });
+      return NextResponse.json({ error: `Missing required fields: ${missingFields.join(', ')}` }, { status: 400 });
     }
 
     await connectDB();
@@ -100,7 +100,7 @@ export async function POST(request: NextRequest) {
     
     const existing = await Blog.findOne({ slug }).maxTimeMS(3000);
     if (existing) {
-      return NextResponse.json({ error: 'Slug already exists' }, { status: 400 });
+      return NextResponse.json({ error: 'A blog with this title already exists' }, { status: 400 });
     }
 
     const readTime = calculateReadTime(htmlContent);

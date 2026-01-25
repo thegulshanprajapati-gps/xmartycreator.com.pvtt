@@ -54,7 +54,14 @@ export default function EditBlogPage() {
     try {
       const res = await fetch(`/api/blog/${params.id}`);
       if (!res.ok) {
-        console.error('Failed to load blog');
+        const error = await res.json();
+        console.error('Failed to load blog:', error);
+        toast({
+          title: 'Error',
+          description: error.error || 'Failed to load blog',
+          variant: 'destructive',
+        });
+        setLoading(false);
         return;
       }
       const data = await res.json();
@@ -74,6 +81,11 @@ export default function EditBlogPage() {
       });
     } catch (error) {
       console.error('Error loading blog:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load blog',
+        variant: 'destructive',
+      });
     } finally {
       setLoading(false);
     }
@@ -166,7 +178,17 @@ export default function EditBlogPage() {
   }
 
   if (!blog) {
-    return <div className="p-8">Blog not found</div>;
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex flex-col items-center justify-center h-64">
+          <h2 className="text-xl font-semibold mb-4">Blog Not Found</h2>
+          <p className="text-muted-foreground mb-6">The blog post you're looking for doesn't exist.</p>
+          <Button onClick={() => router.push('/admin/blog')}>
+            Back to Blogs
+          </Button>
+        </div>
+      </div>
+    );
   }
 
   return (
