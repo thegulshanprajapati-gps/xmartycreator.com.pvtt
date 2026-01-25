@@ -5,6 +5,18 @@ import Blog from '@/lib/models/blog';
 import { calculateReadTime } from '@/lib/readTime';
 import { slugify } from '@/lib/slugify';
 
+// Ensure content has valid TipTap structure
+function validateAndFixContent(content: any) {
+  if (!content || typeof content !== 'object') {
+    return { type: 'doc', content: [] };
+  }
+  if (content.type === 'doc' && Array.isArray(content.content)) {
+    return content;
+  }
+  // If it's empty or malformed, return default
+  return { type: 'doc', content: [] };
+}
+
 export async function GET(request: NextRequest) {
   try {
     await clientPromise;
@@ -18,9 +30,18 @@ export async function GET(request: NextRequest) {
     if (status) query.status = status;
 
     const blogs = await Blog.find(query).sort({ createdAt: -1 }).lean();
-    return NextResponse.json(blogs);
+    
+    // Fix content structure for all blogs
+    const fixedBlogs = blogs.map(blog => ({
+      ...blog,
+      content: validateAndFixContent(blog.content),
+      contentJSON: validateAndFixContent(blog.content),
+    }));
+    
+    return NextResponse.json(fixedBlogs);
   } catch (error) {
-    return NextResponse.json({ error: 'Failed to fetch blogs' }, { status: 500 });
+    console.error('Blog GET error:', error);
+    return NextResponse.json({ error: 'Failed to fetch blogs', details: error instanceof Error ? error.message : String(error) }, { status: 500 });
   }
 }
 
