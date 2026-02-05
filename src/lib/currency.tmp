@@ -1,0 +1,93 @@
+﻿/**
+ * Centralised currency helpers to guarantee:
+ * - Raw numbers flow from API to UI
+ * - All formatting happens in one place
+ * - Defensive coercion when strings sneak through
+ * - No hardcoded symbols sprinkled across the app
+ */
+
+const DEFAULT_LOCALE = process.env.NEXT_PUBLIC_CURRENCY_LOCALE || 'en-IN';
+const DEFAULT_CURRENCY = process.env.NEXT_PUBLIC_CURRENCY_CODE || 'INR';
+const EXPECTED_SYMBOL = process.env.NEXT_PUBLIC_CURRENCY_SYMBOL || 'â‚¹';
+
+type FormatOptions = Pick<Intl.NumberFormatOptions, 'minimumFractionDigits' | 'maximumFractionDigits'>;
+
+/**
+ * Convert any incoming value to a finite number.
+ * Logs in nonâ€‘production so we can trace bad data quickly.
+ */
+export function ensureNumber(value: unknown, context: string): number {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+
+  if (typeof value === 'string') {
+    const normalised = value.replace(/[^\d.-]/g, '');
+    const parsed = Number(normalised);
+    if (Number.isFinite(parsed)) {
+      if (process.env.NODE_ENV !== 'production') {
+        // eslint-disable-next-line no-console
+        console.warn(`[currency] coerced string to number in ${context}:`, value, 'â†’', parsed);
+      }
+      return parsed;
+    }
+  }
+
+  if (process.env.NODE_ENV !== 'production') {
+    // eslint-disable-next-line no-console
+    console.error(`[currency] non-numeric value in ${context}:`, value);
+  }
+
+  return 0;
+}
+
+/**
+ * Format currency into parts so UI can style symbol/value separately.
+ */
+export function formatCurrencyParts(
+  value: unknown,
+  options: FormatOptions = {},
+) {
+  const amount = ensureNumber(value, 'formatCurrencyParts');
+  const formatter = new Intl.NumberFormat(DEFAULT_LOCALE, {
+    style: 'currency',
+    currency: DEFAULT_CURRENCY,
+    minimumFractionDigits: options.minimumFractionDigits ?? 0,
+    maximumFractionDigits: options.maximumFractionDigits ?? 0,
+  });
+
+  const parts = formatter.formatToParts(amount);
+  const symbolFromIntl = parts.find((p) => p.type === 'currency')?.value;
+
+  // Runtime guard: detect and correct any unexpected currency symbol drift.
+  const symbol =
+    symbolFromIntl && symbolFromIntl !== EXPECTED_SYMBOL
+      ? (() => {
+          if (process.env.NODE_ENV !== 'production') {
+            // eslint-disable-next-line no-console
+            console.error(
+              `[currency] Unexpected symbol "${symbolFromIntl}" for currency ${DEFAULT_CURRENCY}. Forcing "${EXPECTED_SYMBOL}".`,
+            );
+          }
+          return EXPECTED_SYMBOL;
+        })()
+      : symbolFromIntl || EXPECTED_SYMBOL;
+  const numeric = parts
+    .filter((p) => p.type !== 'currency' && p.type !== 'literal')
+    .map((p) => p.value)
+    .join('');
+
+  return { symbol, numeric };
+}
+
+/**
+ * Convenience string formatter when parts aren't needed.
+ */
+export function formatCurrency(value: unknown, options: FormatOptions = {}) {
+  const { symbol, numeric } = formatCurrencyParts(value, options);
+  return `${symbol}${numeric}`;
+}
+
+export const currencyConfig = {
+  locale: DEFAULT_LOCALE,
+  currency: DEFAULT_CURRENCY,
+  symbol: EXPECTED_SYMBOL,
+};

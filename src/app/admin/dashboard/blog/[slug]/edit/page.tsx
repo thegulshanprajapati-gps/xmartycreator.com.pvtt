@@ -1,0 +1,124 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { Loader2 } from 'lucide-react';
+import { BlogEditorForm, BlogFormValues } from '@/components/admin/blog-editor-form';
+import { useParams, useRouter } from 'next/navigation';
+
+export default function EditBlogPage() {
+  const { slug } = useParams<{ slug: string }>();
+  const router = useRouter();
+  const [blog, setBlog] = useState<BlogFormValues | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  // map API blog to form values
+  const mapToFormValues = (data: any): BlogFormValues => ({
+    title: data.title || '',
+    slug: data.slug || slug,
+    excerpt: data.excerpt || '',
+    content: data.htmlContent || data.content || '',
+    htmlContent: data.htmlContent || data.content || '',
+    author: data.author || '',
+    tags: Array.isArray(data.tags) ? data.tags.join(', ') : '',
+    metaTitle: data.metaTitle || data.title || '',
+    metaDescription: data.metaDescription || data.excerpt || '',
+    metaKeywords: Array.isArray(data.metaKeywords) ? data.metaKeywords.join(', ') : '',
+    coverImage: typeof data.coverImage === 'string' ? data.coverImage : data.coverImage?.url || '',
+    status: data.status || 'draft',
+  });
+
+  useEffect(() => {
+    const fetchBlog = async () => {
+      try {
+        setLoading(true);
+        const res = await fetch(`/api/blog/${slug}`);
+        
+        if (!res.ok) {
+          if (res.status === 404) {
+            router.replace('/404');
+            return;
+          }
+
+          let message = `Failed to fetch blog (status ${res.status})`;
+          try {
+            const data = await res.json();
+            if (data?.error) message = data.error;
+            if (data?.details) message = `${message}: ${data.details}`;
+          } catch (err) {
+            // ignore JSON parse issues
+          }
+          throw new Error(message);
+        }
+
+        const data = await res.json();
+        setBlog(mapToFormValues(data));
+      } catch (err) {
+        console.warn('Error fetching blog:', err);
+        setError(err instanceof Error ? err.message : 'Failed to load blog');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (slug) fetchBlog();
+  }, [slug]);
+
+  const handleSubmit = async (values: BlogFormValues) => {
+    setSaving(true);
+    try {
+      const tagsArray = values.tags ? values.tags.split(',').map(t => t.trim()).filter(Boolean) : [];
+      const metaKeywordsArray = values.metaKeywords ? values.metaKeywords.split(',').map(t => t.trim()).filter(Boolean) : [];
+      await fetch(`/api/blog/${slug}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...values,
+          tags: tagsArray,
+          metaKeywords: metaKeywordsArray,
+          metaTitle: values.metaTitle || values.title,
+          metaDescription: values.metaDescription || values.excerpt,
+          htmlContent: values.htmlContent || values.content,
+        }),
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-16">
+        <div className="flex flex-col items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground mb-4" />
+          <p className="text-muted-foreground">Loading blog post...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container mx-auto px-4 py-16">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-2">Error Loading Blog</h1>
+          <p className="text-muted-foreground">{error}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!blog) {
+    return (
+      <div className="container mx-auto px-4 py-16">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-2">Blog Not Found</h1>
+          <p className="text-muted-foreground">The requested blog could not be loaded.</p>
+        </div>
+      </div>
+    );
+  }
+
+  return <BlogEditorForm initial={blog} saving={saving} onSubmit={handleSubmit} mode="edit" />;
+}

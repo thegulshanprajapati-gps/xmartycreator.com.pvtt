@@ -1,0 +1,108 @@
+config:
+  target: 'https://xmartycreator.com'
+  phases:
+    - duration: 60
+      arrivalRate: 10
+      name: 'Warm up'
+    - duration: 120
+      arrivalRate: 50
+      name: 'Ramp up load'
+    - duration: 60
+      arrivalRate: 100
+      name: 'High load'
+    - duration: 60
+      arrivalRate: 500
+      name: 'Spike'
+    - duration: 120
+      arrivalRate: 100
+      name: 'Sustained load'
+    - duration: 60
+      arrivalRate: 10
+      name: 'Ramp down'
+  timeout: 10
+  http:
+    timeout: 10
+    max: 50
+  variables:
+    blogSlugs:
+      - 'getting-started'
+      - 'advanced-tips'
+      - 'tutorial'
+  processor: './load-test-processor.js'
+  plugins:
+    statsd:
+      host: localhost
+      port: 8125
+      prefix: 'artillery_'
+
+scenarios:
+  - name: 'Homepage + Navigation'
+    weight: 25
+    flow:
+      - get:
+          url: '/'
+          expect:
+            - statusCode: 200
+            - contentType: html
+          capture:
+            json: '$'
+      - think: 2
+      - get:
+          url: '/blog'
+          expect:
+            - statusCode: 200
+
+  - name: 'Blog Reading'
+    weight: 35
+    flow:
+      - get:
+          url: '/api/blog?status=published'
+          expect:
+            - statusCode: 200
+      - think: 3
+      - get:
+          url: '/blog/{{ blogSlugs[0] }}'
+          expect:
+            - statusCode: 200
+      - think: 2
+      - get:
+          url: '/blog/{{ blogSlugs[1] }}'
+          expect:
+            - statusCode: 200
+
+  - name: 'Courses Browsing'
+    weight: 20
+    flow:
+      - get:
+          url: '/courses'
+          expect:
+            - statusCode: 200
+      - think: 2
+      - get:
+          url: '/api/courses'
+          expect:
+            - statusCode: 200
+
+  - name: 'API Endpoints'
+    weight: 20
+    flow:
+      - get:
+          url: '/api/pages/home'
+          headers:
+            Accept-Encoding: gzip
+          expect:
+            - statusCode: 200
+      - think: 1
+      - get:
+          url: '/api/blog'
+          headers:
+            Accept-Encoding: gzip
+          expect:
+            - statusCode: 200
+      - think: 1
+      - get:
+          url: '/api/updates'
+          headers:
+            Accept-Encoding: gzip
+          expect:
+            - statusCode: 200
