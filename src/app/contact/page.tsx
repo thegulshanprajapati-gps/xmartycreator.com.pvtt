@@ -40,23 +40,64 @@ type ContactContent = {
   };
 };
 
+const DEFAULT_CONTACT_CONTENT: ContactContent = {
+  hero: { title: 'Contact', description: 'Get in touch with us' },
+  info: { title: 'Contact Info', description: '', email: '', phone: '', address: '' },
+  form: {
+    title: 'Send us a message',
+    description: '',
+    namePlaceholder: 'Name',
+    emailPlaceholder: 'Email',
+    subjectPlaceholder: 'Subject',
+    messagePlaceholder: 'Message',
+    buttonText: 'Send',
+  },
+};
+
+function normalizeContactContent(raw: any): ContactContent {
+  const hero = { ...DEFAULT_CONTACT_CONTENT.hero, ...(raw?.hero || {}) };
+  const info = { ...DEFAULT_CONTACT_CONTENT.info, ...(raw?.info || {}) };
+  const form = { ...DEFAULT_CONTACT_CONTENT.form, ...(raw?.form || {}) };
+
+  return {
+    hero: {
+      title: hero.title || DEFAULT_CONTACT_CONTENT.hero.title,
+      description: hero.description || DEFAULT_CONTACT_CONTENT.hero.description,
+    },
+    info: {
+      title: info.title || DEFAULT_CONTACT_CONTENT.info.title,
+      description: info.description || '',
+      email: info.email || '',
+      phone: info.phone || '',
+      address: info.address || '',
+    },
+    form: {
+      title: form.title || DEFAULT_CONTACT_CONTENT.form.title,
+      description: form.description || '',
+      namePlaceholder: form.namePlaceholder || DEFAULT_CONTACT_CONTENT.form.namePlaceholder,
+      emailPlaceholder: form.emailPlaceholder || DEFAULT_CONTACT_CONTENT.form.emailPlaceholder,
+      subjectPlaceholder: form.subjectPlaceholder || DEFAULT_CONTACT_CONTENT.form.subjectPlaceholder,
+      messagePlaceholder: form.messagePlaceholder || DEFAULT_CONTACT_CONTENT.form.messagePlaceholder,
+      buttonText: form.buttonText || DEFAULT_CONTACT_CONTENT.form.buttonText,
+    },
+  };
+}
+
 export default function ContactPage() {
   const [state, formAction, isPending] = useActionState(handleContactSubmission, null);
   const { toast } = useToast();
   const formRef = useRef<HTMLFormElement>(null);
-  const [contactContent, setContactContent] = useState<ContactContent>({
-    hero: { title: 'Contact', description: 'Get in touch with us' },
-    info: { title: 'Contact Info', description: '', email: '', phone: '', address: '' },
-    form: { title: 'Send us a message', description: '', namePlaceholder: 'Name', emailPlaceholder: 'Email', subjectPlaceholder: 'Subject', messagePlaceholder: 'Message', buttonText: 'Send' }
-  });
+  const [contactContent, setContactContent] = useState<ContactContent>(DEFAULT_CONTACT_CONTENT);
 
   useEffect(() => {
     const fetchContent = async () => {
       try {
-        const res = await fetch('/api/pages/contact');
+        const res = await fetch('/api/pages/contact', { cache: 'no-store' });
         if (res.ok) {
           const data = await res.json();
-          setContactContent(data);
+          if (data && typeof data === 'object') {
+            setContactContent(normalizeContactContent(data));
+          }
         }
       } catch (error) {
         console.error('Error fetching contact content:', error);
