@@ -10,9 +10,11 @@ declare global {
 
 const MAGIC_MOUSE_SRC =
   'https://res.cloudinary.com/veseylab/raw/upload/v1684982764/magicmouse-2.0.0.cdn.min.js';
+const MAGIC_MOUSE_ENABLED = process.env.NEXT_PUBLIC_MAGIC_MOUSE === 'true';
 
 export default function MagicMouseProvider() {
   useEffect(() => {
+    if (!MAGIC_MOUSE_ENABLED) return;
     if (typeof window === 'undefined') return;
 
     const supportsFinePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
@@ -43,7 +45,6 @@ export default function MagicMouseProvider() {
     const initMagicMouse = () => {
       if (window.magicMouse) {
         window.magicMouse({
-          cursorOuter: 'circle',
           hoverEffect: 'circle-move',
           hoverItemMove: false,
           defaultCursor: false,

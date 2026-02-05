@@ -90,10 +90,12 @@ export default function RootLayout({
         <link rel="icon" href="/favicon.ico" sizes="any" />
         <link rel="shortcut icon" href="/favicon.ico" />
         <link rel="apple-touch-icon" href="/favicon.ico" />
-        <link
-          rel="stylesheet"
-          href="https://res.cloudinary.com/veseylab/raw/upload/v1684982764/magicmouse-2.0.0.cdn.min.css"
-        />
+        {process.env.NEXT_PUBLIC_MAGIC_MOUSE === 'true' && (
+          <link
+            rel="stylesheet"
+            href="https://res.cloudinary.com/veseylab/raw/upload/v1684982764/magicmouse-2.0.0.cdn.min.css"
+          />
+        )}
         <meta name="google-site-verification" content="JqwCaYH46klXdkyF0gx4xDnSfgdoFsYfK-UiqxPWsiM" />
         <script
           type="application/ld+json"

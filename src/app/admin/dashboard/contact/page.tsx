@@ -1,4 +1,6 @@
 import type { Metadata } from 'next';
+import clientPromise from '@/lib/mongodb';
+import ContactContentManager from './contact-content-manager';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,6 +21,43 @@ import { Mail, User, Clock, MessageSquare, Inbox } from 'lucide-react';
 import { type Submission } from '@/app/contact/actions';
 import { formatDistanceToNow } from 'date-fns';
 
+type ContactContent = {
+  hero: {
+    title: string;
+    description: string;
+  };
+  info: {
+    title: string;
+    description: string;
+    email: string;
+    phone: string;
+    address: string;
+  };
+  form: {
+    title: string;
+    description: string;
+    namePlaceholder: string;
+    emailPlaceholder: string;
+    subjectPlaceholder: string;
+    messagePlaceholder: string;
+    buttonText: string;
+  };
+};
+
+const DEFAULT_CONTACT_CONTENT: ContactContent = {
+  hero: { title: 'Contact', description: 'Get in touch with us' },
+  info: { title: 'Contact Info', description: '', email: '', phone: '', address: '' },
+  form: {
+    title: 'Send us a message',
+    description: '',
+    namePlaceholder: 'Name',
+    emailPlaceholder: 'Email',
+    subjectPlaceholder: 'Subject',
+    messagePlaceholder: 'Message',
+    buttonText: 'Send',
+  },
+};
+
 async function getSubmissions(): Promise<Submission[]> {
   try {
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
@@ -34,11 +73,31 @@ async function getSubmissions(): Promise<Submission[]> {
   }
 }
 
+async function getContactContent(): Promise<ContactContent> {
+  try {
+    const client = await clientPromise;
+    const dbName = process.env.MONGO_DB || process.env.MONGODB_DB || 'xmartydb';
+    const db = client.db(dbName);
+    const page = await db.collection('pages').findOne({ slug: 'contact' });
+    const raw = page?.content || {};
+    return {
+      hero: { ...DEFAULT_CONTACT_CONTENT.hero, ...(raw.hero || {}) },
+      info: { ...DEFAULT_CONTACT_CONTENT.info, ...(raw.info || {}) },
+      form: { ...DEFAULT_CONTACT_CONTENT.form, ...(raw.form || {}) },
+    };
+  } catch (error) {
+    console.error('Failed to fetch contact content:', error);
+    return DEFAULT_CONTACT_CONTENT;
+  }
+}
+
 export default async function AdminContactPage() {
   const submissions = await getSubmissions();
+  const contactContent = await getContactContent();
 
   return (
     <>
+      <ContactContentManager initialContent={contactContent} />
       <div className="flex items-center mb-6">
         <h1 className="text-lg font-semibold md:text-2xl">Contact Form Submissions</h1>
       </div>
