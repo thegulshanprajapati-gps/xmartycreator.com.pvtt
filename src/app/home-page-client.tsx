@@ -303,11 +303,19 @@ export default function HomePageClient({ initialHomeContent }: HomePageClientPro
 
   const heroImage = PlaceHolderImages.find((img) => img.id === 'hero-1');
 
-  const quickLinks: QuickLink[] = (initialHomeContent?.quickAccess?.items || []).map((course, index) => ({
-    ...course,
-    link: course.link || '',
-    icon: resolveQuickAccessIcon(course.title, index),
-  }));
+  const rawQuickAccessItems = Array.isArray(initialHomeContent?.quickAccess?.items)
+    ? initialHomeContent!.quickAccess.items
+    : [];
+  const quickLinks: QuickLink[] = rawQuickAccessItems
+    .filter((item): item is HomeContent['quickAccess']['items'][number] => !!item && typeof item === 'object')
+    .map((course, index) => ({
+      ...course,
+      title: course.title || '',
+      description: course.description || '',
+      imageId: course.imageId || '',
+      link: course.link || '',
+      icon: resolveQuickAccessIcon(course.title || '', index),
+    }));
 
   // Debug logging
   useEffect(() => {
@@ -317,15 +325,38 @@ export default function HomePageClient({ initialHomeContent }: HomePageClientPro
     });
   }, [quickLinks]);
 
-  const whyChooseUs = (initialHomeContent?.whyChooseUs?.features || []).map((feature, index) => {
+  const rawWhyChooseUs = Array.isArray(initialHomeContent?.whyChooseUs?.features)
+    ? initialHomeContent!.whyChooseUs.features
+    : [];
+  const whyChooseUs = rawWhyChooseUs
+    .filter((feature): feature is HomeContent['whyChooseUs']['features'][number] => !!feature && typeof feature === 'object')
+    .map((feature, index) => {
     const icons = [<Laptop className="h-6 w-6" />, <MessageCircleQuestion className="h-6 w-6" />, <Milestone className="h-6 w-6" />, <Award className="h-6 w-6" />];
     return {
       ...feature,
+      title: feature.title || '',
+      description: feature.description || '',
       icon: icons[index]
     }
   });
   
-  const initialReviews = (initialHomeContent?.testimonials?.reviews || []).map(r => ({...r, avatar: r.avatar || `https://api.dicebear.com/8.x/adventurer/svg?seed=${r.name.replace(/\s/g, '')}`}));
+  const rawReviews = Array.isArray(initialHomeContent?.testimonials?.reviews)
+    ? initialHomeContent!.testimonials.reviews
+    : [];
+  const initialReviews = rawReviews
+    .filter((review): review is Review => !!review && typeof review === 'object')
+    .map((r) => {
+      const safeName = r.name || 'Anonymous';
+      const safeSeed = safeName.replace(/\s/g, '') || 'user';
+      return {
+        ...r,
+        name: safeName,
+        role: r.role || '',
+        testimonial: r.testimonial || '',
+        rating: Number.isFinite(r.rating) ? Math.max(1, Math.min(5, r.rating)) : 5,
+        avatar: r.avatar || `https://api.dicebear.com/8.x/adventurer/svg?seed=${safeSeed}`,
+      };
+    });
   const [testimonials, setTestimonials] = useState<Review[]>(initialReviews);
 
   useEffect(() => {

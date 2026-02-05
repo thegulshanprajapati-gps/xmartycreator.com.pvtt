@@ -41,6 +41,7 @@ export async function middleware(req: NextRequest) {
   const isHighTrafficMode = process.env.HIGH_TRAFFIC_MODE === 'true';
   const rateLimitEnabled = process.env.RATE_LIMIT_ENABLED !== 'false';
   const botDetectionEnabled = process.env.BOT_DETECTION_ENABLED !== 'false';
+  const edgeCacheEnabled = process.env.EDGE_CACHE_ENABLED === 'true';
 
   // PART 1: Check IP Blocklist
   if (rateLimitEnabled && await checkIPBlocklist(ip)) {
@@ -98,27 +99,40 @@ export async function middleware(req: NextRequest) {
   // PART 4: Content Caching Headers (Edge Cache)
   const response = NextResponse.next();
 
-  // Cache static pages aggressively
-  if (pathname === '/' || pathname === '/blog' || pathname === '/courses') {
-    response.headers.set(
-      'Cache-Control',
-      'public, s-maxage=3600, stale-while-revalidate=86400'
-    );
-  }
+  if (edgeCacheEnabled) {
+    // Cache static pages aggressively
+    if (pathname === '/' || pathname === '/blog' || pathname === '/courses') {
+      response.headers.set(
+        'Cache-Control',
+        'public, s-maxage=3600, stale-while-revalidate=86400'
+      );
+    }
 
-  // Cache API responses based on path
-  if (pathname.startsWith('/api/blog') && req.method === 'GET') {
-    response.headers.set(
-      'Cache-Control',
-      'public, s-maxage=1800, stale-while-revalidate=86400'
-    );
-  }
+    // Cache API responses based on path
+    if (pathname.startsWith('/api/blog') && req.method === 'GET') {
+      response.headers.set(
+        'Cache-Control',
+        'public, s-maxage=1800, stale-while-revalidate=86400'
+      );
+    }
 
-  if (pathname.startsWith('/api/courses') && req.method === 'GET') {
-    response.headers.set(
-      'Cache-Control',
-      'public, s-maxage=3600, stale-while-revalidate=86400'
-    );
+    if (pathname.startsWith('/api/courses') && req.method === 'GET') {
+      response.headers.set(
+        'Cache-Control',
+        'public, s-maxage=3600, stale-while-revalidate=86400'
+      );
+    }
+  } else {
+    // Disable edge caching so DB changes show up immediately
+    if (
+      pathname === '/' ||
+      pathname === '/blog' ||
+      pathname === '/courses' ||
+      (pathname.startsWith('/api/courses') && req.method === 'GET') ||
+      (pathname.startsWith('/api/pages') && req.method === 'GET')
+    ) {
+      response.headers.set('Cache-Control', 'no-store');
+    }
   }
 
   // Don't cache admin or user-specific content

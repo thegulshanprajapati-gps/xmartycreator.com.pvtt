@@ -42,6 +42,7 @@ export function Header() {
         const res = await fetch('/api/pages/courses', {
           method: 'GET',
           headers: { 'Content-Type': 'application/json' },
+          cache: 'no-store',
         });
         
         if (!res.ok) {

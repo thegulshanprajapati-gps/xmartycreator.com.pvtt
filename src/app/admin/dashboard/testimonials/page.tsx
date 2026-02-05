@@ -27,8 +27,9 @@ async function getTestimonials() {
   try {
     console.log('?? [Admin] Fetching testimonials from MongoDB...');
     const client = await clientPromise;
-    const db = client.db('xmartydb');
-    console.log('?? [Admin] Using DB: xmartydb | collection: Testimonial');
+    const dbName = process.env.MONGO_DB || process.env.MONGODB_DB || 'xmartydb';
+    const db = client.db(dbName);
+    console.log(`?? [Admin] Using DB: ${dbName} | collection: Testimonial`);
 
     const testimonialsCollection = db.collection('Testimonial');
 
@@ -151,9 +152,61 @@ async function getTestimonials() {
       return testimonials;
     }
 
-    const normalized = normalizeDoc(testimonialsDoc);
-    console.log(`? [Admin] Found ${normalized?.reviews?.length || 0} testimonials`);
-    return normalized || { title: '', description: '', reviews: [] };
+    const normalized = normalizeDoc(testimonialsDoc) || { title: '', description: '', reviews: [] };
+    const normalizedReviews = (normalized.reviews || []).filter(Boolean);
+
+    // Always merge in individual review docs so new entries show up
+    const reviewDocs = await testimonialsCollection.find({ testimonial: { $exists: true } }).toArray();
+    if (reviewDocs.length > 0) {
+      const reviewItems = reviewDocs.map((doc: any) => ({
+        _id: String(doc._id || ''),
+        name: doc.name || 'Anonymous',
+        role: doc.role || '',
+        testimonial: doc.testimonial || '',
+        rating: Number(doc.rating) || 5,
+        avatar: doc.avatar || '',
+      }));
+
+      const seen = new Set<string>();
+      const merged: any[] = [];
+      const pushUnique = (item: any) => {
+        if (!item) return;
+        const name = (item.name || '').trim();
+        const text = (item.testimonial || '').trim();
+        if (!name && !text) return;
+        const key = item._id ? `id:${item._id}` : `nt:${name.toLowerCase()}|${text.toLowerCase()}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          merged.push(item);
+        }
+      };
+
+      normalizedReviews.forEach(pushUnique);
+      reviewItems.forEach(pushUnique);
+
+      const aggregated = { title: normalized.title || '', description: normalized.description || '', reviews: merged };
+      await testimonialsCollection.updateOne(
+        { slug: 'home' },
+        {
+          $set: {
+            slug: 'home',
+            title: aggregated.title,
+            description: aggregated.description,
+            items: aggregated.reviews,
+            updatedAt: new Date(),
+          },
+          $setOnInsert: {
+            createdAt: new Date(),
+          },
+        },
+        { upsert: true }
+      );
+      console.log(`? [Admin] Found ${aggregated.reviews?.length || 0} testimonials`);
+      return aggregated;
+    }
+
+    console.log(`? [Admin] Found ${normalizedReviews.length} testimonials`);
+    return { ...normalized, reviews: normalizedReviews };
   } catch (error) {
     console.error('? [Admin] Failed to fetch testimonials:', error);
     return {

@@ -214,8 +214,8 @@ export async function updateHomeContent(prevState: { message: string, data: any 
             { upsert: true }
         );
 
-        // Save testimonials separately (always in xmartydb/Testimonial)
-        await client.db('xmartydb').collection('Testimonial').updateOne(
+        // Save testimonials separately
+        await db.collection('Testimonial').updateOne(
             { slug: 'home' },
             {
                 $set: {

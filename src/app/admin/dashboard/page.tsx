@@ -52,7 +52,7 @@ async function getHomeContent(): Promise<HomeContent> {
     const quickAccessCollection = db.collection('quick_access');
     const quickAccessDoc = (await quickAccessCollection.findOne({ slug: 'quick-access' }))
       || (await quickAccessCollection.findOne({}));
-    const testimonialsCollection = client.db('xmartydb').collection('Testimonial');
+    const testimonialsCollection = client.db(dbName).collection('Testimonial');
     const testimonialsDoc = (await testimonialsCollection.findOne({ slug: 'home' }))
       || (await testimonialsCollection.findOne({
         $or: [
@@ -83,6 +83,32 @@ async function getHomeContent(): Promise<HomeContent> {
         : Array.isArray((rawTestimonials as any)?.reviews)
           ? (rawTestimonials as any).reviews
           : [];
+      const safeItems = rawItems.filter((item: any) => item && typeof item === 'object');
+      const safeReviews = reviews.filter((review: any) => review && typeof review === 'object');
+      const reviewDocs = await testimonialsCollection.find({ testimonial: { $exists: true } }).toArray();
+      const reviewItems = reviewDocs.map((doc: any) => ({
+        _id: String(doc._id || ''),
+        name: doc.name || 'Anonymous',
+        role: doc.role || '',
+        testimonial: doc.testimonial || '',
+        rating: Number(doc.rating) || 5,
+        avatar: doc.avatar || '',
+      }));
+      const seen = new Set<string>();
+      const mergedReviews: any[] = [];
+      const pushUnique = (item: any) => {
+        if (!item) return;
+        const name = (item.name || '').trim();
+        const text = (item.testimonial || '').trim();
+        if (!name && !text) return;
+        const key = item._id ? `id:${item._id}` : `nt:${name.toLowerCase()}|${text.toLowerCase()}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          mergedReviews.push(item);
+        }
+      };
+      safeReviews.forEach(pushUnique);
+      reviewItems.forEach(pushUnique);
 
       if (!testimonialsDoc) {
         const legacyDoc = (await db.collection('testimonials').findOne({ slug: 'home' }))
@@ -122,7 +148,7 @@ async function getHomeContent(): Promise<HomeContent> {
         quickAccess: {
           title: rawQuickAccess?.title || '',
           description: rawQuickAccess?.description || '',
-          items: rawItems.map((item: any) => ({
+          items: safeItems.map((item: any) => ({
             ...item,
             link: item?.link || '',
           })),
@@ -135,7 +161,7 @@ async function getHomeContent(): Promise<HomeContent> {
         testimonials: {
           title: rawTestimonials?.title || '',
           description: rawTestimonials?.description || '',
-          reviews,
+          reviews: mergedReviews,
         },
       };
       return mergedContent;
@@ -148,16 +174,18 @@ async function getHomeContent(): Promise<HomeContent> {
         quickAccess: {
           title: quickAccessDoc?.title || '',
           description: quickAccessDoc?.description || '',
-          items: Array.isArray(quickAccessDoc?.items) ? quickAccessDoc.items : [],
+          items: Array.isArray(quickAccessDoc?.items)
+            ? quickAccessDoc.items.filter((item: any) => item && typeof item === 'object')
+            : [],
         },
         testimonials: testimonialsDoc
           ? {
               title: (testimonialsDoc as any).title || '',
               description: (testimonialsDoc as any).description || '',
               reviews: Array.isArray((testimonialsDoc as any).items)
-                ? (testimonialsDoc as any).items
+                ? (testimonialsDoc as any).items.filter((review: any) => review && typeof review === 'object')
                 : Array.isArray((testimonialsDoc as any).reviews)
-                  ? (testimonialsDoc as any).reviews
+                  ? (testimonialsDoc as any).reviews.filter((review: any) => review && typeof review === 'object')
                   : [],
             }
           : defaultContent.testimonials,

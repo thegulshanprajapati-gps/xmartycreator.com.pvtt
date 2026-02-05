@@ -51,7 +51,7 @@ Behavior: Acknowledge briefly, then give a clear answer or next step. Avoid long
           { role: 'user', content: message },
         ],
         temperature: 0.7,
-        max_tokens: 256,
+        max_tokens: 240,
       }),
     });
 

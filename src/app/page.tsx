@@ -106,11 +106,12 @@ async function getHomeContent(): Promise<HomeContent> {
       quickAccess: {
         ...DEFAULT_HOME_CONTENT.quickAccess,
         ...rawQuickAccess,
-        items: Array.isArray(rawQuickAccess?.items)
+        items: (Array.isArray(rawQuickAccess?.items)
           ? rawQuickAccess.items
           : Array.isArray(rawQuickAccess?.courses)
             ? rawQuickAccess.courses
-            : DEFAULT_HOME_CONTENT.quickAccess.items,
+            : DEFAULT_HOME_CONTENT.quickAccess.items
+        ).filter((item: any) => item && typeof item === 'object'),
       },
       whyChooseUs: {
         ...DEFAULT_HOME_CONTENT.whyChooseUs,
@@ -122,11 +123,12 @@ async function getHomeContent(): Promise<HomeContent> {
       testimonials: {
         ...DEFAULT_HOME_CONTENT.testimonials,
         ...rawTestimonials,
-        reviews: Array.isArray(rawTestimonials?.reviews)
+        reviews: (Array.isArray(rawTestimonials?.reviews)
           ? rawTestimonials.reviews
           : Array.isArray(rawTestimonials?.items)
             ? rawTestimonials.items
-          : DEFAULT_HOME_CONTENT.testimonials.reviews,
+            : DEFAULT_HOME_CONTENT.testimonials.reviews
+        ).filter((review: any) => review && typeof review === 'object'),
       },
     };
 
@@ -223,7 +225,9 @@ async function getQuickAccessContent(): Promise<HomeContent['quickAccess'] | nul
     return {
       title: quickAccessDoc?.title || '',
       description: quickAccessDoc?.description || '',
-      items: Array.isArray(quickAccessDoc?.items) ? quickAccessDoc.items : [],
+      items: Array.isArray(quickAccessDoc?.items)
+        ? quickAccessDoc.items.filter((item: any) => item && typeof item === 'object')
+        : [],
     };
   } catch (error) {
     console.error('!! [Home Page] Failed to fetch Quick Access from DB:', error);
@@ -260,7 +264,8 @@ async function upsertQuickAccessContent(payload: HomeContent['quickAccess']) {
 async function getTestimonialsContent(): Promise<HomeContent['testimonials'] | null> {
   try {
     const client = await clientPromise;
-    const db = client.db('xmartydb');
+    const dbName = process.env.MONGO_DB || process.env.MONGODB_DB || 'xmartydb';
+    const db = client.db(dbName);
     const testimonialsCollection = db.collection('Testimonial');
 
     const normalizeDoc = (doc: any): HomeContent['testimonials'] | null => {
@@ -339,7 +344,52 @@ async function getTestimonialsContent(): Promise<HomeContent['testimonials'] | n
       return null;
     }
 
-    return normalizeDoc(testimonialsDoc);
+    const normalized = normalizeDoc(testimonialsDoc) || { title: '', description: '', reviews: [] };
+    const normalizedReviews = (normalized.reviews || []).filter(Boolean);
+
+    // Always merge in individual testimonial documents so new entries show immediately
+    const reviewDocs = await testimonialsCollection.find({ testimonial: { $exists: true } }).toArray();
+    if (reviewDocs.length > 0) {
+      const reviewItems = reviewDocs.map((doc: any) => ({
+        _id: String(doc._id || ''),
+        name: doc.name || 'Anonymous',
+        role: doc.role || '',
+        testimonial: doc.testimonial || '',
+        rating: Number(doc.rating) || 5,
+        avatar: doc.avatar || '',
+      }));
+
+      const seen = new Set<string>();
+      const merged: any[] = [];
+      const pushUnique = (item: any) => {
+        if (!item) return;
+        const name = (item.name || '').trim();
+        const text = (item.testimonial || '').trim();
+        if (!name && !text) return;
+        const key = item._id ? `id:${item._id}` : `nt:${name.toLowerCase()}|${text.toLowerCase()}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          merged.push(item);
+        }
+      };
+
+      normalizedReviews.forEach(pushUnique);
+      reviewItems.forEach(pushUnique);
+
+      const aggregated = {
+        title: normalized.title || '',
+        description: normalized.description || '',
+        reviews: merged,
+      };
+
+      if (merged.length !== normalizedReviews.length) {
+        await upsertTestimonialsContent(aggregated);
+      }
+
+      return aggregated;
+    }
+
+    return { ...normalized, reviews: normalizedReviews };
   } catch (error) {
     console.error('!! [Home Page] Failed to fetch Testimonials from DB:', error);
     return null;
@@ -349,7 +399,8 @@ async function getTestimonialsContent(): Promise<HomeContent['testimonials'] | n
 async function upsertTestimonialsContent(payload: HomeContent['testimonials']) {
   try {
     const client = await clientPromise;
-    const db = client.db('xmartydb');
+    const dbName = process.env.MONGO_DB || process.env.MONGODB_DB || 'xmartydb';
+    const db = client.db(dbName);
     await db.collection('Testimonial').updateOne(
       { slug: 'home' },
       {
@@ -357,7 +408,7 @@ async function upsertTestimonialsContent(payload: HomeContent['testimonials']) {
           slug: 'home',
           title: payload.title,
           description: payload.description,
-          items: payload.reviews,
+          items: Array.isArray(payload.reviews) ? payload.reviews.filter(Boolean) : [],
           updatedAt: new Date(),
         },
         $setOnInsert: {

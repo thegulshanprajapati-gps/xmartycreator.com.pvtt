@@ -37,7 +37,7 @@ export default function CoursePage() {
   useEffect(() => {
     const fetchCourse = async () => {
       try {
-        const res = await fetch(`/api/courses?slug=${slug}`);
+        const res = await fetch(`/api/courses?slug=${slug}`, { cache: 'no-store' });
         if (res.ok) {
           const courses = await res.json();
           const foundCourse = Array.isArray(courses) 
