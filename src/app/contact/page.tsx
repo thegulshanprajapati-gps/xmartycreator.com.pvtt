@@ -120,113 +120,193 @@ export default function ContactPage() {
     }
   }, [state, toast]);
 
+  const contactItems = [
+    {
+      icon: Mail,
+      label: 'Email',
+      value: contactContent.info.email,
+      href: contactContent.info.email ? `mailto:${contactContent.info.email}` : undefined,
+    },
+    {
+      icon: Phone,
+      label: 'Phone',
+      value: contactContent.info.phone,
+      href: contactContent.info.phone ? `tel:${contactContent.info.phone}` : undefined,
+    },
+    {
+      icon: MapPin,
+      label: 'Address',
+      value: contactContent.info.address,
+    },
+  ].filter((item) => item.value && item.value.trim().length > 0);
+
   return (
     <>
       <div className="flex flex-col bg-background">
-        
-        <motion.section 
-          className="w-full py-20 md:py-32"
+        <motion.section
+          className="relative w-full overflow-hidden"
           initial="hidden"
           animate="visible"
           variants={fadeIn}
         >
-          <div className="container mx-auto px-4 md:px-6">
-            <motion.div 
-              className="flex flex-col items-center justify-center space-y-4 text-center mb-16"
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(34,197,94,0.18),_transparent_55%)]" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom,_rgba(14,165,233,0.18),_transparent_50%)]" />
+          <div className="absolute -left-24 top-12 h-72 w-72 rounded-full bg-emerald-400/20 blur-3xl" />
+          <div className="absolute right-0 top-10 h-80 w-80 rounded-full bg-sky-400/20 blur-3xl" />
+
+          <div className="container mx-auto px-4 md:px-6 py-20 md:py-28 relative z-10">
+            <motion.div
+              className="mx-auto max-w-3xl space-y-6 text-center"
               initial="hidden"
               whileInView="visible"
-              viewport={{ once: true, amount: 0.5 }}
+              viewport={{ once: true, amount: 0.4 }}
               variants={fadeIn}
             >
-              <MessageSquare className="h-12 w-12 text-destructive dark:text-foreground" />
-              <h2 className="font-headline text-3xl font-bold tracking-tighter sm:text-5xl text-destructive dark:text-foreground">
+              <div className="inline-flex items-center gap-2 rounded-full border border-emerald-200/60 bg-emerald-100/50 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300">
+                <MessageSquare className="h-4 w-4" />
+                Contact
+              </div>
+              <h1 className="font-headline text-4xl md:text-5xl font-bold tracking-tight text-slate-900 dark:text-white">
                 {contactContent.hero.title}
-              </h2>
-              <p className="max-w-[900px] text-muted-foreground md:text-xl">
+              </h1>
+              <p className="text-base md:text-lg text-slate-600 dark:text-slate-300">
                 {contactContent.hero.description}
               </p>
             </motion.div>
-            <div className="grid gap-12 lg:grid-cols-5 lg:gap-16">
-              
-              {/* Contact Information */}
-              <motion.div 
-                className="flex flex-col justify-center space-y-8 lg:col-span-2"
-                initial={{opacity: 0, x: -50}}
-                whileInView={{opacity: 1, x: 0}}
-                viewport={{ once: true, amount: 0.5 }}
-                transition={{duration: 0.5}}
+
+            <div className="mt-16 grid gap-10 lg:grid-cols-5">
+              <motion.div
+                className="lg:col-span-2 space-y-8"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.4 }}
+                transition={{ duration: 0.6 }}
               >
-                <div>
-                  <h2 className="text-3xl font-bold text-foreground mb-4">{contactContent.info.title}</h2>
-                  <p className="text-muted-foreground">{contactContent.info.description}</p>
-                </div>
-                <div className="space-y-6">
-                  {[
-                    { icon: Mail, label: 'Email', value: contactContent.info.email, href: `mailto:${contactContent.info.email}` },
-                    { icon: Phone, label: 'Phone', value: contactContent.info.phone, href: `tel:${contactContent.info.phone}` },
-                    { icon: MapPin, label: 'Address', value: contactContent.info.address },
-                  ].map((item, index) => (
-                    <a 
-                      key={index}
-                      href={item.href}
-                      className="group flex items-start gap-4 p-4 rounded-lg border border-transparent hover:border-primary/50 hover:bg-accent transition-all duration-300 transform hover:scale-105 hover:shadow-lg"
-                    >
-                      <div className="flex-shrink-0">
-                        <div className="bg-primary/10 p-3 rounded-full group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
-                          <item.icon className="h-6 w-6 text-primary group-hover:text-white transition-colors" />
+                <div className="rounded-3xl border border-slate-200/60 bg-white/80 p-6 shadow-[0_30px_80px_-60px_rgba(14,116,144,0.8)] backdrop-blur dark:border-white/10 dark:bg-slate-900/70">
+                  <div className="space-y-3">
+                    <p className="text-sm font-semibold uppercase tracking-[0.25em] text-slate-500 dark:text-slate-400">
+                      Contact Info
+                    </p>
+                    <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+                      {contactContent.info.title}
+                    </h2>
+                    {contactContent.info.description && (
+                      <p className="text-sm text-slate-600 dark:text-slate-300">
+                        {contactContent.info.description}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="mt-6 space-y-4">
+                    {contactItems.length > 0 ? (
+                      contactItems.map((item) => (
+                        <div
+                          key={item.label}
+                          className="group flex items-start gap-4 rounded-2xl border border-transparent bg-slate-50 px-4 py-4 transition-all hover:border-emerald-200/60 hover:bg-emerald-50/40 dark:bg-slate-900/60 dark:hover:border-emerald-500/30"
+                        >
+                          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700 shadow-inner dark:bg-emerald-500/10 dark:text-emerald-300">
+                            <item.icon className="h-5 w-5" />
+                          </div>
+                          <div className="space-y-1">
+                            <p className="text-sm font-semibold text-slate-900 dark:text-white">{item.label}</p>
+                            {item.href ? (
+                              <a
+                                href={item.href}
+                                className="text-sm text-slate-600 hover:text-emerald-600 dark:text-slate-300 dark:hover:text-emerald-300"
+                              >
+                                {item.value}
+                              </a>
+                            ) : (
+                              <p className="text-sm text-slate-600 dark:text-slate-300">{item.value}</p>
+                            )}
+                          </div>
                         </div>
+                      ))
+                    ) : (
+                      <div className="rounded-2xl border border-dashed border-slate-200 px-4 py-6 text-sm text-slate-500 dark:border-white/10 dark:text-slate-400">
+                        Contact info hasn’t been set yet. Add it in the admin panel.
                       </div>
-                      <div>
-                        <h3 className="text-xl font-semibold text-foreground group-hover:text-primary transition-colors">{item.label}</h3>
-                        <p className="text-muted-foreground">{item.value}</p>
-                      </div>
-                    </a>
-                  ))}
+                    )}
+                  </div>
+                </div>
+
+                <div className="rounded-3xl border border-slate-200/60 bg-gradient-to-br from-emerald-500/10 via-transparent to-sky-500/10 p-6 text-sm text-slate-700 dark:border-white/10 dark:text-slate-300">
+                  <p className="font-semibold text-slate-900 dark:text-white">Response time</p>
+                  <p className="mt-2">We usually reply within 24 hours on working days.</p>
                 </div>
               </motion.div>
 
-              {/* Contact Form */}
-              <motion.div 
+              <motion.div
                 className="lg:col-span-3"
-                initial={{opacity: 0, x: 50}}
-                whileInView={{opacity: 1, x: 0}}
-                viewport={{ once: true, amount: 0.5 }}
-                transition={{duration: 0.5}}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.4 }}
+                transition={{ duration: 0.6, delay: 0.05 }}
               >
-                <Card className="shadow-lg border-border h-full">
+                <Card className="h-full border border-slate-200/70 bg-white/90 shadow-[0_40px_120px_-80px_rgba(15,118,110,0.9)] backdrop-blur dark:border-white/10 dark:bg-slate-900/70">
                   <CardHeader>
-                    <CardTitle className="text-3xl font-bold">{contactContent.form.title}</CardTitle>
-                    <CardDescription>{contactContent.form.description}</CardDescription>
+                    <CardTitle className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white">
+                      {contactContent.form.title}
+                    </CardTitle>
+                    {contactContent.form.description && (
+                      <CardDescription className="text-slate-600 dark:text-slate-300">
+                        {contactContent.form.description}
+                      </CardDescription>
+                    )}
                   </CardHeader>
                   <CardContent>
                     <form ref={formRef} action={formAction} className="space-y-6">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                         <div className="space-y-2">
                           <Label htmlFor="name">{contactContent.form.namePlaceholder}</Label>
-                          <Input id="name" name="name" placeholder={contactContent.form.namePlaceholder} className="hover:border-primary/50 transition-colors" required />
+                          <Input
+                            id="name"
+                            name="name"
+                            placeholder={contactContent.form.namePlaceholder}
+                            className="bg-white/70 dark:bg-slate-900/60"
+                            required
+                          />
                         </div>
                         <div className="space-y-2">
                           <Label htmlFor="email">{contactContent.form.emailPlaceholder}</Label>
-                          <Input id="email" name="email" type="email" placeholder={contactContent.form.emailPlaceholder} className="hover:border-primary/50 transition-colors" required/>
+                          <Input
+                            id="email"
+                            name="email"
+                            type="email"
+                            placeholder={contactContent.form.emailPlaceholder}
+                            className="bg-white/70 dark:bg-slate-900/60"
+                            required
+                          />
                         </div>
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="subject">{contactContent.form.subjectPlaceholder}</Label>
-                        <Input id="subject" name="subject" placeholder={contactContent.form.subjectPlaceholder} className="hover:border-primary/50 transition-colors" required />
+                        <Input
+                          id="subject"
+                          name="subject"
+                          placeholder={contactContent.form.subjectPlaceholder}
+                          className="bg-white/70 dark:bg-slate-900/60"
+                          required
+                        />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="message">{contactContent.form.messagePlaceholder}</Label>
-                        <Textarea id="message" name="message" placeholder={contactContent.form.messagePlaceholder} className="min-h-[150px] hover:border-primary/50 transition-colors" required />
+                        <Textarea
+                          id="message"
+                          name="message"
+                          placeholder={contactContent.form.messagePlaceholder}
+                          className="min-h-[160px] bg-white/70 dark:bg-slate-900/60"
+                          required
+                        />
                       </div>
-                      <Button type="submit" size="lg" className="w-full transition-transform transform hover:scale-105" disabled={isPending}>
-                        <Send className="mr-2 h-5 w-5" />
+                      <Button type="submit" size="lg" className="w-full gap-2" disabled={isPending}>
+                        <Send className="h-4 w-4" />
                         {isPending ? 'Sending...' : contactContent.form.buttonText}
                       </Button>
                     </form>
                   </CardContent>
                 </Card>
               </motion.div>
-
             </div>
           </div>
         </motion.section>
