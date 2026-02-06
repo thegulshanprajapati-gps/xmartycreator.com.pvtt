@@ -19,6 +19,7 @@ import {
   MessageSquare,
   MessageCircle,
   Shield,
+  MousePointer2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -48,6 +49,7 @@ const navItems = [
     { href: '/admin/dashboard/updates', label: 'Updates', icon: Bell },
     { href: '/admin/gallery', label: 'Image Gallery', icon: GalleryVertical },
     { href: '/admin/dashboard/notification', label: 'Notification', icon: LineChart },
+    { href: '/admin/dashboard/appearance', label: 'Appearance', icon: MousePointer2 },
     { href: '/admin/dashboard/analytics', label: 'Analytics', icon: LineChart },
     { href: '/admin/dashboard/security', label: 'Security', icon: Shield },
     { href: '/admin/dashboard/admins', label: 'Admins', icon: UserPlus },

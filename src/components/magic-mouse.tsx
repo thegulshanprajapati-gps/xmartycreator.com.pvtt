@@ -10,24 +10,18 @@ declare global {
 
 const MAGIC_MOUSE_SRC =
   'https://res.cloudinary.com/veseylab/raw/upload/v1684982764/magicmouse-2.0.0.cdn.min.js';
-const MAGIC_MOUSE_ENABLED = process.env.NEXT_PUBLIC_MAGIC_MOUSE === 'true';
-
 export default function MagicMouseProvider() {
   useEffect(() => {
-    if (!MAGIC_MOUSE_ENABLED) return;
     if (typeof window === 'undefined') return;
 
     const supportsFinePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const isSmallViewport = window.innerWidth < 768;
 
-    if (!supportsFinePointer || prefersReducedMotion || isSmallViewport) {
-      return;
-    }
-
     const root = document.documentElement;
 
     const applyHoverClasses = () => {
+      if (root.dataset.cursor !== 'magic') return;
       const selectors =
         'a, button, [role="button"], .cursor-pointer, input, textarea, select, summary';
       document.querySelectorAll(selectors).forEach((el) => {
@@ -37,12 +31,18 @@ export default function MagicMouseProvider() {
       });
     };
 
-    applyHoverClasses();
-
-    const observer = new MutationObserver(() => applyHoverClasses());
-    observer.observe(document.body, { childList: true, subtree: true });
+    const cleanupMagicMouse = () => {
+      root.classList.remove('magic-mouse-enabled');
+      document.querySelectorAll('.magicmouse-cursor, .magicmouse-pointer, #magicMouseCursor')
+        .forEach((el) => el.remove());
+    };
 
     const initMagicMouse = () => {
+      if (!supportsFinePointer || prefersReducedMotion || isSmallViewport) {
+        cleanupMagicMouse();
+        return;
+      }
+
       if (window.magicMouse) {
         window.magicMouse({
           hoverEffect: 'circle-move',
@@ -55,25 +55,44 @@ export default function MagicMouseProvider() {
       }
     };
 
-    if (window.magicMouse) {
-      initMagicMouse();
-    } else {
-      const existingScript = document.getElementById('magicmouse-script') as HTMLScriptElement | null;
-      if (existingScript) {
-        existingScript.addEventListener('load', initMagicMouse, { once: true });
-      } else {
-        const script = document.createElement('script');
-        script.id = 'magicmouse-script';
-        script.src = MAGIC_MOUSE_SRC;
-        script.async = true;
-        script.onload = initMagicMouse;
-        document.body.appendChild(script);
+    const applyMode = () => {
+      const cursorStyle = root.dataset.cursor || 'sparkle';
+      if (cursorStyle !== 'magic') {
+        cleanupMagicMouse();
+        return;
       }
-    }
+
+      applyHoverClasses();
+
+      if (window.magicMouse) {
+        initMagicMouse();
+      } else {
+        const existingScript = document.getElementById('magicmouse-script') as HTMLScriptElement | null;
+        if (existingScript) {
+          existingScript.addEventListener('load', initMagicMouse, { once: true });
+        } else {
+          const script = document.createElement('script');
+          script.id = 'magicmouse-script';
+          script.src = MAGIC_MOUSE_SRC;
+          script.async = true;
+          script.onload = initMagicMouse;
+          document.body.appendChild(script);
+        }
+      }
+    };
+
+    applyMode();
+
+    const observer = new MutationObserver(() => applyHoverClasses());
+    observer.observe(document.body, { childList: true, subtree: true });
+
+    const modeObserver = new MutationObserver(() => applyMode());
+    modeObserver.observe(root, { attributes: true, attributeFilter: ['data-cursor'] });
 
     return () => {
       observer.disconnect();
-      root.classList.remove('magic-mouse-enabled');
+      modeObserver.disconnect();
+      cleanupMagicMouse();
     };
   }, []);
 

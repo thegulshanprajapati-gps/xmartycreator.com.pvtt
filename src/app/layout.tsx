@@ -3,6 +3,7 @@ import { PT_Sans, Noto_Sans } from 'next/font/google';
 import './globals.css';
 import { Suspense, ReactNode } from 'react';
 import RootLayoutClient from './root-layout-client';
+import { getSiteSettings } from '@/lib/site-settings';
 
 const siteUrl = process.env.NEXT_PUBLIC_URL || 'https://xmartycreator.com';
 
@@ -42,11 +43,13 @@ const notoSans = Noto_Sans({
   display: 'swap',
 });
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const siteSettings = await getSiteSettings();
+  const cursorStyle = siteSettings?.cursorStyle || 'sparkle';
   const jsonLd = [
     {
       '@context': 'https://schema.org',
@@ -85,12 +88,12 @@ export default function RootLayout({
   ];
 
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" data-cursor={cursorStyle} suppressHydrationWarning>
       <head>
         <link rel="icon" href="/favicon.ico" sizes="any" />
         <link rel="shortcut icon" href="/favicon.ico" />
         <link rel="apple-touch-icon" href="/favicon.ico" />
-        {process.env.NEXT_PUBLIC_MAGIC_MOUSE === 'true' && (
+        {cursorStyle === 'magic' && (
           <link
             rel="stylesheet"
             href="https://res.cloudinary.com/veseylab/raw/upload/v1684982764/magicmouse-2.0.0.cdn.min.css"

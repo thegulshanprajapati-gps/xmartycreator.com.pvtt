@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache';
 import type { ImagePlaceholder } from '@/lib/placeholder-images';
 import clientPromise from '@/lib/mongodb';
 import { clearPageCache } from "@/lib/page-content-cache";
+import { DEFAULT_SITE_SETTINGS, isValidCursorStyle } from '@/lib/site-settings';
 
 
 function getFeaturesFromFormData(formData: FormData) {
@@ -525,5 +526,42 @@ export async function deleteImageFromGallery(imageId: string) {
     } catch (error: any) {
         console.error('❌ [Admin] Failed to delete image:', error);
         return { success: false, message: `Error: Could not delete image. ${error.message}` };
+    }
+}
+
+export async function updateSiteSettings(prevState: { message: string; data: any }, formData: FormData) {
+    try {
+        console.log('🔧 [Admin] Updating site settings...');
+        const rawCursorStyle = formData.get('cursor-style') as string;
+        const cursorStyle = isValidCursorStyle(rawCursorStyle)
+            ? rawCursorStyle
+            : DEFAULT_SITE_SETTINGS.cursorStyle;
+
+        const client = await clientPromise;
+        const dbName = process.env.MONGO_DB || process.env.MONGODB_DB || 'xmartydb';
+        const db = client.db(dbName);
+
+        await db.collection('site_settings').updateOne(
+            { slug: 'global' },
+            {
+                $set: {
+                    slug: 'global',
+                    cursorStyle,
+                    updatedAt: new Date(),
+                },
+                $unset: { content: '' },
+                $setOnInsert: { createdAt: new Date() },
+            },
+            { upsert: true }
+        );
+
+        revalidatePath('layout');
+        revalidatePath('/admin/dashboard/appearance');
+
+        console.log('✅ [Admin] Site settings updated successfully');
+        return { message: 'Site settings updated successfully!', data: { cursorStyle } };
+    } catch (error: any) {
+        console.error('❌ [Admin] Failed to update site settings:', error);
+        return { message: `Failed to update site settings: ${error.message}`, data: prevState.data };
     }
 }
