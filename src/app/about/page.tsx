@@ -41,6 +41,7 @@ type AboutContent = {
     name: string;
     role: string;
     bio: string;
+    highlights: string[];
     imageId: string;
     image?: ImagePlaceholder;
     socials: {
@@ -73,6 +74,7 @@ const DEFAULT_ABOUT_CONTENT: AboutContent = {
     name: '', 
     role: '', 
     bio: '', 
+    highlights: [],
     imageId: '', 
     image: undefined, 
     socials: { linkedin: '', twitter: '', instagram: '', youtube: '' } 
@@ -178,6 +180,9 @@ async function getAboutContentFromDb(): Promise<AboutContent | null> {
           ...DEFAULT_ABOUT_CONTENT.founder.socials,
           ...((aboutDoc as any).founder?.socials || {}),
         },
+        highlights: Array.isArray((aboutDoc as any).founder?.highlights)
+          ? (aboutDoc as any).founder.highlights
+          : [],
       },
     };
 

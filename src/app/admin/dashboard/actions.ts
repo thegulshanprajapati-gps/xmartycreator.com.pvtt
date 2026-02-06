@@ -59,6 +59,19 @@ function getParagraphsFromFormData(formData: FormData) {
     return paragraphs;
 }
 
+function getFounderHighlightsFromFormData(formData: FormData) {
+    const highlights = [];
+    let index = 0;
+    while (formData.has(`founder-highlight-${index}`)) {
+        const value = (formData.get(`founder-highlight-${index}`) as string)?.trim();
+        if (value) {
+            highlights.push(value);
+        }
+        index++;
+    }
+    return highlights;
+}
+
 function getCoursesFromFormData(formData: FormData) {
     const courses = [];
     let index = 0;
@@ -281,6 +294,7 @@ export async function updateAboutContent(prevState: { message: string, data: any
                 name: formData.get('founder-name') as string,
                 role: formData.get('founder-role') as string,
                 bio: formData.get('founder-bio') as string,
+                highlights: getFounderHighlightsFromFormData(formData),
                 imageId: formData.get('founder-imageId') as string,
                 socials: {
                     linkedin: formData.get('founder-socials-linkedin') as string,
@@ -303,6 +317,7 @@ export async function updateAboutContent(prevState: { message: string, data: any
                     ...newContent,
                     updatedAt: new Date(),
                 },
+                $unset: { content: '' },
                 $setOnInsert: { createdAt: new Date() }
             },
             { upsert: true }

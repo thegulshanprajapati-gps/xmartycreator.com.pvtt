@@ -60,6 +60,7 @@ type AboutContent = {
     name: string;
     role: string;
     bio: string;
+    highlights: string[];
     imageId: string;
     socials: {
       linkedin: string;
@@ -97,6 +98,9 @@ export default function AdminAboutPage() {
         name: data?.founder?.name ?? '',
         role: data?.founder?.role ?? '',
         bio: data?.founder?.bio ?? '',
+        highlights: Array.isArray(data?.founder?.highlights)
+          ? data?.founder?.highlights.filter((item) => typeof item === 'string')
+          : [],
         imageId: data?.founder?.imageId ?? '',
         socials: {
           linkedin: data?.founder?.socials?.linkedin ?? '',
@@ -106,6 +110,16 @@ export default function AdminAboutPage() {
         },
       },
     });
+
+    const resolveAboutPayload = (raw: any) => {
+      if (!raw || typeof raw !== 'object') return {};
+      const hasTopLevel = Boolean(raw.hero || raw.story || raw.values || raw.founder);
+      const content = raw?.content && typeof raw.content === 'object' ? raw.content : null;
+      const hasContent = Boolean(content && (content.hero || content.story || content.values || content.founder));
+      if (hasTopLevel) return raw;
+      if (hasContent) return content;
+      return raw;
+    };
 
     const initialContent: AboutContent = normalizeAbout();
     
@@ -130,7 +144,7 @@ export default function AdminAboutPage() {
 
           if (aboutRes.ok) {
             const data = await aboutRes.json();
-            const normalized = normalizeAbout((data as any)?.content ?? (data as any));
+            const normalized = normalizeAbout(resolveAboutPayload(data));
             console.log('✅ [Admin About] Content fetched and normalized:', normalized);
             setAboutContent(normalized);
           } else {
@@ -189,7 +203,7 @@ export default function AdminAboutPage() {
     const handleArrayChange = (section: string, subSection: string, index: number, field: string, value: string) => {
       setAboutContent(prev => {
         const newContent = JSON.parse(JSON.stringify(prev));
-        if (subSection === 'paragraphs') {
+        if (subSection === 'paragraphs' || subSection === 'highlights') {
           newContent[section][subSection][index] = value;
         } else {
           (newContent as any)[section][subSection][index][field] = value;
@@ -238,6 +252,26 @@ export default function AdminAboutPage() {
       }));
     };
 
+    const handleAddHighlight = () => {
+      setAboutContent(prev => ({
+        ...prev,
+        founder: {
+          ...prev.founder,
+          highlights: [...prev.founder.highlights, '']
+        }
+      }));
+    };
+
+    const handleRemoveHighlight = (index: number) => {
+      setAboutContent(prev => ({
+        ...prev,
+        founder: {
+          ...prev.founder,
+          highlights: prev.founder.highlights.filter((_, i) => i !== index)
+        }
+      }));
+    };
+
     const handleSubmit = async (formData: FormData) => {
       console.log('💾 [Admin About] Submitting form with state:', aboutContent);
       
@@ -263,6 +297,9 @@ export default function AdminAboutPage() {
       formData.set('founder-name', aboutContent.founder.name);
       formData.set('founder-role', aboutContent.founder.role);
       formData.set('founder-bio', aboutContent.founder.bio);
+      aboutContent.founder.highlights.forEach((highlight, index) => {
+        formData.set(`founder-highlight-${index}`, highlight);
+      });
       formData.set('founder-imageId', aboutContent.founder.imageId);
       formData.set('founder-socials-linkedin', aboutContent.founder.socials.linkedin);
       formData.set('founder-socials-twitter', aboutContent.founder.socials.twitter);
@@ -472,12 +509,16 @@ export default function AdminAboutPage() {
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="founder-description">Section Description</Label>
+                                <Label htmlFor="founder-description">Short Description</Label>
                                 <Textarea 
                                   id="founder-description" 
                                   value={aboutContent.founder.description}
                                   onChange={(e) => handleChange(e, 'founder.description')}
+                                  maxLength={180}
                                 />
+                                <p className="text-xs text-muted-foreground">
+                                  Shown under the heading. Keep it short (max 180 characters). {aboutContent.founder.description.length}/180
+                                </p>
                             </div>
                              <div className="space-y-2">
                                 <Label htmlFor="founder-name">Name</Label>
@@ -530,6 +571,51 @@ export default function AdminAboutPage() {
                                   value={aboutContent.founder.bio}
                                   onChange={(e) => handleChange(e, 'founder.bio')}
                                 />
+                            </div>
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between">
+                                <Label>Highlights</Label>
+                                <Button type="button" variant="outline" size="sm" onClick={handleAddHighlight}>
+                                  <PlusCircle className="h-4 w-4 mr-2" />
+                                  Add Highlight
+                                </Button>
+                              </div>
+                              {aboutContent.founder.highlights.length === 0 && (
+                                <p className="text-sm text-muted-foreground">
+                                  Add 2-4 short points that will show as highlights on the About page.
+                                </p>
+                              )}
+                              <div className="space-y-2">
+                                {aboutContent.founder.highlights.map((item, index) => (
+                                  <div className="flex items-start gap-2" key={index}>
+                                    <Input
+                                      value={item}
+                                      onChange={(e) => handleArrayChange('founder', 'highlights', index, '', e.target.value)}
+                                      placeholder="Example: Exam updates, Career guidance, Student support"
+                                      maxLength={80}
+                                    />
+                                    <AlertDialog>
+                                      <AlertDialogTrigger asChild>
+                                        <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-700">
+                                          <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                      </AlertDialogTrigger>
+                                      <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                          <AlertDialogTitle>Delete Highlight</AlertDialogTitle>
+                                          <AlertDialogDescription>
+                                            Are you sure you want to remove this highlight?
+                                          </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                          <AlertDialogAction onClick={() => handleRemoveHighlight(index)}>Delete</AlertDialogAction>
+                                        </AlertDialogFooter>
+                                      </AlertDialogContent>
+                                    </AlertDialog>
+                                  </div>
+                                ))}
+                              </div>
                             </div>
                              <div className="space-y-2">
                                 <Label>Social Links</Label>

@@ -1,6 +1,6 @@
 ﻿'use client';
 
-import { ArrowRight, Linkedin, Twitter, Instagram, Youtube, Zap, Lightbulb, Heart, Rocket, Sparkles, Link2 } from 'lucide-react';
+import { ArrowRight, Linkedin, Twitter, Instagram, Youtube, Zap, Lightbulb, Heart, Rocket, Sparkles, Link2, CheckCircle2 } from 'lucide-react';
 import { Footer } from '@/components/layout/footer';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -36,6 +36,7 @@ type AboutContent = {
     name: string;
     role: string;
     bio: string;
+    highlights: string[];
     imageId: string;
     image?: {
       id: string;
@@ -79,6 +80,10 @@ const scaleIn = {
 
 export default function AboutPageClient({ initialAboutContent }: AboutPageClientProps) {
   const heroImage = initialAboutContent?.hero?.image;
+  const founderDescription = initialAboutContent?.founder?.description?.trim();
+  const founderShortDescription = founderDescription && founderDescription.length > 180
+    ? `${founderDescription.slice(0, 177)}...`
+    : founderDescription;
 
   const valueIcons: Record<number, React.ReactNode> = {
     0: <Zap className="h-6 w-6" />,
@@ -324,7 +329,8 @@ export default function AboutPageClient({ initialAboutContent }: AboutPageClient
         {(() => {
           const f = initialAboutContent?.founder;
           const hasSocial = f?.socials && Object.values(f.socials).some((v: any) => v);
-          const hasFounder = Boolean(f && (f.name || f.image || f.imageId || f.bio || f.description || f.role || hasSocial));
+          const hasHighlights = Boolean(f?.highlights && f.highlights.some((v) => v));
+          const hasFounder = Boolean(f && (f.name || f.image || f.imageId || f.bio || f.description || f.role || hasSocial || hasHighlights));
           return hasFounder;
         })() && (
           <section className="relative py-20 md:py-28 overflow-hidden">
@@ -341,14 +347,14 @@ export default function AboutPageClient({ initialAboutContent }: AboutPageClient
                 <h2 className="font-headline text-4xl md:text-5xl font-bold tracking-tight">
                   {initialAboutContent.founder.title || 'Meet the Founder'}
                 </h2>
-                {initialAboutContent.founder.description && (
-                  <p className="max-w-2xl text-lg text-slate-600 dark:text-slate-300">
-                    {initialAboutContent.founder.description}
+                {founderShortDescription && (
+                  <p className="max-w-3xl text-base md:text-lg text-slate-600 dark:text-slate-300 leading-relaxed">
+                    {founderShortDescription}
                   </p>
                 )}
               </div>
 
-              <div className="grid lg:grid-cols-[420px_1fr] gap-8 items-center bg-white/80 dark:bg-slate-900/60 rounded-3xl shadow-2xl border border-slate-100 dark:border-slate-800 backdrop-blur-md p-8 md:p-10">
+              <div className="grid lg:grid-cols-[420px_1fr] gap-8 items-start bg-white/80 dark:bg-slate-900/60 rounded-3xl shadow-2xl border border-slate-100 dark:border-slate-800 backdrop-blur-md p-8 md:p-10">
                 <div className="flex flex-col items-center gap-4">
                   <div className="p-[6px] rounded-full bg-gradient-to-br from-pink-500 via-purple-500 to-blue-500 shadow-lg">
                     {initialAboutContent.founder.image ? (
@@ -381,16 +387,38 @@ export default function AboutPageClient({ initialAboutContent }: AboutPageClient
                 </div>
 
                 <div className="space-y-6">
-                  {initialAboutContent.founder.bio && (
-                    <p className="text-lg leading-relaxed text-slate-700 dark:text-slate-200">
-                      {initialAboutContent.founder.bio}
-                    </p>
+                  {(initialAboutContent.founder.bio || initialAboutContent.founder.description) && (
+                    <div className="rounded-2xl border border-slate-100 dark:border-slate-800 bg-white/70 dark:bg-slate-900/40 p-4">
+                      <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                        <Sparkles className="h-4 w-4 text-primary" />
+                        <span>Founder Note</span>
+                      </div>
+                      <p className="mt-2 text-lg leading-relaxed text-slate-700 dark:text-slate-200">
+                        {initialAboutContent.founder.bio || initialAboutContent.founder.description}
+                      </p>
+                    </div>
                   )}
-                  {!initialAboutContent.founder.bio && initialAboutContent.founder.description && (
-                    <p className="text-lg leading-relaxed text-slate-700 dark:text-slate-200">
-                      {initialAboutContent.founder.description}
-                    </p>
+
+                  {initialAboutContent.founder.highlights && initialAboutContent.founder.highlights.some((v) => v) && (
+                    <div className="rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-800/50 p-4">
+                      <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                        <CheckCircle2 className="h-4 w-4 text-primary" />
+                        <span>Highlights</span>
+                      </div>
+                      <div className="mt-3 grid sm:grid-cols-2 gap-3">
+                        {initialAboutContent.founder.highlights.filter(Boolean).map((item, idx) => (
+                          <div
+                            key={idx}
+                            className="flex items-start gap-2 rounded-xl border border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-900/40 p-3"
+                          >
+                            <CheckCircle2 className="h-4 w-4 text-primary mt-0.5" />
+                            <p className="text-sm text-slate-700 dark:text-slate-200">{item}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   )}
+
                   <div className="grid sm:grid-cols-2 gap-4 bg-slate-50 dark:bg-slate-800/60 rounded-2xl p-4 border border-slate-100 dark:border-slate-700">
                     <div>
                       <p className="text-sm text-slate-500 dark:text-slate-400">Name</p>
@@ -487,7 +515,5 @@ export default function AboutPageClient({ initialAboutContent }: AboutPageClient
     </>
   );
 }
-
-
 
 
