@@ -179,7 +179,7 @@ export default async function BlogDetailPage({ params }: { params: Promise<{ slu
 
               <div className="relative">
                 <div className="absolute -inset-4 rounded-[32px] bg-gradient-to-br from-blue-500/15 via-transparent to-orange-400/15 blur-xl" />
-                <div className="relative overflow-hidden rounded-3xl border border-white/60 bg-white/70 dark:border-slate-800/80 dark:bg-slate-900/60 shadow-2xl">
+                <div className="relative overflow-hidden rounded-3xl border border-white/60 bg-white/70 dark:border-slate-800/80 dark:bg-slate-900/60 shadow-2xl hover-lift hover-sheen">
                   {blog.coverImage?.url ? (
                     <div className="relative aspect-[16/11] sm:aspect-[16/10]">
                       <Image
@@ -310,7 +310,7 @@ export default async function BlogDetailPage({ params }: { params: Promise<{ slu
                     href={`/blog/${post.slug}`}
                     className="group"
                   >
-                    <div className="bg-white dark:bg-slate-900/70 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 h-full flex flex-col">
+                    <div className="bg-white dark:bg-slate-900/70 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 hover-lift hover-sheen h-full flex flex-col">
                       {post.coverImage?.url && (
                         <div className="relative h-40 w-full overflow-hidden bg-muted">
                           <Image

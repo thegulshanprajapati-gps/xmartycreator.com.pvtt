@@ -834,7 +834,7 @@ export default function HomePageClient({ initialHomeContent }: HomePageClientPro
                         transition={{ delay: index * 0.05 }}
                         viewport={{ once: true }}
                       >
-                        <Card className="group relative overflow-hidden border border-slate-200/70 dark:border-white/10 bg-gradient-to-br from-white/95 via-slate-50 to-slate-100/80 dark:from-slate-900/70 dark:via-slate-900/40 dark:to-slate-800/60 shadow-[0_25px_80px_-60px_rgba(59,130,246,0.55)] transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl h-full">
+                        <Card className="group relative overflow-hidden border border-slate-200/70 dark:border-white/10 bg-gradient-to-br from-white/95 via-slate-50 to-slate-100/80 dark:from-slate-900/70 dark:via-slate-900/40 dark:to-slate-800/60 shadow-[0_25px_80px_-60px_rgba(59,130,246,0.55)] hover-lift hover-sheen h-full">
                           <div className="pointer-events-none absolute inset-0">
                             <div className="absolute -top-20 -right-20 h-40 w-40 rounded-full bg-purple-400/15 blur-3xl" />
                             <div className="absolute -bottom-20 -left-20 h-40 w-40 rounded-full bg-cyan-400/15 blur-3xl" />
@@ -957,4 +957,3 @@ export default function HomePageClient({ initialHomeContent }: HomePageClientPro
     </>
   );
 }
-

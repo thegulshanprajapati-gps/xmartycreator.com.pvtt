@@ -358,6 +358,56 @@
   }
 }
 
+@layer utilities {
+  .hover-lift {
+    transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+    will-change: transform;
+  }
+
+  @media (hover: hover) {
+    .hover-lift:hover {
+      transform: translateY(-6px) scale(1.01);
+      box-shadow: 0 24px 70px -45px rgba(59, 130, 246, 0.45);
+    }
+  }
+
+  .hover-lift-sm {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    will-change: transform;
+  }
+
+  @media (hover: hover) {
+    .hover-lift-sm:hover {
+      transform: translateY(-3px) scale(1.01);
+      box-shadow: 0 16px 45px -30px rgba(14, 116, 144, 0.35);
+    }
+  }
+
+  .hover-sheen {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hover-sheen::after {
+    content: '';
+    position: absolute;
+    top: -40%;
+    left: -60%;
+    width: 60%;
+    height: 180%;
+    background: linear-gradient(115deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transform: translateX(-120%);
+    transition: transform 0.5s ease;
+    pointer-events: none;
+  }
+
+  @media (hover: hover) {
+    .hover-sheen:hover::after {
+      transform: translateX(220%);
+    }
+  }
+}
+
 /* CKEditor (Classic) Theme Integration */
 .ck.ck-editor {
   --ck-color-base-background: hsl(var(--background));

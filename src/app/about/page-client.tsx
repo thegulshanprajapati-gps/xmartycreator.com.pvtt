@@ -432,7 +432,7 @@ export default function AboutPageClient({ initialAboutContent }: AboutPageClient
             <div className="container mx-auto px-4 md:px-6 relative z-10">
               <div className="grid gap-10 lg:grid-cols-[320px_1fr] items-start">
                 <div className="space-y-6">
-                  <div className="rounded-3xl border border-slate-200/70 dark:border-white/10 bg-white/90 dark:bg-white/5 p-6 shadow-[0_20px_55px_-30px_rgba(15,23,42,0.2)] dark:shadow-[0_20px_60px_-20px_rgba(15,23,42,0.7)]">
+                  <div className="rounded-3xl border border-slate-200/70 dark:border-white/10 bg-white/90 dark:bg-white/5 p-6 shadow-[0_20px_55px_-30px_rgba(15,23,42,0.2)] dark:shadow-[0_20px_60px_-20px_rgba(15,23,42,0.7)] hover-lift hover-sheen">
                     <div className="flex flex-col items-center text-center gap-4">
                       <div className="p-1.5 rounded-full bg-gradient-to-br from-pink-500 via-purple-500 to-blue-500 shadow-[0_0_30px_rgba(99,102,241,0.35)]">
                         {founderImageUrl ? (
@@ -495,14 +495,14 @@ export default function AboutPageClient({ initialAboutContent }: AboutPageClient
                   </div>
 
                   {founderQuote && (
-                    <div className="rounded-2xl border border-slate-200/80 bg-white/85 dark:bg-white/5 dark:border-white/10 p-5 text-sm text-slate-600 dark:text-slate-300 italic shadow-sm">
+                  <div className="rounded-2xl border border-slate-200/80 bg-white/85 dark:bg-white/5 dark:border-white/10 p-5 text-sm text-slate-600 dark:text-slate-300 italic shadow-sm hover-lift-sm hover-sheen">
                       “{founderQuote}”
                     </div>
                   )}
                 </div>
 
                 <div className="space-y-6">
-                  <div className="rounded-3xl border border-slate-200/70 bg-white/80 backdrop-blur-xl shadow-[0_20px_50px_-28px_rgba(15,23,42,0.25)] dark:border-white/10 dark:bg-white/5 dark:shadow-[0_20px_60px_-20px_rgba(15,23,42,0.7)] p-6 md:p-8">
+                  <div className="rounded-3xl border border-slate-200/70 bg-white/80 backdrop-blur-xl shadow-[0_20px_50px_-28px_rgba(15,23,42,0.25)] dark:border-white/10 dark:bg-white/5 dark:shadow-[0_20px_60px_-20px_rgba(15,23,42,0.7)] p-6 md:p-8 hover-lift hover-sheen">
                     {founderTitle && (
                       <h2 className="font-headline text-3xl md:text-4xl font-semibold text-slate-900 dark:text-white">
                         {founderTitle}
@@ -563,7 +563,7 @@ export default function AboutPageClient({ initialAboutContent }: AboutPageClient
                             target="_blank"
                             rel="noopener noreferrer"
                             aria-label={meta.label}
-                            className={`inline-flex items-center gap-2 rounded-2xl border px-4 py-2 text-sm font-semibold transition-transform duration-150 hover:scale-[1.05] hover:shadow-[0_0_20px_rgba(59,130,246,0.2)] dark:hover:shadow-[0_0_20px_rgba(59,130,246,0.35)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-950 ${meta.className}`}
+                            className={`inline-flex items-center gap-2 rounded-2xl border px-4 py-2 text-sm font-semibold transition-transform duration-150 hover:scale-[1.05] hover:shadow-[0_0_20px_rgba(59,130,246,0.2)] dark:hover:shadow-[0_0_20px_rgba(59,130,246,0.35)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-950 hover-lift-sm ${meta.className}`}
                           >
                             <LabelIcon className="h-5 w-5" />
                             <span>
