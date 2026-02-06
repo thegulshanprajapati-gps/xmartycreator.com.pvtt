@@ -121,7 +121,7 @@ export function HelpWidget() {
     <>
       {/* Floating Button */}
       <div
-        className="fixed bottom-12 right-4 z-30 pointer-events-none md:right-6"
+        className="fixed bottom-8 right-4 z-30 pointer-events-none md:right-6"
         onMouseEnter={() => setHovering(true)}
         onMouseLeave={() => setHovering(false)}
       >
@@ -132,22 +132,23 @@ export function HelpWidget() {
         >
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className="relative flex items-center justify-center w-16 h-16 rounded-2xl bg-white/70 text-white shadow-[0_18px_65px_-28px_rgba(32,55,90,0.65)] border border-white/60 backdrop-blur-xl transition-all duration-200 hover:shadow-[0_22px_70px_-24px_rgba(32,55,90,0.75)] overflow-hidden"
+            className="relative flex items-center justify-center w-12 h-12 rounded-[16px] bg-white/70 text-white shadow-[0_14px_45px_-22px_rgba(120,53,15,0.7)] border border-white/60 backdrop-blur-xl transition-all duration-200 hover:shadow-[0_18px_55px_-20px_rgba(234,88,12,0.6)] overflow-hidden"
             aria-label="Open chat"
           >
             <motion.span
-              className="absolute inset-[-18%] bg-gradient-to-br from-indigo-500 via-fuchsia-500 to-orange-400"
-              animate={{ rotate: isOpen ? 20 : 0 }}
-              transition={{ duration: 0.4 }}
+              className="absolute inset-[-30%] bg-[conic-gradient(from_120deg,rgba(239,68,68,0.95),rgba(249,115,22,0.95),rgba(251,191,36,0.9),rgba(239,68,68,0.95))]"
+              animate={{ rotate: isOpen ? 40 : 0 }}
+              transition={{ duration: 0.5 }}
             />
-            <div className="absolute inset-[2px] rounded-[18px] bg-white/85 backdrop-blur-xl" />
-            <div className="relative flex flex-col items-center gap-1 text-xs font-semibold text-slate-900">
+            <div className="absolute inset-[2px] rounded-[14px] bg-white/90 backdrop-blur-xl" />
+            <div className="absolute inset-[6px] rounded-[10px] border border-orange-200/70" />
+            <div className="relative flex flex-col items-center gap-0.5 text-[10px] font-semibold text-slate-900">
               <div className="relative">
-                <div className="absolute inset-[-6px] rounded-2xl bg-gradient-to-br from-indigo-500/30 via-fuchsia-500/20 to-orange-400/30 blur" />
-                <Image src="/logo/1000010559.png" alt="Vasant AI icon" width={28} height={28} className="rounded-xl shadow-sm" />
-                <span className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full bg-emerald-500 shadow-[0_0_0_4px_rgba(16,185,129,0.25)]" />
+                <div className="absolute inset-[-7px] rounded-2xl bg-gradient-to-br from-red-500/30 via-orange-400/25 to-amber-300/30 blur" />
+                <Image src="/logo/1000010559.png" alt="Vasant AI icon" width={22} height={22} className="rounded-lg shadow-sm" />
+                <span className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_0_3px_rgba(16,185,129,0.25)]" />
               </div>
-              <span className="leading-tight">Vasant AI</span>
+              <span className="leading-tight">Vasant</span>
             </div>
           </button>
         </motion.div>
@@ -171,12 +172,13 @@ export function HelpWidget() {
           ref={overlayRef}
           className="fixed bottom-20 right-4 md:bottom-32 md:right-6 z-40 w-[380px] max-w-[94vw] max-h-[78vh]"
         >
-          <div className="relative rounded-3xl p-[1px] bg-gradient-to-br from-indigo-500/50 via-fuchsia-500/50 to-orange-400/50 shadow-[0_30px_90px_-65px_rgba(99,102,241,0.9)]">
-            <div className="rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white/95 dark:bg-[#05070f]/92 backdrop-blur-2xl text-slate-900 dark:text-slate-50 flex flex-col overflow-hidden min-h-0 max-h-[78vh]">
+          <div className="relative rounded-[28px] p-[1px] bg-[conic-gradient(from_140deg,rgba(16,185,129,0.5),rgba(14,165,233,0.5),rgba(251,191,36,0.5),rgba(16,185,129,0.5))] shadow-[0_30px_90px_-65px_rgba(14,116,144,0.9)]">
+            <div className="rounded-[26px] border border-slate-200/80 dark:border-white/10 bg-white/95 dark:bg-[#05070f]/92 backdrop-blur-2xl text-slate-900 dark:text-slate-50 flex flex-col overflow-hidden min-h-0 max-h-[78vh]">
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-white/20 dark:border-white/10 bg-gradient-to-r from-indigo-500/90 via-fuchsia-500/90 to-orange-400/90 text-white">
+          <div className="relative flex items-center justify-between p-4 border-b border-white/20 dark:border-white/10 bg-gradient-to-r from-emerald-500/90 via-sky-500/90 to-amber-400/90 text-white">
+            <div className="absolute inset-0 opacity-40 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.45),transparent_55%)]" />
             <div className="flex items-center gap-3">
-              <div className="relative w-10 h-10 rounded-2xl bg-white/90 flex items-center justify-center shadow-lg">
+              <div className="relative w-10 h-10 rounded-2xl bg-white/95 flex items-center justify-center shadow-lg">
                 <Image src="/logo/1000010559.png" alt="Vasant AI" width={28} height={28} className="rounded-lg" />
                 <span className="absolute -right-1 -bottom-1 h-2.5 w-2.5 rounded-full bg-emerald-400 shadow-[0_0_0_4px_rgba(255,255,255,0.35)]" />
               </div>
@@ -197,7 +199,8 @@ export function HelpWidget() {
           </div>
 
           {/* Messages */}
-          <div className="flex-1 min-h-[220px] overflow-y-auto p-4 space-y-3 bg-gradient-to-b from-transparent via-slate-50 to-transparent dark:via-white/5">
+          <div className="relative flex-1 min-h-[220px] overflow-y-auto p-4 space-y-3 bg-gradient-to-b from-transparent via-slate-50 to-transparent dark:via-white/5">
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_15%_20%,rgba(16,185,129,0.08),transparent_35%),radial-gradient(circle_at_85%_0%,rgba(14,165,233,0.08),transparent_35%)]" />
             {messages.map((message) => (
               <motion.div
                 key={message.id}
@@ -208,8 +211,8 @@ export function HelpWidget() {
                 <div
                   className={`max-w-xs px-4 py-2 rounded-lg text-sm ${
                     message.type === 'user'
-                      ? 'bg-primary text-primary-foreground rounded-br-none shadow-sm'
-                      : 'bg-slate-100 text-slate-800 border border-slate-200/80 rounded-bl-none shadow-sm dark:bg-white/15 dark:text-slate-50 dark:border-white/10 backdrop-blur'
+                      ? 'bg-gradient-to-r from-emerald-500 to-sky-500 text-white rounded-br-none shadow-[0_12px_30px_-18px_rgba(16,185,129,0.8)]'
+                      : 'bg-white text-slate-800 border border-slate-200/80 rounded-bl-none shadow-sm dark:bg-white/10 dark:text-slate-50 dark:border-white/10 backdrop-blur'
                   }`}
                 >
                   {message.content}
@@ -260,14 +263,14 @@ export function HelpWidget() {
                   }
                 }}
                 placeholder="Ask anything..."
-                className="flex-1 px-3 py-2 rounded-xl border border-slate-200/80 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 shadow-inner text-slate-900 placeholder:text-slate-400 dark:border-white/10 dark:bg-white/5 dark:text-slate-50 dark:placeholder:text-slate-400"
+                className="flex-1 px-3 py-2 rounded-2xl border border-slate-200/80 bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 shadow-inner text-slate-900 placeholder:text-slate-400 dark:border-white/10 dark:bg-white/5 dark:text-slate-50 dark:placeholder:text-slate-400"
                 disabled={isLoading}
               />
               <Button
                 size="icon"
                 onClick={handleSendMessage}
                 disabled={isLoading || !input.trim()}
-                className="rounded-xl bg-gradient-to-r from-indigo-500 via-fuchsia-500 to-orange-400 text-white shadow-lg hover:scale-[1.02] transition"
+                className="rounded-2xl bg-gradient-to-r from-emerald-500 via-sky-500 to-amber-400 text-white shadow-lg hover:scale-[1.02] transition"
               >
                 <Send className="w-4 h-4" />
               </Button>

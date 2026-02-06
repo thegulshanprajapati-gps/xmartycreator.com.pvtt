@@ -1,6 +1,24 @@
 ﻿'use client';
 
-import { ArrowRight, Instagram, Youtube, Zap, Lightbulb, Heart, Rocket, Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
+import {
+  ArrowRight,
+  Instagram,
+  Youtube,
+  Zap,
+  Lightbulb,
+  Heart,
+  Rocket,
+  Sparkles,
+  ChevronDown,
+  ChevronUp,
+  Linkedin,
+  Twitter,
+  Facebook,
+  Github,
+  Globe,
+  Send,
+  MessageCircle,
+} from 'lucide-react';
 import { Footer } from '@/components/layout/footer';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -94,9 +112,10 @@ export default function AboutPageClient({ initialAboutContent }: AboutPageClient
   const founderImageUrl =
     founder?.image?.imageUrl || (founder as any)?.imageUrl || (founder as any)?.image?.url;
 
-  const hasSocial =
-    Boolean(founderSocials?.instagram) ||
-    Boolean(founderSocials?.youtube);
+  const socialEntries = Object.entries(founderSocials || {}).filter(
+    ([, value]) => typeof value === 'string' && value.trim().length > 0
+  );
+  const hasSocial = socialEntries.length > 0;
   const hasFounder = Boolean(
     founderNameRaw ||
       founderRoleRaw ||
@@ -119,8 +138,9 @@ export default function AboutPageClient({ initialAboutContent }: AboutPageClient
   const isLongBio = Boolean(founderBioRaw && founderBioRaw.length > 260);
   const shouldClampBio = isLongBio && !isBioExpanded;
 
-  const getSocialLabel = (href?: string, label?: string) => {
+  const getSocialLabel = (href?: string, label?: string, fallbackLabel?: string) => {
     if (label && label.trim()) return label.trim();
+    if (fallbackLabel && fallbackLabel.trim()) return fallbackLabel.trim();
     if (!href) return '';
     try {
       const host = new URL(href).hostname.replace(/^www\./, '');
@@ -128,6 +148,38 @@ export default function AboutPageClient({ initialAboutContent }: AboutPageClient
     } catch {
       return '';
     }
+  };
+
+  const getSocialMeta = (href: string, key: string) => {
+    const lowerHref = href.toLowerCase();
+    const lowerKey = key.toLowerCase();
+
+    if (lowerHref.includes('youtube') || lowerHref.includes('youtu.be') || lowerKey.includes('youtube')) {
+      return { icon: Youtube, label: 'YouTube', className: 'bg-red-500/15 text-red-600 dark:text-red-300 border-red-500/20' };
+    }
+    if (lowerHref.includes('instagram') || lowerKey.includes('instagram')) {
+      return { icon: Instagram, label: 'Instagram', className: 'bg-gradient-to-r from-pink-500/15 via-purple-500/15 to-orange-400/15 text-pink-600 dark:text-pink-300 border-pink-500/20' };
+    }
+    if (lowerHref.includes('linkedin') || lowerKey.includes('linkedin')) {
+      return { icon: Linkedin, label: 'LinkedIn', className: 'bg-sky-500/15 text-sky-700 dark:text-sky-300 border-sky-500/20' };
+    }
+    if (lowerHref.includes('twitter') || lowerHref.includes('x.com') || lowerKey === 'x' || lowerKey.includes('twitter')) {
+      return { icon: Twitter, label: 'X', className: 'bg-slate-900/10 text-slate-800 dark:text-slate-200 border-slate-400/30' };
+    }
+    if (lowerHref.includes('facebook') || lowerKey.includes('facebook')) {
+      return { icon: Facebook, label: 'Facebook', className: 'bg-blue-600/15 text-blue-700 dark:text-blue-300 border-blue-500/20' };
+    }
+    if (lowerHref.includes('github') || lowerKey.includes('github')) {
+      return { icon: Github, label: 'GitHub', className: 'bg-slate-800/10 text-slate-800 dark:text-slate-200 border-slate-500/30' };
+    }
+    if (lowerHref.includes('t.me') || lowerKey.includes('telegram')) {
+      return { icon: Send, label: 'Telegram', className: 'bg-cyan-500/15 text-cyan-700 dark:text-cyan-300 border-cyan-500/20' };
+    }
+    if (lowerHref.includes('wa.me') || lowerHref.includes('whatsapp') || lowerKey.includes('whatsapp')) {
+      return { icon: MessageCircle, label: 'WhatsApp', className: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/20' };
+    }
+
+    return { icon: Globe, label: 'Website', className: 'bg-slate-200/70 text-slate-700 dark:text-slate-200 border-slate-300/70 dark:bg-white/5 dark:border-white/10' };
   };
 
   const valueIcons: Record<number, React.ReactNode> = {
@@ -373,70 +425,94 @@ export default function AboutPageClient({ initialAboutContent }: AboutPageClient
         {/* ===== FOUNDER SECTION ===== */}
         {hasFounder && (
           <section className="relative py-20 md:py-28 overflow-hidden">
-            <div className="absolute inset-0 bg-slate-950" />
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.18),transparent_55%)]" />
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom,rgba(236,72,153,0.15),transparent_50%)]" />
+            <div className="absolute inset-0 bg-gradient-to-b from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-950/90 dark:to-slate-900" />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.12),transparent_55%)] dark:bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.2),transparent_55%)]" />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom,rgba(236,72,153,0.12),transparent_50%)] dark:bg-[radial-gradient(circle_at_bottom,rgba(236,72,153,0.18),transparent_50%)]" />
 
             <div className="container mx-auto px-4 md:px-6 relative z-10">
-              <div className="grid gap-10 lg:grid-cols-[360px_1fr] items-start">
-                <div className="flex flex-col items-center lg:items-start gap-5">
-                  <div className="p-1.5 rounded-full bg-gradient-to-br from-pink-500 via-purple-500 to-blue-500 shadow-[0_0_35px_rgba(59,130,246,0.35)]">
-                    {founderImageUrl ? (
-                      <div className="relative w-40 h-40 md:w-48 md:h-48 rounded-full overflow-hidden bg-slate-900">
-                        <Image
-                          src={founderImageUrl}
-                          alt={founderNameRaw || ''}
-                          fill
-                          className="object-cover"
-                          sizes="192px"
-                        />
+              <div className="grid gap-10 lg:grid-cols-[320px_1fr] items-start">
+                <div className="space-y-6">
+                  <div className="rounded-3xl border border-slate-200/70 dark:border-white/10 bg-white/90 dark:bg-white/5 p-6 shadow-[0_20px_55px_-30px_rgba(15,23,42,0.2)] dark:shadow-[0_20px_60px_-20px_rgba(15,23,42,0.7)]">
+                    <div className="flex flex-col items-center text-center gap-4">
+                      <div className="p-1.5 rounded-full bg-gradient-to-br from-pink-500 via-purple-500 to-blue-500 shadow-[0_0_30px_rgba(99,102,241,0.35)]">
+                        {founderImageUrl ? (
+                          <div className="relative w-36 h-36 md:w-40 md:h-40 rounded-full overflow-hidden bg-slate-900">
+                            <Image
+                              src={founderImageUrl}
+                              alt={founderNameRaw || ''}
+                              fill
+                              className="object-cover"
+                              sizes="160px"
+                            />
+                          </div>
+                        ) : (
+                          <Avatar className="w-36 h-36 md:w-40 md:h-40">
+                            <AvatarFallback className="text-4xl md:text-5xl bg-slate-100 text-slate-700 dark:bg-slate-900 dark:text-slate-200 font-semibold">
+                              {founderNameRaw
+                                ? founderNameRaw
+                                    .replace(/[₱]/g, '₹')
+                                    .replace(/[^A-Za-z\s₹]/g, '')
+                                    .trim()
+                                    .split(' ')
+                                    .filter(Boolean)
+                                    .map((n) => n[0])
+                                    .join('')
+                                    .toUpperCase() || '—'
+                                : '—'}
+                            </AvatarFallback>
+                          </Avatar>
+                        )}
                       </div>
-                    ) : (
-                      <Avatar className="w-40 h-40 md:w-48 md:h-48">
-                        <AvatarFallback className="text-4xl md:text-5xl bg-slate-900 text-slate-200 font-semibold">
-                          {founderNameRaw
-                            ? founderNameRaw
-                                .replace(/[₱]/g, '₹')
-                                .replace(/[^A-Za-z\s₹]/g, '')
-                                .trim()
-                                .split(' ')
-                                .filter(Boolean)
-                                .map((n) => n[0])
-                                .join('')
-                                .toUpperCase() || '—'
-                            : '—'}
-                        </AvatarFallback>
-                      </Avatar>
-                    )}
+
+                      <div>
+                        <h3 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white">
+                          {founderName}
+                        </h3>
+                        <p className="text-sm md:text-base text-slate-600 dark:text-slate-400">
+                          {founderRole}
+                        </p>
+                      </div>
+
+                      {founderDescription && (
+                        <p className="text-sm text-slate-600 dark:text-slate-300">
+                          {founderDescription}
+                        </p>
+                      )}
+
+                      {founder?.highlights?.length > 0 && (
+                        <div className="flex flex-wrap items-center justify-center gap-2">
+                          {founder.highlights.slice(0, 6).map((item, idx) => (
+                            <span
+                              key={idx}
+                              className="px-3 py-1 rounded-full text-xs font-semibold bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-pink-500/10 border border-slate-200/70 dark:border-white/10 text-slate-700 dark:text-slate-200"
+                            >
+                              {item}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
 
-                  <div className="text-center lg:text-left space-y-1">
-                    <h3 className="text-3xl md:text-4xl font-bold text-white">
-                      {founderName}
-                    </h3>
-                    <p className="text-sm md:text-base text-slate-400">
-                      {founderRole}
-                    </p>
-                  </div>
+                  {founderQuote && (
+                    <div className="rounded-2xl border border-slate-200/80 bg-white/85 dark:bg-white/5 dark:border-white/10 p-5 text-sm text-slate-600 dark:text-slate-300 italic shadow-sm">
+                      “{founderQuote}”
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-6">
-                  <div className="rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl shadow-[0_20px_60px_-20px_rgba(15,23,42,0.7)] p-6 md:p-8">
+                  <div className="rounded-3xl border border-slate-200/70 bg-white/80 backdrop-blur-xl shadow-[0_20px_50px_-28px_rgba(15,23,42,0.25)] dark:border-white/10 dark:bg-white/5 dark:shadow-[0_20px_60px_-20px_rgba(15,23,42,0.7)] p-6 md:p-8">
                     {founderTitle && (
-                      <h2 className="font-headline text-3xl md:text-4xl font-semibold text-white">
+                      <h2 className="font-headline text-3xl md:text-4xl font-semibold text-slate-900 dark:text-white">
                         {founderTitle}
                       </h2>
-                    )}
-                    {founderDescription && (
-                      <p className="mt-3 text-base md:text-lg text-slate-300 leading-relaxed">
-                        {founderDescription}
-                      </p>
                     )}
 
                     <div className="mt-6 space-y-4">
                       <p
                         id={bioId}
-                        className="text-base md:text-lg text-slate-200 leading-relaxed"
+                        className="text-base md:text-lg text-slate-700 dark:text-slate-200 leading-relaxed"
                         style={
                           shouldClampBio
                             ? {
@@ -457,7 +533,7 @@ export default function AboutPageClient({ initialAboutContent }: AboutPageClient
                           onClick={() => setIsBioExpanded((prev) => !prev)}
                           aria-expanded={isBioExpanded}
                           aria-controls={bioId}
-                          className="inline-flex items-center gap-2 text-sm font-semibold text-slate-200 hover:text-white transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
+                          className="inline-flex items-center gap-2 text-sm font-semibold text-slate-700 hover:text-slate-900 dark:text-slate-200 dark:hover:text-white transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-950"
                         >
                           {isBioExpanded ? (
                             <>
@@ -473,51 +549,33 @@ export default function AboutPageClient({ initialAboutContent }: AboutPageClient
                         </button>
                       )}
                     </div>
-
-                    {founderQuote && (
-                      <blockquote className="mt-6 border-l-2 border-white/20 pl-4 text-slate-300 italic">
-                        {founderQuote}
-                      </blockquote>
-                    )}
                   </div>
 
                   {hasSocial && (
                     <div className="flex flex-wrap gap-3">
-                      {[
-                        {
-                          href: founderSocials?.instagram,
-                          icon: Instagram,
-                          className:
-                            'bg-gradient-to-r from-pink-500/20 via-purple-500/20 to-orange-400/20 text-white',
-                          label: getSocialLabel(
-                            founderSocials?.instagram,
-                            founderSocials?.instagramLabel || founderSocials?.instagramText
-                          ),
-                        },
-                        {
-                          href: founderSocials?.youtube,
-                          icon: Youtube,
-                          className: 'bg-red-500/20 text-white',
-                          label: getSocialLabel(
-                            founderSocials?.youtube,
-                            founderSocials?.youtubeLabel || founderSocials?.youtubeText
-                          ),
-                        },
-                      ].map((item, idx) =>
-                        item.href ? (
+                      {socialEntries.map(([key, href]) => {
+                        const meta = getSocialMeta(href as string, key);
+                        const LabelIcon = meta.icon;
+                        return (
                           <a
-                            key={idx}
-                            href={item.href}
+                            key={`${key}-${href}`}
+                            href={href as string}
                             target="_blank"
                             rel="noopener noreferrer"
-                            aria-label={item.label || undefined}
-                            className={`inline-flex items-center gap-2 rounded-2xl border border-white/10 px-4 py-2 text-sm font-semibold transition-transform duration-150 hover:scale-[1.05] hover:shadow-[0_0_20px_rgba(59,130,246,0.35)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 ${item.className}`}
+                            aria-label={meta.label}
+                            className={`inline-flex items-center gap-2 rounded-2xl border px-4 py-2 text-sm font-semibold transition-transform duration-150 hover:scale-[1.05] hover:shadow-[0_0_20px_rgba(59,130,246,0.2)] dark:hover:shadow-[0_0_20px_rgba(59,130,246,0.35)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-950 ${meta.className}`}
                           >
-                            <item.icon className="h-5 w-5" />
-                            {item.label && <span>{item.label}</span>}
+                            <LabelIcon className="h-5 w-5" />
+                            <span>
+                              {getSocialLabel(
+                                href as string,
+                                (founderSocials as any)?.[`${key}Label`] || (founderSocials as any)?.[`${key}Text`],
+                                meta.label
+                              )}
+                            </span>
                           </a>
-                        ) : null
-                      )}
+                        );
+                      })}
                     </div>
                   )}
                 </div>
