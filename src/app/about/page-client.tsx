@@ -1,12 +1,13 @@
 ﻿'use client';
 
-import { ArrowRight, Linkedin, Twitter, Instagram, Youtube, Zap, Lightbulb, Heart, Rocket, Sparkles, Link2, CheckCircle2 } from 'lucide-react';
+import { ArrowRight, Instagram, Youtube, Zap, Lightbulb, Heart, Rocket, Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
 import { Footer } from '@/components/layout/footer';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
+import { useState } from 'react';
 
 type AboutContent = {
   hero: {
@@ -80,10 +81,54 @@ const scaleIn = {
 
 export default function AboutPageClient({ initialAboutContent }: AboutPageClientProps) {
   const heroImage = initialAboutContent?.hero?.image;
-  const founderDescription = initialAboutContent?.founder?.description?.trim();
-  const founderShortDescription = founderDescription && founderDescription.length > 180
-    ? `${founderDescription.slice(0, 177)}...`
-    : founderDescription;
+  const [isBioExpanded, setIsBioExpanded] = useState(false);
+
+  const founder = initialAboutContent?.founder;
+  const founderSocials = (founder as any)?.socials || (founder as any)?.social || {};
+  const founderNameRaw = founder?.name?.trim();
+  const founderRoleRaw = founder?.role?.trim();
+  const founderTitleRaw = founder?.title?.trim();
+  const founderDescriptionRaw = founder?.description?.trim();
+  const founderBioRaw = founder?.bio?.trim();
+  const founderQuoteRaw = (founder as any)?.quote?.trim();
+  const founderImageUrl =
+    founder?.image?.imageUrl || (founder as any)?.imageUrl || (founder as any)?.image?.url;
+
+  const hasSocial =
+    Boolean(founderSocials?.instagram) ||
+    Boolean(founderSocials?.youtube);
+  const hasFounder = Boolean(
+    founderNameRaw ||
+      founderRoleRaw ||
+      founderTitleRaw ||
+      founderDescriptionRaw ||
+      founderBioRaw ||
+      founderQuoteRaw ||
+      founderImageUrl ||
+      hasSocial
+  );
+
+  const founderName = founderNameRaw || '—';
+  const founderRole = founderRoleRaw || '—';
+  const founderTitle = founderTitleRaw;
+  const founderDescription = founderDescriptionRaw;
+  const founderBio = founderBioRaw || '—';
+  const founderQuote = founderQuoteRaw;
+
+  const bioId = 'founder-bio';
+  const isLongBio = Boolean(founderBioRaw && founderBioRaw.length > 260);
+  const shouldClampBio = isLongBio && !isBioExpanded;
+
+  const getSocialLabel = (href?: string, label?: string) => {
+    if (label && label.trim()) return label.trim();
+    if (!href) return '';
+    try {
+      const host = new URL(href).hostname.replace(/^www\./, '');
+      return host;
+    } catch {
+      return '';
+    }
+  };
 
   const valueIcons: Record<number, React.ReactNode> = {
     0: <Zap className="h-6 w-6" />,
@@ -325,137 +370,154 @@ export default function AboutPageClient({ initialAboutContent }: AboutPageClient
           </motion.section>
         )}
 
-                {/* ===== FOUNDER SECTION ===== */}
-        {(() => {
-          const f = initialAboutContent?.founder;
-          const hasSocial = f?.socials && Object.values(f.socials).some((v: any) => v);
-          const hasHighlights = Boolean(f?.highlights && f.highlights.some((v) => v));
-          const hasFounder = Boolean(f && (f.name || f.image || f.imageId || f.bio || f.description || f.role || hasSocial || hasHighlights));
-          return hasFounder;
-        })() && (
+        {/* ===== FOUNDER SECTION ===== */}
+        {hasFounder && (
           <section className="relative py-20 md:py-28 overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-b from-blue-50/50 via-white to-pink-50/50 dark:from-slate-900/40 dark:via-slate-900/20 dark:to-slate-900/40" />
-            <div className="absolute -top-24 -right-32 w-80 h-80 bg-pink-400/20 blur-3xl rounded-full" />
-            <div className="absolute -bottom-24 -left-32 w-80 h-80 bg-blue-400/20 blur-3xl rounded-full" />
+            <div className="absolute inset-0 bg-slate-950" />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.18),transparent_55%)]" />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom,rgba(236,72,153,0.15),transparent_50%)]" />
 
             <div className="container mx-auto px-4 md:px-6 relative z-10">
-              <div className="flex flex-col items-center gap-4 text-center mb-10">
-                <div className="inline-flex items-center gap-2 bg-gradient-to-r from-pink-500/15 via-purple-500/15 to-blue-500/15 border border-pink-200/60 dark:border-pink-800/60 rounded-full px-4 py-2">
-                  <Sparkles className="h-4 w-4 text-pink-600 dark:text-pink-400" />
-                  <span className="text-sm font-semibold text-pink-600 dark:text-pink-300">Leadership Spotlight</span>
-                </div>
-                <h2 className="font-headline text-4xl md:text-5xl font-bold tracking-tight">
-                  {initialAboutContent.founder.title || 'Meet the Founder'}
-                </h2>
-                {founderShortDescription && (
-                  <p className="max-w-3xl text-base md:text-lg text-slate-600 dark:text-slate-300 leading-relaxed">
-                    {founderShortDescription}
-                  </p>
-                )}
-              </div>
-
-              <div className="grid lg:grid-cols-[420px_1fr] gap-8 items-start bg-white/80 dark:bg-slate-900/60 rounded-3xl shadow-2xl border border-slate-100 dark:border-slate-800 backdrop-blur-md p-8 md:p-10">
-                <div className="flex flex-col items-center gap-4">
-                  <div className="p-[6px] rounded-full bg-gradient-to-br from-pink-500 via-purple-500 to-blue-500 shadow-lg">
-                    {initialAboutContent.founder.image ? (
-                      <div className="relative w-44 h-44 md:w-48 md:h-48 rounded-full overflow-hidden bg-slate-200 dark:bg-slate-800">
+              <div className="grid gap-10 lg:grid-cols-[360px_1fr] items-start">
+                <div className="flex flex-col items-center lg:items-start gap-5">
+                  <div className="p-1.5 rounded-full bg-gradient-to-br from-pink-500 via-purple-500 to-blue-500 shadow-[0_0_35px_rgba(59,130,246,0.35)]">
+                    {founderImageUrl ? (
+                      <div className="relative w-40 h-40 md:w-48 md:h-48 rounded-full overflow-hidden bg-slate-900">
                         <Image
-                          src={initialAboutContent.founder.image.imageUrl}
-                          alt={initialAboutContent.founder.image.description || initialAboutContent.founder.name || 'Founder'}
+                          src={founderImageUrl}
+                          alt={founderNameRaw || ''}
                           fill
                           className="object-cover"
                           sizes="192px"
                         />
                       </div>
                     ) : (
-                      <Avatar className="w-48 h-48 border-4 border-primary/20 shadow-lg">
-                        <AvatarFallback className="text-6xl bg-gradient-to-br from-blue-500 to-purple-600 text-white font-bold">
-                          {(() => {
-                            const fallbackName = initialAboutContent.founder.name || 'Founder';
-                            const sanitized = fallbackName.replace(/[₱]/g, '₹').replace(/[^A-Za-z\s₹]/g, '').trim();
-                            const lettersOnly = sanitized.replace(/[^A-Za-z]/g, '');
-                            return lettersOnly ? lettersOnly.split(' ').map(n => n[0]).join('').toUpperCase() : 'F';
-                          })()}
+                      <Avatar className="w-40 h-40 md:w-48 md:h-48">
+                        <AvatarFallback className="text-4xl md:text-5xl bg-slate-900 text-slate-200 font-semibold">
+                          {founderNameRaw
+                            ? founderNameRaw
+                                .replace(/[₱]/g, '₹')
+                                .replace(/[^A-Za-z\s₹]/g, '')
+                                .trim()
+                                .split(' ')
+                                .filter(Boolean)
+                                .map((n) => n[0])
+                                .join('')
+                                .toUpperCase() || '—'
+                            : '—'}
                         </AvatarFallback>
                       </Avatar>
                     )}
                   </div>
-                  <div className="text-center space-y-1">
-                    <h3 className="text-2xl md:text-3xl font-bold text-foreground">{initialAboutContent.founder.name || 'Founder'}</h3>
-                    <p className="text-primary font-semibold">{initialAboutContent.founder.role || 'Leadership'}</p>
+
+                  <div className="text-center lg:text-left space-y-1">
+                    <h3 className="text-3xl md:text-4xl font-bold text-white">
+                      {founderName}
+                    </h3>
+                    <p className="text-sm md:text-base text-slate-400">
+                      {founderRole}
+                    </p>
                   </div>
                 </div>
 
                 <div className="space-y-6">
-                  {(initialAboutContent.founder.bio || initialAboutContent.founder.description) && (
-                    <div className="rounded-2xl border border-slate-100 dark:border-slate-800 bg-white/70 dark:bg-slate-900/40 p-4">
-                      <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                        <Sparkles className="h-4 w-4 text-primary" />
-                        <span>Founder Note</span>
-                      </div>
-                      <p className="mt-2 text-lg leading-relaxed text-slate-700 dark:text-slate-200">
-                        {initialAboutContent.founder.bio || initialAboutContent.founder.description}
+                  <div className="rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl shadow-[0_20px_60px_-20px_rgba(15,23,42,0.7)] p-6 md:p-8">
+                    {founderTitle && (
+                      <h2 className="font-headline text-3xl md:text-4xl font-semibold text-white">
+                        {founderTitle}
+                      </h2>
+                    )}
+                    {founderDescription && (
+                      <p className="mt-3 text-base md:text-lg text-slate-300 leading-relaxed">
+                        {founderDescription}
                       </p>
-                    </div>
-                  )}
+                    )}
 
-                  {initialAboutContent.founder.highlights && initialAboutContent.founder.highlights.some((v) => v) && (
-                    <div className="rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-800/50 p-4">
-                      <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                        <CheckCircle2 className="h-4 w-4 text-primary" />
-                        <span>Highlights</span>
-                      </div>
-                      <div className="mt-3 grid sm:grid-cols-2 gap-3">
-                        {initialAboutContent.founder.highlights.filter(Boolean).map((item, idx) => (
-                          <div
-                            key={idx}
-                            className="flex items-start gap-2 rounded-xl border border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-900/40 p-3"
-                          >
-                            <CheckCircle2 className="h-4 w-4 text-primary mt-0.5" />
-                            <p className="text-sm text-slate-700 dark:text-slate-200">{item}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                    <div className="mt-6 space-y-4">
+                      <p
+                        id={bioId}
+                        className="text-base md:text-lg text-slate-200 leading-relaxed"
+                        style={
+                          shouldClampBio
+                            ? {
+                                display: '-webkit-box',
+                                WebkitLineClamp: 4,
+                                WebkitBoxOrient: 'vertical',
+                                overflow: 'hidden',
+                              }
+                            : undefined
+                        }
+                      >
+                        {founderBio}
+                      </p>
 
-                  <div className="grid sm:grid-cols-2 gap-4 bg-slate-50 dark:bg-slate-800/60 rounded-2xl p-4 border border-slate-100 dark:border-slate-700">
-                    <div>
-                      <p className="text-sm text-slate-500 dark:text-slate-400">Name</p>
-                      <p className="font-semibold text-slate-800 dark:text-slate-100">{initialAboutContent.founder.name || '—'}</p>
+                      {isLongBio && (
+                        <button
+                          type="button"
+                          onClick={() => setIsBioExpanded((prev) => !prev)}
+                          aria-expanded={isBioExpanded}
+                          aria-controls={bioId}
+                          className="inline-flex items-center gap-2 text-sm font-semibold text-slate-200 hover:text-white transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
+                        >
+                          {isBioExpanded ? (
+                            <>
+                              <span>Read Less</span>
+                              <ChevronUp className="h-4 w-4" />
+                            </>
+                          ) : (
+                            <>
+                              <span>Read More</span>
+                              <ChevronDown className="h-4 w-4" />
+                            </>
+                          )}
+                        </button>
+                      )}
                     </div>
-                    <div>
-                      <p className="text-sm text-slate-500 dark:text-slate-400">Role</p>
-                      <p className="font-semibold text-slate-800 dark:text-slate-100">{initialAboutContent.founder.role || '—'}</p>
-                    </div>
+
+                    {founderQuote && (
+                      <blockquote className="mt-6 border-l-2 border-white/20 pl-4 text-slate-300 italic">
+                        {founderQuote}
+                      </blockquote>
+                    )}
                   </div>
 
-                  {initialAboutContent.founder.socials && Object.values(initialAboutContent.founder.socials).some((v: any) => v) && (
+                  {hasSocial && (
                     <div className="flex flex-wrap gap-3">
                       {[
-                        { icon: Linkedin, href: initialAboutContent.founder.socials.linkedin, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-900/30' },
-                        { icon: Twitter, href: initialAboutContent.founder.socials.twitter, color: 'text-sky-500', bg: 'bg-sky-50 dark:bg-sky-900/30' },
-                        { icon: Instagram, href: initialAboutContent.founder.socials.instagram, color: 'text-pink-500', bg: 'bg-pink-50 dark:bg-pink-900/30' },
-                        { icon: Youtube, href: initialAboutContent.founder.socials.youtube, color: 'text-red-500', bg: 'bg-red-50 dark:bg-red-900/30' },
-                      ].map((item, idx) => item.href ? (
-                        <motion.a
-                          key={idx}
-                          href={item.href}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          whileHover={{ scale: 1.05, y: -2 }}
-                          className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-100 dark:border-slate-700 ${item.bg} ${item.color} font-semibold text-sm`}
-                        >
-                          <item.icon className="h-5 w-5" />
-                          <span className="hidden sm:inline">Connect</span>
-                        </motion.a>
-                      ) : null)}
-                    </div>
-                  )}
-                  {(!initialAboutContent.founder.socials || !Object.values(initialAboutContent.founder.socials).some((v: any) => v)) && (
-                    <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
-                      <Link2 className="h-4 w-4" />
-                      <span>Add social links to showcase presence.</span>
+                        {
+                          href: founderSocials?.instagram,
+                          icon: Instagram,
+                          className:
+                            'bg-gradient-to-r from-pink-500/20 via-purple-500/20 to-orange-400/20 text-white',
+                          label: getSocialLabel(
+                            founderSocials?.instagram,
+                            founderSocials?.instagramLabel || founderSocials?.instagramText
+                          ),
+                        },
+                        {
+                          href: founderSocials?.youtube,
+                          icon: Youtube,
+                          className: 'bg-red-500/20 text-white',
+                          label: getSocialLabel(
+                            founderSocials?.youtube,
+                            founderSocials?.youtubeLabel || founderSocials?.youtubeText
+                          ),
+                        },
+                      ].map((item, idx) =>
+                        item.href ? (
+                          <a
+                            key={idx}
+                            href={item.href}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            aria-label={item.label || undefined}
+                            className={`inline-flex items-center gap-2 rounded-2xl border border-white/10 px-4 py-2 text-sm font-semibold transition-transform duration-150 hover:scale-[1.05] hover:shadow-[0_0_20px_rgba(59,130,246,0.35)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 ${item.className}`}
+                          >
+                            <item.icon className="h-5 w-5" />
+                            {item.label && <span>{item.label}</span>}
+                          </a>
+                        ) : null
+                      )}
                     </div>
                   )}
                 </div>
@@ -515,5 +577,3 @@ export default function AboutPageClient({ initialAboutContent }: AboutPageClient
     </>
   );
 }
-
-
