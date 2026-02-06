@@ -8,6 +8,7 @@ import Blog from '@/lib/models/blog';
 import { Footer } from '@/components/layout/footer';
 import { BlogContent } from '@/components/blog-content';
 import { BlogComments } from '@/components/blog/blog-comments';
+import { BlogViews } from '@/components/blog/blog-views';
 import {
   generateBlogMetadata,
   generateBlogPostingSchema,
@@ -22,7 +23,7 @@ import {
   Calendar,
   User,
   Clock,
-  BookOpen,
+  Eye,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { ShareButtons } from './share-buttons';
@@ -109,7 +110,6 @@ export default async function BlogDetailPage({ params }: { params: Promise<{ slu
   const shareUrls = generateShareUrls(blog.slug, blog.title);
   const baseUrl = process.env.NEXT_PUBLIC_URL || 'https://xmartycreator.com';
   const cleanedHtml = blog.htmlContent ? scrubCurrencyInHtml(blog.htmlContent) : undefined;
-  const readsDisplay = Math.max(1, blog.views || 0);
 
   return (
     <>
@@ -171,8 +171,8 @@ export default async function BlogDetailPage({ params }: { params: Promise<{ slu
                     </div>
                   )}
                   <div className="flex items-center gap-2 rounded-full bg-white/80 border border-slate-200 px-3 py-2 text-slate-700 dark:bg-slate-900/70 dark:border-slate-700 dark:text-slate-200 shadow-sm">
-                    <BookOpen className="h-4 w-4 text-indigo-600 dark:text-indigo-300" />
-                    <span>{readsDisplay.toLocaleString()} reads</span>
+                    <Eye className="h-4 w-4 text-indigo-600 dark:text-indigo-300" />
+                    <BlogViews slug={blog.slug} initialViews={blog.views || 0} />
                   </div>
                 </div>
               </div>
