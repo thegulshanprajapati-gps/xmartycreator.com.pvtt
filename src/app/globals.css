@@ -142,6 +142,96 @@
   }
 }
 
+/* CKEditor (Classic) Theme Integration */
+.ck.ck-editor {
+  --ck-color-base-background: hsl(var(--background));
+  --ck-color-base-foreground: hsl(var(--foreground));
+  --ck-color-base-border: hsl(var(--border));
+  --ck-color-focus-border: hsl(var(--ring));
+  --ck-color-text: hsl(var(--foreground));
+  --ck-color-toolbar-background: hsl(var(--card));
+  --ck-color-toolbar-border: hsl(var(--border));
+  --ck-color-button-default-hover-background: hsl(var(--accent));
+  --ck-color-button-on-background: hsl(var(--primary));
+  --ck-color-button-on-color: hsl(var(--primary-foreground));
+  --ck-color-button-on-hover-background: hsl(var(--primary));
+  --ck-color-dropdown-panel-background: hsl(var(--card));
+  --ck-color-dropdown-panel-border: hsl(var(--border));
+  --ck-color-link-default: hsl(var(--primary));
+  --ck-border-radius: 0.5rem;
+}
+
+.ck.ck-toolbar {
+  background: hsl(var(--card));
+  border: 0;
+  border-bottom: 1px solid hsl(var(--border));
+  border-top-left-radius: 0.5rem;
+  border-top-right-radius: 0.5rem;
+}
+
+.ck.ck-toolbar .ck.ck-button,
+.ck.ck-toolbar .ck.ck-dropdown__button {
+  color: hsl(var(--foreground));
+}
+
+.ck.ck-toolbar .ck.ck-button:hover,
+.ck.ck-toolbar .ck.ck-dropdown__button:hover {
+  background: hsl(var(--accent));
+}
+
+.ck.ck-toolbar .ck.ck-button.ck-on,
+.ck.ck-toolbar .ck.ck-button.ck-on:hover,
+.ck.ck-toolbar .ck.ck-dropdown__button.ck-on,
+.ck.ck-toolbar .ck.ck-dropdown__button.ck-on:hover {
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+}
+
+.ck.ck-editor__main > .ck-editor__editable {
+  border: 0;
+}
+
+.ck.ck-editor__editable_inline {
+  min-height: 260px;
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  border-bottom-left-radius: 0.5rem;
+  border-bottom-right-radius: 0.5rem;
+}
+
+.ck.ck-editor__editable.ck-focused {
+  box-shadow: 0 0 0 1px hsl(var(--ring));
+}
+
+.ck.ck-editor__editable_inline .ck-placeholder::before {
+  color: hsl(var(--muted-foreground));
+}
+
+.ck.ck-dropdown__panel {
+  background: hsl(var(--card));
+  border-color: hsl(var(--border));
+}
+
+.ck.ck-input-text {
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  border-color: hsl(var(--border));
+}
+
+.ck.ck-input-text:focus {
+  border-color: hsl(var(--ring));
+  box-shadow: 0 0 0 1px hsl(var(--ring));
+}
+
+.ck.ck-tooltip .ck-tooltip__text {
+  background: hsl(var(--foreground));
+  color: hsl(var(--background));
+}
+
+.ck.ck-powered-by {
+  color: hsl(var(--muted-foreground));
+}
+
   
 @layer utilities {
   .animation-delay-2000 {
