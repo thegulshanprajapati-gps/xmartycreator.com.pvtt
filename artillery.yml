@@ -1,0 +1,89 @@
+config:
+  target: "https://xmartycreator.com"
+  phases:
+    - duration: 60
+      arrivalRate: 10
+      name: "Warm up"
+    - duration: 300
+      arrivalRate: 100
+      rampTo: 500
+      name: "Ramp up to 500 req/s"
+    - duration: 300
+      arrivalRate: 500
+      name: "Sustain 500 req/s"
+    - duration: 600
+      arrivalRate: 1000
+      name: "Peak: 1000 req/s for 10 minutes"
+    - duration: 120
+      arrivalRate: 500
+      rampTo: 0
+      name: "Ramp down"
+  processor: "./artillery-processor.js"
+  variables:
+    blogSlugs:
+      - "getting-started"
+      - "tutorial"
+      - "guide"
+      - "introduction"
+      - "beginner"
+  defaults:
+    headers:
+      Accept-Encoding: "gzip, deflate"
+      User-Agent: "Artillery Load Tester"
+      Cache-Control: "max-age=3600"
+
+scenarios:
+  - name: "Homepage - 40% of traffic"
+    weight: 40
+    flow:
+      - get:
+          url: "/"
+          expect:
+            - statusCode: 200
+          capture:
+            json: "$.home"
+
+  - name: "Blog Listing API - 30% of traffic"
+    weight: 30
+    flow:
+      - get:
+          url: "/api/blog?status=published"
+          expect:
+            - statusCode: 200
+          capture:
+            json: "$.blogs[0].slug"
+
+  - name: "Individual Blog - 20% of traffic"
+    weight: 20
+    flow:
+      - get:
+          url: "/api/blog/{{ blogSlugs | random }}"
+          expect:
+            - statusCode:
+                - 200
+                - 404
+
+  - name: "Home Content API - 10% critical path"
+    weight: 10
+    flow:
+      - get:
+          url: "/api/pages/home"
+          expect:
+            - statusCode: 200
+          think: 2
+
+  - name: "Courses API"
+    weight: 5
+    flow:
+      - get:
+          url: "/api/courses"
+          expect:
+            - statusCode: 200
+
+  - name: "Search - 5%"
+    weight: 5
+    flow:
+      - get:
+          url: "/blog?search=tutorial"
+          expect:
+            - statusCode: 200

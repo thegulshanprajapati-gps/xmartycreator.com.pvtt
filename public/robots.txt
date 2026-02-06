@@ -1,0 +1,14 @@
+// /public/robots.txt
+
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+Disallow: /_next/
+Disallow: /.well-known/
+
+# Crawl Delay
+Crawl-delay: 1
+
+# Sitemaps
+Sitemap: https://xmartycreator.com/sitemap.xml
