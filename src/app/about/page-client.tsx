@@ -137,8 +137,32 @@ export default function AboutPageClient({ initialAboutContent }: AboutPageClient
 
   const sanitizeFounderHtml = (value: string) => {
     if (!value) return '';
+
+    const basicSanitize = (raw: string) => {
+      const allowedTags = new Set(['a', 'strong', 'b', 'em', 'i', 'u', 'br']);
+      return raw.replace(/<\/?([a-z][a-z0-9]*)\b[^>]*>/gi, (match, tagName) => {
+        const tag = tagName.toLowerCase();
+        if (!allowedTags.has(tag)) return '';
+
+        const isClosing = match.startsWith('</');
+        if (tag === 'a') {
+          if (isClosing) return '</a>';
+          const hrefMatch = match.match(/href\s*=\s*(['"])(.*?)\1/i);
+          const href = hrefMatch ? hrefMatch[2] : '';
+          const safe = /^(https?:\/\/|mailto:|tel:)/i.test(href) ? href : '';
+          if (!safe) return '<a>';
+          return `<a href="${safe}" rel="noopener noreferrer" target="_blank">`;
+        }
+
+        return isClosing ? `</${tag}>` : `<${tag}>`;
+      });
+    };
+
+    if (typeof window === 'undefined') {
+      return basicSanitize(value);
+    }
+
     const sanitized = sanitizeBlogContent(value);
-    // Extra safety: strip unsafe href protocols
     try {
       const doc = new DOMParser().parseFromString(sanitized, 'text/html');
       doc.querySelectorAll('a').forEach((anchor) => {
@@ -152,7 +176,7 @@ export default function AboutPageClient({ initialAboutContent }: AboutPageClient
       });
       return doc.body.innerHTML;
     } catch {
-      return sanitized;
+      return basicSanitize(sanitized);
     }
   };
 
