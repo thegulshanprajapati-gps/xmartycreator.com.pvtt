@@ -356,6 +356,18 @@
       transform: scale(1.6);
     }
   }
+
+  @keyframes typingPulse {
+    0%,
+    100% {
+      transform: translateY(0);
+      opacity: 0.5;
+    }
+    50% {
+      transform: translateY(-3px);
+      opacity: 1;
+    }
+  }
 }
 
 @layer utilities {
@@ -405,6 +417,46 @@
     .hover-sheen:hover::after {
       transform: translateX(220%);
     }
+  }
+
+  .chat-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(148, 163, 184, 0.6) transparent;
+  }
+
+  .chat-scrollbar::-webkit-scrollbar {
+    display: block;
+    width: 6px;
+    height: 6px;
+  }
+
+  .chat-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.45);
+    border-radius: 9999px;
+  }
+
+  .chat-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .typing-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 9999px;
+    background: rgba(100, 116, 139, 0.8);
+    animation: typingPulse 1s ease-in-out infinite;
+  }
+
+  .dark .typing-dot {
+    background: rgba(226, 232, 240, 0.8);
+  }
+
+  .typing-dot:nth-child(2) {
+    animation-delay: 0.15s;
+  }
+
+  .typing-dot:nth-child(3) {
+    animation-delay: 0.3s;
   }
 
   .founder-rich a {
