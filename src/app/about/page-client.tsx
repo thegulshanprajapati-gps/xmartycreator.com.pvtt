@@ -25,7 +25,8 @@ import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import { sanitizeBlogContent } from '@/lib/blog-utils';
 
 type AboutContent = {
   hero: {
@@ -133,6 +134,36 @@ export default function AboutPageClient({ initialAboutContent }: AboutPageClient
   const founderDescription = founderDescriptionRaw;
   const founderBio = founderBioRaw || '—';
   const founderQuote = founderQuoteRaw;
+
+  const sanitizeFounderHtml = (value: string) => {
+    if (!value) return '';
+    const sanitized = sanitizeBlogContent(value);
+    // Extra safety: strip unsafe href protocols
+    try {
+      const doc = new DOMParser().parseFromString(sanitized, 'text/html');
+      doc.querySelectorAll('a').forEach((anchor) => {
+        const href = anchor.getAttribute('href') || '';
+        const safe = /^https?:\/\//i.test(href) || href.startsWith('mailto:') || href.startsWith('tel:');
+        if (!safe) {
+          anchor.removeAttribute('href');
+        }
+        anchor.setAttribute('rel', 'noopener noreferrer');
+        anchor.setAttribute('target', '_blank');
+      });
+      return doc.body.innerHTML;
+    } catch {
+      return sanitized;
+    }
+  };
+
+  const founderDescriptionHtml = useMemo(
+    () => sanitizeFounderHtml(founderDescription || ''),
+    [founderDescription]
+  );
+  const founderBioHtml = useMemo(
+    () => sanitizeFounderHtml(founderBio || ''),
+    [founderBio]
+  );
 
   const bioId = 'founder-bio';
   const isLongBio = Boolean(founderBioRaw && founderBioRaw.length > 260);
@@ -474,9 +505,10 @@ export default function AboutPageClient({ initialAboutContent }: AboutPageClient
                       </div>
 
                       {founderDescription && (
-                        <p className="text-sm text-slate-600 dark:text-slate-300">
-                          {founderDescription}
-                        </p>
+                        <div
+                          className="founder-rich text-sm text-slate-600 dark:text-slate-300"
+                          dangerouslySetInnerHTML={{ __html: founderDescriptionHtml }}
+                        />
                       )}
 
                       {founder?.highlights?.length > 0 && (
@@ -510,9 +542,9 @@ export default function AboutPageClient({ initialAboutContent }: AboutPageClient
                     )}
 
                     <div className="mt-6 space-y-4">
-                      <p
+                      <div
                         id={bioId}
-                        className="text-base md:text-lg text-slate-700 dark:text-slate-200 leading-relaxed"
+                        className="founder-rich text-base md:text-lg text-slate-700 dark:text-slate-200 leading-relaxed"
                         style={
                           shouldClampBio
                             ? {
@@ -523,9 +555,8 @@ export default function AboutPageClient({ initialAboutContent }: AboutPageClient
                               }
                             : undefined
                         }
-                      >
-                        {founderBio}
-                      </p>
+                        dangerouslySetInnerHTML={{ __html: founderBioHtml }}
+                      />
 
                       {isLongBio && (
                         <button

@@ -406,6 +406,28 @@
       transform: translateX(220%);
     }
   }
+
+  .founder-rich a {
+    color: hsl(var(--primary));
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    font-weight: 600;
+  }
+
+  .founder-rich strong,
+  .founder-rich b {
+    font-weight: 700;
+  }
+
+  .founder-rich em,
+  .founder-rich i {
+    font-style: italic;
+  }
+
+  .founder-rich u {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
 }
 
 /* CKEditor (Classic) Theme Integration */
