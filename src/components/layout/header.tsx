@@ -17,6 +17,7 @@ import { logout } from '@/app/admin/actions';
 import { useToast } from '@/hooks/use-toast';
 import { motion } from 'framer-motion';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
+import UpdateBell from '@/components/update-bell';
 
 const navLinks = [
   { href: '/', label: 'Home' },
@@ -134,6 +135,7 @@ export function Header() {
            </nav>
 
           <div className="flex items-center gap-2 md:gap-4">
+            <UpdateBell />
             <ThemeToggle />
             <Button variant="ghost" size="icon" className="hidden md:inline-flex" onClick={() => setShowSearch(true)}>
               <Search className="h-5 w-5" />

@@ -36,6 +36,7 @@ interface AnalyticsClientWrapperProps {
   pageVisitsData: { name: string; visits: number }[];
   linkClicksData: { name: string; clicks: number }[];
   dailyTotals: { date: string; pageViews: number; linkClicks: number }[];
+  hourlyTotals: { hour: string; pageViews: number; linkClicks: number }[];
 }
 
 interface CourseMetric {
@@ -55,7 +56,7 @@ interface AnalyticsSummary {
   conversionRate: string | number;
 }
 
-export function AnalyticsClientWrapper({ pageVisitsData, linkClicksData, dailyTotals }: AnalyticsClientWrapperProps) {
+export function AnalyticsClientWrapper({ pageVisitsData, linkClicksData, dailyTotals, hourlyTotals }: AnalyticsClientWrapperProps) {
   const [courseAnalytics, setCourseAnalytics] = useState<AnalyticsSummary | null>(null);
   const [courses, setCourses] = useState<CourseMetric[]>([]);
   const [loadingCourses, setLoadingCourses] = useState(true);
@@ -86,7 +87,12 @@ export function AnalyticsClientWrapper({ pageVisitsData, linkClicksData, dailyTo
       {/* Page Analytics */}
       <div>
         <h2 className="text-2xl font-bold mb-4">Website Analytics</h2>
-        <AnalyticsCharts pageVisitsData={pageVisitsData} linkClicksData={linkClicksData} dailyTotals={dailyTotals} />
+        <AnalyticsCharts
+          pageVisitsData={pageVisitsData}
+          linkClicksData={linkClicksData}
+          dailyTotals={dailyTotals}
+          hourlyTotals={hourlyTotals}
+        />
       </div>
 
       {/* Course Analytics */}

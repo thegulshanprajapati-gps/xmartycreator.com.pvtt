@@ -7,6 +7,7 @@ import clientPromise from '@/lib/mongodb';
 import Blog from '@/lib/models/blog';
 import { Footer } from '@/components/layout/footer';
 import { BlogContent } from '@/components/blog-content';
+import { BlogComments } from '@/components/blog/blog-comments';
 import {
   generateBlogMetadata,
   generateBlogPostingSchema,
@@ -220,6 +221,9 @@ export default async function BlogDetailPage({ params }: { params: Promise<{ slu
                     title={blog.title}
                   />
                 </article>
+                <div className="rounded-3xl border border-slate-200/70 bg-white/90 dark:border-slate-800/70 dark:bg-slate-900/70 shadow-[0_30px_80px_-60px_rgba(15,23,42,0.45)] px-6 py-8 md:px-10 md:py-10">
+                  <BlogComments slug={blog.slug} title={blog.title} />
+                </div>
               </div>
 
               <aside className="lg:block">

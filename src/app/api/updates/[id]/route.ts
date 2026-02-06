@@ -2,6 +2,23 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ObjectId } from 'mongodb';
 import clientPromise from '@/lib/mongodb';
 
+const normalizeCurrencyText = (value?: string) => {
+  if (!value) return value;
+  return value
+    .replace(/â‚¹/g, '₹')
+    .replace(/₱/g, '₹')
+    .replace(/\bPHP\b\s?/gi, '₹')
+    .replace(/\bINR\b\s?/gi, '₹');
+};
+
+const normalizeUpdate = (update: any) => ({
+  ...update,
+  title: normalizeCurrencyText(update.title),
+  subtitle: normalizeCurrencyText(update.subtitle),
+  content: normalizeCurrencyText(update.content),
+  details: normalizeCurrencyText(update.details),
+});
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -18,7 +35,8 @@ export async function GET(
     }
 
     const client = await clientPromise;
-    const db = client.db('myapp');
+    const dbName = process.env.MONGO_DB || process.env.MONGODB_DB || 'xmartydb';
+    const db = client.db(dbName);
     const updatesCollection = db.collection('updates');
 
     const update = await updatesCollection.findOne({
@@ -33,7 +51,7 @@ export async function GET(
     }
 
     return NextResponse.json(
-      { success: true, update },
+      { success: true, update: normalizeUpdate(update) },
       { status: 200 }
     );
   } catch (error) {
@@ -64,15 +82,16 @@ export async function PUT(
     const { title, subtitle, content, details, type, isUrgent, status, author, documentLink, readMoreLink } = body;
 
     const client = await clientPromise;
-    const db = client.db('myapp');
+    const dbName = process.env.MONGO_DB || process.env.MONGODB_DB || 'xmartydb';
+    const db = client.db(dbName);
     const updatesCollection = db.collection('updates');
 
     // Build update object
     const updateData: any = {};
-    if (title !== undefined) updateData.title = title;
-    if (subtitle !== undefined) updateData.subtitle = subtitle;
-    if (content !== undefined) updateData.content = content;
-    if (details !== undefined) updateData.details = details;
+    if (title !== undefined) updateData.title = normalizeCurrencyText(title);
+    if (subtitle !== undefined) updateData.subtitle = normalizeCurrencyText(subtitle);
+    if (content !== undefined) updateData.content = normalizeCurrencyText(content);
+    if (details !== undefined) updateData.details = normalizeCurrencyText(details);
     if (type !== undefined) updateData.type = type;
     if (isUrgent !== undefined) updateData.isUrgent = isUrgent;
     if (status !== undefined) updateData.status = status;
@@ -126,7 +145,8 @@ export async function DELETE(
     }
 
     const client = await clientPromise;
-    const db = client.db('myapp');
+    const dbName = process.env.MONGO_DB || process.env.MONGODB_DB || 'xmartydb';
+    const db = client.db(dbName);
     const updatesCollection = db.collection('updates');
 
     const result = await updatesCollection.deleteOne({

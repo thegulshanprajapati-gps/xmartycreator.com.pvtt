@@ -22,19 +22,22 @@ export default function SecurityDashboard() {
   const [overview, setOverview] = useState<any>(null);
   const [events, setEvents] = useState<Event[]>([]);
   const [traffic, setTraffic] = useState<{ route: string; count: number }[]>([]);
+  const [visits, setVisits] = useState<any[]>([]);
 
   // Poll overview + events
   useEffect(() => {
     let mounted = true;
     const load = async () => {
       try {
-        const [o, e] = await Promise.all([
+        const [o, e, v] = await Promise.all([
           fetch('/api/security/overview').then(r => r.json()),
           fetch('/api/security/events?limit=200').then(r => r.json()),
+          fetch('/api/security/visits?limit=200').then(r => r.json()),
         ]);
         if (mounted) {
           setOverview(o);
           setEvents(e.events || []);
+          setVisits(v.visits || []);
         }
       } catch (err) {
         console.error('Security fetch error', err);
@@ -170,6 +173,41 @@ export default function SecurityDashboard() {
                   </TableCell>
                   <TableCell className="text-xs text-muted-foreground">
                     {new Date(e.ts).toLocaleTimeString()}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
+      <Card className="border-border/70 bg-card/70">
+        <CardHeader>
+          <CardTitle>Recent Visits (IP + Time)</CardTitle>
+        </CardHeader>
+        <CardContent className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>IP</TableHead>
+                <TableHead>Route</TableHead>
+                <TableHead>Method</TableHead>
+                <TableHead>Time</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {visits.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center text-muted-foreground">No visits yet</TableCell>
+                </TableRow>
+              )}
+              {visits.map((v, idx) => (
+                <TableRow key={idx}>
+                  <TableCell className="font-mono text-xs">{v.ip}</TableCell>
+                  <TableCell className="truncate max-w-[280px]">{v.route}</TableCell>
+                  <TableCell>{v.method}</TableCell>
+                  <TableCell className="text-xs text-muted-foreground">
+                    {v.ts ? new Date(v.ts).toLocaleString() : '—'}
                   </TableCell>
                 </TableRow>
               ))}

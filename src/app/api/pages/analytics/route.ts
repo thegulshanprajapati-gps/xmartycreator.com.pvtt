@@ -31,11 +31,21 @@ type DailyDoc = {
   totalLinkClicks?: number;
 };
 
+type HourlyDoc = {
+  hour: string; // YYYY-MM-DD-HH (UTC)
+  date?: string; // YYYY-MM-DD (UTC)
+  hourOfDay?: number; // 0-23 (UTC)
+  pageViews?: Record<string, number>;
+  linkClicks?: Record<string, number>;
+  totalPageViews?: number;
+  totalLinkClicks?: number;
+};
+
 // Use the same DB everywhere; derive from env/URI, fallback to "myapp".
 const dbName = deriveDbName();
 
 function emptyContent() {
-  return { pageViews: {}, linkClicks: {}, dailyTotals: [] as any[] };
+  return { pageViews: {}, linkClicks: {}, dailyTotals: [] as any[], hourlyTotals: [] as any[] };
 }
 
 // Some older records stored content twice (content.content). Normalize that shape.
@@ -73,6 +83,15 @@ function getRangeStart(range: string | null) {
   }
 }
 
+function getHourKey(date: Date) {
+  return date.toISOString().slice(0, 13).replace('T', '-'); // YYYY-MM-DD-HH (UTC)
+}
+
+function formatHourLabel(date: Date) {
+  const iso = date.toISOString(); // YYYY-MM-DDTHH:mm:ss.sssZ
+  return `${iso.slice(5, 13).replace('T', ' ')}:00`; // MM-DD HH:00 (UTC)
+}
+
 export async function GET(req: Request) {
   try {
     const url = new URL(req.url);
@@ -80,6 +99,11 @@ export async function GET(req: Request) {
     const startDate = getRangeStart(range);
     const startKey = startDate.toISOString().slice(0, 10); // YYYY-MM-DD
     const todayKey = new Date().toISOString().slice(0, 10);
+    const now = new Date();
+    const hourlyStart = new Date(now);
+    hourlyStart.setMinutes(0, 0, 0);
+    hourlyStart.setHours(hourlyStart.getHours() - 23);
+    const startHourKey = getHourKey(hourlyStart);
 
     const client = await clientPromise;
     const db = client.db(dbName);
@@ -88,6 +112,12 @@ export async function GET(req: Request) {
     const dailyDocs = await db
       .collection<DailyDoc>('analytics_daily')
       .find({ date: { $gte: startKey } })
+      .toArray();
+
+    // Fetch hourly docs for last 24h
+    const hourlyDocs = await db
+      .collection<HourlyDoc>('analytics_hourly')
+      .find({ hour: { $gte: startHourKey } })
       .toArray();
 
     let pageViewsAgg: Record<string, number> = {};
@@ -127,12 +157,28 @@ export async function GET(req: Request) {
       });
     }
 
+    const hourlyMap = new Map(hourlyDocs.map(doc => [doc.hour, doc]));
+    const hourlyTotals: { hour: string; pageViews: number; linkClicks: number }[] = [];
+
+    for (let i = 0; i < 24; i += 1) {
+      const bucket = new Date(hourlyStart);
+      bucket.setHours(hourlyStart.getHours() + i);
+      const key = getHourKey(bucket);
+      const doc = hourlyMap.get(key);
+      hourlyTotals.push({
+        hour: formatHourLabel(bucket),
+        pageViews: doc?.totalPageViews || 0,
+        linkClicks: doc?.totalLinkClicks || 0,
+      });
+    }
+
     return Response.json({
       slug: 'analytics',
       content: {
         pageViews: pageViewsAgg,
         linkClicks: linkClicksAgg,
         dailyTotals: dailyTotals.sort((a, b) => a.date.localeCompare(b.date)),
+        hourlyTotals,
       },
     });
   } catch (error) {
@@ -147,9 +193,13 @@ export async function POST(req: Request) {
     const client = await clientPromise;
     const db = client.db(dbName);
 
-    const todayKey = new Date().toISOString().slice(0, 10);
+    const now = new Date();
+    const todayKey = now.toISOString().slice(0, 10);
+    const hourKey = getHourKey(now);
     const analyticsColl = db.collection('pages');
     const dailyColl = db.collection<DailyDoc>('analytics_daily');
+    const hourlyColl = db.collection<HourlyDoc>('analytics_hourly');
+    const hourMeta = { hour: hourKey, date: todayKey, hourOfDay: now.getUTCHours() };
 
     // Increment-only fast paths
     if (payload?.type === 'pageview' && typeof payload.pathname === 'string') {
@@ -167,6 +217,18 @@ export async function POST(req: Request) {
             [`pageViews.${payload.pathname}`]: 1,
             totalPageViews: 1,
           },
+        },
+        { upsert: true }
+      );
+
+      await hourlyColl.updateOne(
+        { hour: hourKey },
+        {
+          $inc: {
+            [`pageViews.${payload.pathname}`]: 1,
+            totalPageViews: 1,
+          },
+          $setOnInsert: hourMeta,
         },
         { upsert: true }
       );
@@ -189,6 +251,18 @@ export async function POST(req: Request) {
             [`linkClicks.${payload.linkName}`]: 1,
             totalLinkClicks: 1,
           },
+        },
+        { upsert: true }
+      );
+
+      await hourlyColl.updateOne(
+        { hour: hourKey },
+        {
+          $inc: {
+            [`linkClicks.${payload.linkName}`]: 1,
+            totalLinkClicks: 1,
+          },
+          $setOnInsert: hourMeta,
         },
         { upsert: true }
       );

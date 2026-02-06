@@ -17,6 +17,7 @@ import {
   UserPlus,
   GalleryVertical,
   MessageSquare,
+  MessageCircle,
   Shield,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -40,6 +41,7 @@ const navItems = [
     { href: '/admin/dashboard/about', label: 'About Page', icon: Info },
     { href: '/admin/dashboard/testimonials', label: 'Testimonials', icon: MessageSquare },
     { href: '/admin/dashboard/blog', label: 'Blog Page', icon: Newspaper },
+    { href: '/admin/dashboard/comments', label: 'Blog Comments', icon: MessageCircle },
     { href: '/admin/courses', label: 'Courses', icon: BookOpen },
     { href: '/admin/dashboard/community', label: 'Community Page', icon: Users },
     { href: '/admin/dashboard/contact', label: 'Contact Page', icon: Mail },

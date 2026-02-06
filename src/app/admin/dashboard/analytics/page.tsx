@@ -18,11 +18,12 @@ async function getAnalyticsData() {
     return {
         pageViews: data.content?.pageViews || {},
         linkClicks: data.content?.linkClicks || {},
-        dailyTotals: data.content?.dailyTotals || []
+        dailyTotals: data.content?.dailyTotals || [],
+        hourlyTotals: data.content?.hourlyTotals || [],
     }
   } catch (error) {
     console.error("Failed to read analytics data:", error);
-    return { pageViews: {}, linkClicks: {}, dailyTotals: [] };
+    return { pageViews: {}, linkClicks: {}, dailyTotals: [], hourlyTotals: [] };
   }
 }
 

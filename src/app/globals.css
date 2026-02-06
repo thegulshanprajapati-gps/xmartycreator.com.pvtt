@@ -126,6 +126,17 @@
     background-color: rgba(15, 23, 42, 0.9) !important;
   }
 
+  .magic-mouse-enabled #magicMouseCursor,
+  .magic-mouse-enabled .magicmouse-cursor,
+  .magic-mouse-enabled .magicmouse-pointer {
+    z-index: 999999 !important;
+  }
+
+  .magic-mouse-enabled .magicmouse-pointer,
+  .magic-mouse-enabled .magicmouse-pointer::before {
+    background-color: #ef4444 !important;
+  }
+
   .dark a:hover {
     color: white;
   }

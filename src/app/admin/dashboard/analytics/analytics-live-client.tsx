@@ -10,6 +10,7 @@ type AnalyticsData = {
   pageViews: Record<string, number>;
   linkClicks: Record<string, number>;
   dailyTotals?: { date: string; pageViews: number; linkClicks: number }[];
+  hourlyTotals?: { hour: string; pageViews: number; linkClicks: number }[];
 };
 
 export default function AnalyticsLiveClient({ initial }: { initial: AnalyticsData }) {
@@ -39,6 +40,7 @@ export default function AnalyticsLiveClient({ initial }: { initial: AnalyticsDat
             pageViews: json.content?.pageViews || {},
             linkClicks: json.content?.linkClicks || {},
             dailyTotals: json.content?.dailyTotals || [],
+            hourlyTotals: json.content?.hourlyTotals || [],
           });
           setLastUpdated(Date.now());
         }
@@ -76,6 +78,7 @@ export default function AnalyticsLiveClient({ initial }: { initial: AnalyticsDat
   const topPages = pageVisitsData.slice(0, 5);
   const topLinks = linkClicksData.slice(0, 5);
   const dailyTotals = data.dailyTotals || [];
+  const hourlyTotals = data.hourlyTotals || [];
 
   return (
     <div className="space-y-8">
@@ -156,6 +159,7 @@ export default function AnalyticsLiveClient({ initial }: { initial: AnalyticsDat
           pageVisitsData={pageVisitsData}
           linkClicksData={linkClicksData}
           dailyTotals={dailyTotals}
+          hourlyTotals={hourlyTotals}
         />
       </div>
 

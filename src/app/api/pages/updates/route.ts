@@ -4,7 +4,8 @@ import clientPromise from '@/lib/mongodb';
 export async function GET(request: NextRequest) {
   try {
     const client = await clientPromise;
-    const db = client.db('myapp');
+    const dbName = process.env.MONGO_DB || process.env.MONGODB_DB || 'xmartydb';
+    const db = client.db(dbName);
     const pagesCollection = db.collection('pages');
 
     // Try to fetch updates content
@@ -40,7 +41,8 @@ export async function POST(request: NextRequest) {
     const { title, description, updates } = await request.json();
 
     const client = await clientPromise;
-    const db = client.db('myapp');
+    const dbName = process.env.MONGO_DB || process.env.MONGODB_DB || 'xmartydb';
+    const db = client.db(dbName);
     const pagesCollection = db.collection('pages');
 
     // Update or insert the updates content

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { checkRateLimit, checkIPBlocklist, blockIP, authRateLimiter, aggressiveRateLimiter, getViolationCount } from '@/lib/rate-limit';
 import { detectBot, getBotFingerprint } from '@/lib/bot-detection';
 import { trackPageView } from '@/lib/analytics-tracker';
+import { redis } from '@/lib/redis-cache';
 
 export const config = {
   matcher: [
@@ -38,10 +39,27 @@ function getCacheIdentifier(req: NextRequest, ip: string): string {
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const ip = getClientIP(req);
+  const userAgent = req.headers.get('user-agent') || '';
   const isHighTrafficMode = process.env.HIGH_TRAFFIC_MODE === 'true';
   const rateLimitEnabled = process.env.RATE_LIMIT_ENABLED !== 'false';
   const botDetectionEnabled = process.env.BOT_DETECTION_ENABLED !== 'false';
   const edgeCacheEnabled = process.env.EDGE_CACHE_ENABLED === 'true';
+
+  const logVisit = async () => {
+    try {
+      const visit = {
+        ip,
+        route: pathname,
+        method: req.method,
+        ua: userAgent,
+        ts: Date.now(),
+      };
+      await redis.lpush('security:visits', JSON.stringify(visit));
+      await redis.ltrim('security:visits', 0, 4999);
+    } catch (err) {
+      console.error('[security visit] log failed', err);
+    }
+  };
 
   // PART 1: Check IP Blocklist
   if (rateLimitEnabled && await checkIPBlocklist(ip)) {
@@ -166,6 +184,7 @@ export async function middleware(req: NextRequest) {
   ) {
     // Don't await; background increment only
     trackPageView(pathname, req.nextUrl.origin).catch(() => {});
+    logVisit().catch(() => {});
   }
 
   return response;

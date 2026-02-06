@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { Fragment, useEffect, useState, useMemo } from 'react';
 import { Bell, ArrowRight, Calendar, User, Search, AlertCircle, Sparkles, FileText, ExternalLink, Zap, BookOpen, FileCheck, Megaphone, Settings, AlertTriangle, FileSymlink, X } from 'lucide-react';
 import { Footer } from '@/components/layout/footer';
 import { Button } from '@/components/ui/button';
@@ -41,6 +41,41 @@ type UpdatesContent = {
 };
 
 const CATEGORIES = ['All', 'general', 'platform', 'course', 'maintenance', 'exam', 'event', 'announcement', 'system'];
+
+const normalizeCurrencyText = (text?: string) => {
+  if (!text) return text;
+  return text
+    .replace(/â‚¹/g, '₹')
+    .replace(/₱/g, '₹')
+    .replace(/\bPHP\b\s?/gi, '₹')
+    .replace(/\bINR\b\s?/gi, '₹');
+};
+
+const rupeeSymbolStyle = {
+  fontFamily:
+    "'Noto Sans Devanagari','Noto Sans','Segoe UI Symbol','Arial Unicode MS',system-ui,sans-serif",
+};
+
+const rupeeTextStyle = {
+  fontFamily:
+    "'Noto Sans Devanagari','Noto Sans','Segoe UI','Inter',system-ui,sans-serif",
+};
+
+const renderCurrencySafeText = (text?: string) => {
+  const normalized = normalizeCurrencyText(text) || '';
+  if (!normalized.includes('₹')) return normalized;
+  const parts = normalized.split('₹');
+  return parts.map((part, index) => (
+    <Fragment key={`rupee-part-${index}`}>
+      {index > 0 && (
+        <span style={rupeeSymbolStyle} className="font-semibold">
+          ₹
+        </span>
+      )}
+      {part}
+    </Fragment>
+  ));
+};
 
 // Debounce hook
 function useDebounce<T>(value: T, delay: number): T {
@@ -139,13 +174,29 @@ export default function UpdatesPage() {
         console.log('✅ [Updates] Updates fetched:', data.count || 0, 'updates');
         
         // Filter only published updates
-        const publishedUpdates = data.updates?.filter((u: Update) => u.status === 'published') || [];
+        const publishedUpdates = (data.updates?.filter((u: Update) => u.status === 'published') || [])
+          .map((u: Update) => ({
+            ...u,
+            title: normalizeCurrencyText(u.title) || '',
+            subtitle: normalizeCurrencyText(u.subtitle) || '',
+            content: normalizeCurrencyText(u.content) || '',
+            details: normalizeCurrencyText(u.details) || '',
+          }));
         
         setUpdatesContent({
           title: 'Notices & Updates',
           description: 'Stay informed with the latest updates, announcements, and important information',
           updates: publishedUpdates
         });
+
+        if (publishedUpdates.length > 0) {
+          const latestAt = Math.max(
+            ...publishedUpdates.map((u: Update) => new Date(u.createdAt || u.updatedAt || Date.now()).getTime())
+          );
+          localStorage.setItem('updatesLastSeenAt', String(latestAt));
+          localStorage.setItem('updatesUnreadCount', '0');
+          window.dispatchEvent(new CustomEvent('updates:unread', { detail: { count: 0 } }));
+        }
       } catch (error) {
         console.error('❌ [Updates] Error fetching updates:', error);
         setError('Failed to load updates');
@@ -421,7 +472,7 @@ export default function UpdatesPage() {
                               animate={{ opacity: [0.5, 0.8, 0.5] }}
                               transition={{ repeat: Infinity, duration: 2 }}
                             />
-                            <div className="relative z-10 flex items-start justify-between gap-4">
+                            <div className="relative z-10 flex items-start justify-between gap-4" style={rupeeTextStyle}>
                               <div className="flex-1">
                                 <div className="flex items-center gap-3 mb-3 flex-wrap">
                                   <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold border ${
@@ -444,19 +495,19 @@ export default function UpdatesPage() {
                                     ? 'text-white group-hover:text-red-400'
                                     : 'text-red-900 group-hover:text-red-700'
                                 }`}>
-                                  {update.title}
+                                  {renderCurrencySafeText(update.title)}
                                 </h3>
                                 {update.subtitle && (
                                   <p className={`mb-4 ${
                                     theme === 'dark' ? 'text-slate-300' : 'text-red-800/70'
                                   }`}>
-                                    {update.subtitle}
+                                    {renderCurrencySafeText(update.subtitle)}
                                   </p>
                                 )}
                                 <p className={`mb-4 line-clamp-2 ${
                                   theme === 'dark' ? 'text-slate-400' : 'text-red-800/60'
                                 }`}>
-                                  {update.content}
+                                  {renderCurrencySafeText(update.content)}
                                 </p>
                                 <div className={`flex items-center gap-4 text-sm flex-wrap ${
                                   theme === 'dark' ? 'text-muted-foreground' : 'text-red-800/70'
@@ -564,7 +615,7 @@ export default function UpdatesPage() {
                               }`}
                             />
 
-                            <div className="relative z-10">
+                            <div className="relative z-10" style={rupeeTextStyle}>
                               <div className="flex items-start justify-between mb-4">
                                 <div className="flex items-center gap-2 flex-wrap">
                                   <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold border ${
@@ -596,21 +647,21 @@ export default function UpdatesPage() {
                                   ? 'text-white group-hover:text-cyan-400'
                                   : 'text-gray-900 group-hover:text-gray-700'
                               }`}>
-                                {update.title}
+                              {renderCurrencySafeText(update.title)}
                               </h3>
 
                               {update.subtitle && (
                                 <p className={`text-sm mb-4 line-clamp-2 ${
                                   theme === 'dark' ? 'text-slate-300' : 'text-gray-600'
                                 }`}>
-                                  {update.subtitle}
+                                  {renderCurrencySafeText(update.subtitle)}
                                 </p>
                               )}
 
                               <p className={`text-sm mb-4 line-clamp-3 ${
                                 theme === 'dark' ? 'text-slate-400' : 'text-gray-600'
                               }`}>
-                                {update.content}
+                                {renderCurrencySafeText(update.content)}
                               </p>
 
                               {/* Link Buttons */}
@@ -745,15 +796,15 @@ export default function UpdatesPage() {
         }`}>
           <DialogHeader>
             <div className="flex items-start justify-between w-full gap-4">
-              <div className="flex-1">
+              <div className="flex-1" style={rupeeTextStyle}>
                 <DialogTitle className={theme === 'dark' ? 'text-white text-2xl' : 'text-gray-900 text-2xl'}>
-                  {selectedUpdate?.title}
+                  {renderCurrencySafeText(selectedUpdate?.title || '')}
                 </DialogTitle>
                 {selectedUpdate?.subtitle && (
                   <DialogDescription className={`mt-2 text-base ${
                     theme === 'dark' ? 'text-slate-300' : 'text-gray-600'
                   }`}>
-                    {selectedUpdate.subtitle}
+                    {renderCurrencySafeText(selectedUpdate.subtitle)}
                   </DialogDescription>
                 )}
               </div>
@@ -812,7 +863,7 @@ export default function UpdatesPage() {
                 <p className={`text-base leading-relaxed ${
                   theme === 'dark' ? 'text-slate-300' : 'text-gray-700'
                 }`}>
-                  {selectedUpdate.content}
+                  {renderCurrencySafeText(selectedUpdate.content)}
                 </p>
               </div>
 
@@ -831,7 +882,7 @@ export default function UpdatesPage() {
                   <div className={`prose prose-sm max-w-none whitespace-pre-wrap ${
                     theme === 'dark' ? 'text-slate-300' : 'text-gray-700'
                   }`}>
-                    {selectedUpdate.details}
+                    {renderCurrencySafeText(selectedUpdate.details)}
                   </div>
                 </div>
               )}
@@ -898,4 +949,3 @@ export default function UpdatesPage() {
     </>
   );
 }
-

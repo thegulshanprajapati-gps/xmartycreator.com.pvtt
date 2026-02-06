@@ -2,11 +2,29 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ObjectId } from 'mongodb';
 import clientPromise from '@/lib/mongodb';
 
+const normalizeCurrencyText = (value?: string) => {
+  if (!value) return value;
+  return value
+    .replace(/â‚¹/g, '₹')
+    .replace(/₱/g, '₹')
+    .replace(/\bPHP\b\s?/gi, '₹')
+    .replace(/\bINR\b\s?/gi, '₹');
+};
+
+const normalizeUpdate = (update: any) => ({
+  ...update,
+  title: normalizeCurrencyText(update.title),
+  subtitle: normalizeCurrencyText(update.subtitle),
+  content: normalizeCurrencyText(update.content),
+  details: normalizeCurrencyText(update.details),
+});
+
 // GET all updates
 export async function GET(request: NextRequest) {
   try {
     const client = await clientPromise;
-    const db = client.db('myapp');
+    const dbName = process.env.MONGO_DB || process.env.MONGODB_DB || 'xmartydb';
+    const db = client.db(dbName);
     const updatesCollection = db.collection('updates');
 
     // Get query parameters for filtering
@@ -27,11 +45,13 @@ export async function GET(request: NextRequest) {
       .sort({ [sortBy]: order })
       .toArray();
 
+    const normalizedUpdates = updates.map(normalizeUpdate);
+
     return NextResponse.json(
       {
         success: true,
-        count: updates.length,
-        updates
+        count: normalizedUpdates.length,
+        updates: normalizedUpdates
       },
       { status: 200 }
     );
@@ -59,14 +79,15 @@ export async function POST(request: NextRequest) {
     }
 
     const client = await clientPromise;
-    const db = client.db('myapp');
+    const dbName = process.env.MONGO_DB || process.env.MONGODB_DB || 'xmartydb';
+    const db = client.db(dbName);
     const updatesCollection = db.collection('updates');
 
     const newUpdate = {
-      title,
-      subtitle: subtitle || '',
-      content,
-      details: details || '',
+      title: normalizeCurrencyText(title),
+      subtitle: normalizeCurrencyText(subtitle || ''),
+      content: normalizeCurrencyText(content),
+      details: normalizeCurrencyText(details || ''),
       type,
       isUrgent: isUrgent || false,
       status: status || 'draft',
@@ -96,4 +117,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-
