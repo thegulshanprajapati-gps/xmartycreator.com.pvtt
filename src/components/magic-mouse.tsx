@@ -10,6 +10,8 @@ declare global {
 
 const MAGIC_MOUSE_SRC =
   'https://res.cloudinary.com/veseylab/raw/upload/v1684982764/magicmouse-2.0.0.cdn.min.js';
+const MAGIC_MOUSE_CSS =
+  'https://res.cloudinary.com/veseylab/raw/upload/v1684982764/magicmouse-2.0.0.cdn.min.css';
 export default function MagicMouseProvider() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -60,6 +62,14 @@ export default function MagicMouseProvider() {
       if (cursorStyle !== 'magic') {
         cleanupMagicMouse();
         return;
+      }
+
+      if (!document.getElementById('magicmouse-css')) {
+        const link = document.createElement('link');
+        link.id = 'magicmouse-css';
+        link.rel = 'stylesheet';
+        link.href = MAGIC_MOUSE_CSS;
+        document.head.appendChild(link);
       }
 
       applyHoverClasses();

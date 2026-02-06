@@ -9,6 +9,7 @@ import { ContextMenu } from '@/components/context-menu';
 import { HelpWidget } from '@/components/help-widget';
 import { ThemePersistence } from '@/components/theme-persistence';
 import MagicMouseProvider from '@/components/magic-mouse';
+import SiteSettingsClient from '@/components/site-settings-client';
 import UpdateNotifier from '@/components/update-notifier';
 import { AnalyticsTracker } from '@/components/analytics-tracker';
 
@@ -16,6 +17,7 @@ export default function RootLayoutClient({ children }: { children: ReactNode }) 
   return (
     <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
       <ThemePersistence />
+      <SiteSettingsClient />
       <MagicMouseProvider />
       <UpdateNotifier />
       <AnalyticsTracker />

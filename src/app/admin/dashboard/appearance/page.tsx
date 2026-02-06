@@ -53,7 +53,12 @@ export default function AdminAppearancePage() {
       });
     }
     if (state?.data) {
-      setSettings({ cursorStyle: state.data.cursorStyle || 'sparkle' });
+      const cursorStyle = state.data.cursorStyle || 'sparkle';
+      setSettings({ cursorStyle });
+      if (typeof document !== 'undefined') {
+        document.documentElement.dataset.cursor = cursorStyle;
+        window.dispatchEvent(new CustomEvent('site-settings-updated', { detail: { cursorStyle } }));
+      }
     }
   }, [state, toast]);
 
@@ -87,7 +92,13 @@ export default function AdminAppearancePage() {
             <Label>Cursor Style</Label>
             <Select
               value={settings.cursorStyle}
-              onValueChange={(value) => setSettings((prev) => ({ ...prev, cursorStyle: value }))}
+              onValueChange={(value) => {
+                setSettings((prev) => ({ ...prev, cursorStyle: value }));
+                if (typeof document !== 'undefined') {
+                  document.documentElement.dataset.cursor = value;
+                  window.dispatchEvent(new CustomEvent('site-settings-updated', { detail: { cursorStyle: value } }));
+                }
+              }}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select cursor style" />
@@ -109,4 +120,3 @@ export default function AdminAppearancePage() {
     </form>
   );
 }
-
