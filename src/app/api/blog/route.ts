@@ -33,6 +33,9 @@ function buildExcerpt(inputExcerpt: any, htmlContent: string) {
   return plainText.length > 220 ? `${plainText.slice(0, 217)}...` : plainText;
 }
 
+const MAX_HTML_CONTENT_CHARS = 2_500_000;
+const MAX_INLINE_COVER_IMAGE_CHARS = 1_250_000;
+
 function revalidateBlogPages(slug: string) {
   revalidateTag('blog-content');
   revalidateTag('blog-related');
@@ -139,6 +142,24 @@ export async function POST(request: NextRequest) {
     
     const { title, slug: providedSlug, excerpt, author, authorImage, coverImage, tags, metaTitle, metaDescription, metaKeywords, status } = body;
     const normalizedExcerpt = buildExcerpt(excerpt, htmlContent);
+
+    if (typeof htmlContent === 'string' && htmlContent.length > MAX_HTML_CONTENT_CHARS) {
+      return NextResponse.json(
+        { error: 'Content is too large. Please reduce article size.' },
+        { status: 413 }
+      );
+    }
+
+    if (
+      typeof coverImage === 'string'
+      && coverImage.startsWith('data:image/')
+      && coverImage.length > MAX_INLINE_COVER_IMAGE_CHARS
+    ) {
+      return NextResponse.json(
+        { error: 'Cover image is too large for inline upload. Use an image URL or smaller image.' },
+        { status: 413 }
+      );
+    }
 
     const missingFields: string[] = [];
     if (!title) missingFields.push('title');

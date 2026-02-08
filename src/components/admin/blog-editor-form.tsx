@@ -48,6 +48,20 @@ const DEFAULT_INITIAL: BlogFormValues = {
   status: 'draft',
 };
 
+const INLINE_COVER_IMAGE_MAX_BYTES = 900 * 1024; // keep inline images small to avoid 413 payload errors
+const MAX_REQUEST_PAYLOAD_BYTES = 3.5 * 1024 * 1024;
+
+function isInlineImageDataUrl(value: string) {
+  return /^data:image\/[a-zA-Z0-9.+-]+;base64,/.test(value);
+}
+
+function getDataUrlBytes(dataUrl: string) {
+  const [, base64 = ''] = dataUrl.split(',', 2);
+  if (!base64) return 0;
+  const padding = (base64.match(/=+$/)?.[0]?.length || 0);
+  return Math.max(0, Math.floor((base64.length * 3) / 4) - padding);
+}
+
 export function BlogEditorForm({ initial, saving = false, onSubmit, mode = 'create' }: BlogEditorFormProps) {
   const router = useRouter();
   const { toast } = useToast();
@@ -85,8 +99,24 @@ export function BlogEditorForm({ initial, saving = false, onSubmit, mode = 'crea
 
   const handleFileSelect = (file?: File) => {
     if (!file) return;
-    if (!file.type.startsWith('image/')) return alert('Please select an image file');
-    if (file.size > 5 * 1024 * 1024) return alert('Max file size is 5MB');
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: 'Invalid file',
+        description: 'Please select a valid image file.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (file.size > INLINE_COVER_IMAGE_MAX_BYTES) {
+      toast({
+        title: 'Image too large',
+        description: 'For blog cover upload, keep image under 900KB or paste a hosted image URL.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     const reader = new FileReader();
     reader.onload = (e) => {
       const url = e.target?.result?.toString() || '';
@@ -128,6 +158,31 @@ export function BlogEditorForm({ initial, saving = false, onSubmit, mode = 'crea
       toast({
         title: 'Content required',
         description: 'Please add blog content before saving.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const coverValue = values.coverImage?.trim() || '';
+    if (isInlineImageDataUrl(coverValue)) {
+      const inlineImageBytes = getDataUrlBytes(coverValue);
+      if (inlineImageBytes > INLINE_COVER_IMAGE_MAX_BYTES) {
+        toast({
+          title: 'Cover image too large',
+          description: 'Inline image data is too large and may fail with 413. Use image URL or smaller image (<900KB).',
+          variant: 'destructive',
+        });
+        return;
+      }
+    }
+
+    const approxPayloadBytes = new TextEncoder().encode(
+      JSON.stringify({ ...values, htmlContent: htmlBody })
+    ).length;
+    if (approxPayloadBytes > MAX_REQUEST_PAYLOAD_BYTES) {
+      toast({
+        title: 'Payload too large',
+        description: 'Blog content request is too large. Reduce content/image size or use hosted image URL.',
         variant: 'destructive',
       });
       return;
@@ -177,7 +232,7 @@ export function BlogEditorForm({ initial, saving = false, onSubmit, mode = 'crea
       <section className="rounded-2xl border border-border bg-card/70 shadow-sm p-4 sm:p-6 space-y-4">
         <div className="space-y-1">
           <h2 className="text-lg font-semibold">Featured Image *</h2>
-          <p className="text-sm text-muted-foreground">Paste an image URL (PNG, JPG, WebP). Max ~5MB.</p>
+          <p className="text-sm text-muted-foreground">Prefer hosted image URL. Inline upload is base64 and should stay below ~900KB.</p>
         </div>
         <div className="grid gap-4 md:grid-cols-[2fr_3fr] items-start">
           <div

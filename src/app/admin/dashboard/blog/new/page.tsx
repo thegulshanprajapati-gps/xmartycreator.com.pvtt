@@ -66,6 +66,11 @@ export default function NewBlogPage() {
 
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
+        if (res.status === 413) {
+          throw new Error(
+            data?.error || 'Request too large. Use smaller inline image or paste a hosted image URL.'
+          );
+        }
         const message = data?.error || data?.details || `Failed to create blog (${res.status})`;
         throw new Error(message);
       }

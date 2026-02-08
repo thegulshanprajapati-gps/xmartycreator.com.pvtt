@@ -137,7 +137,6 @@ export default function BlogListClient({ initialBlogs = [] }: BlogListClientProp
   const hasFilter = searchQuery || selectedTags.length > 0;
 
   const featured = filteredBlogs[0];
-  const remaining = filteredBlogs.slice(1);
   const featuredCover = featured
     ? (typeof featured.coverImage === 'string'
         ? featured.coverImage
@@ -147,8 +146,8 @@ export default function BlogListClient({ initialBlogs = [] }: BlogListClientProp
   return (
     <div className="space-y-10">
       {/* Hero Section */}
-      <div className="relative overflow-hidden rounded-2xl border border-slate-200/80 bg-gradient-to-br from-white via-blue-50/70 to-indigo-50/60 shadow-[0_24px_70px_-45px_rgba(59,130,246,0.45)] dark:border-white/10 dark:bg-gradient-to-br dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
-        <div className="absolute inset-0 opacity-70 bg-[radial-gradient(circle_at_18%_18%,rgba(59,130,246,0.2),transparent_38%),radial-gradient(circle_at_82%_12%,rgba(236,72,153,0.14),transparent_32%),radial-gradient(circle_at_55%_85%,rgba(99,102,241,0.2),transparent_40%)] dark:opacity-40" />
+      <div className="relative overflow-hidden rounded-3xl border border-slate-200/70 bg-gradient-to-br from-white/95 via-slate-50 to-slate-100/90 shadow-[0_30px_90px_-70px_rgba(59,130,246,0.65)] backdrop-blur">
+        <div className="absolute inset-0 opacity-55 bg-[radial-gradient(circle_at_18%_18%,rgba(59,130,246,0.12),transparent_38%),radial-gradient(circle_at_82%_12%,rgba(236,72,153,0.1),transparent_32%),radial-gradient(circle_at_55%_85%,rgba(99,102,241,0.12),transparent_40%)]" />
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -156,20 +155,20 @@ export default function BlogListClient({ initialBlogs = [] }: BlogListClientProp
           className="relative px-6 py-10 md:px-10 md:py-14 grid gap-8 lg:grid-cols-[1.2fr_1fr]"
         >
           <div className="space-y-4">
-            <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 text-primary px-3 py-1 text-sm font-semibold">
+            <div className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-blue-500/12 via-purple-500/12 to-pink-500/12 border border-slate-200/60 text-slate-800 px-4 py-2 text-sm font-semibold shadow-[0_10px_40px_-30px_rgba(59,130,246,0.8)]">
               <Sparkles className="h-4 w-4" />
               Curated insights
             </div>
-            <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-slate-900 dark:text-white bg-gradient-to-r from-blue-700 via-indigo-700 to-purple-700 dark:from-white dark:via-slate-100 dark:to-white bg-clip-text text-transparent">
+            <h1 className="text-4xl md:text-5xl font-bold tracking-tight bg-gradient-to-r from-foreground via-foreground to-foreground/70 bg-clip-text text-transparent">
               Insights & Knowledge
             </h1>
-            <p className="text-lg text-slate-700 dark:text-slate-200 max-w-2xl">
-              Discover articles on technology, design, and digital growthâ€”exactly as saved in admin, rendered without loss.
+            <p className="text-lg text-slate-700 max-w-2xl">
+              Discover articles on technology, design, and digital growth, exactly as saved in admin.
             </p>
             <div className="flex flex-wrap gap-3">
-              <Badge className="bg-slate-100 text-slate-700 border-slate-200 dark:bg-white/10 dark:text-white dark:border-white/20">Guides</Badge>
-              <Badge className="bg-slate-100 text-slate-700 border-slate-200 dark:bg-white/10 dark:text-white dark:border-white/20">Releases</Badge>
-              <Badge className="bg-slate-100 text-slate-700 border-slate-200 dark:bg-white/10 dark:text-white dark:border-white/20">Community</Badge>
+              <Badge className="bg-white/80 text-slate-700 border-slate-200">Guides</Badge>
+              <Badge className="bg-white/80 text-slate-700 border-slate-200">Releases</Badge>
+              <Badge className="bg-white/80 text-slate-700 border-slate-200">Community</Badge>
             </div>
           </div>
 
@@ -177,7 +176,7 @@ export default function BlogListClient({ initialBlogs = [] }: BlogListClientProp
           {featured && (
             <Link
               href={`/blog/${featured.slug}`}
-              className="relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white/90 backdrop-blur group shadow-md hover:shadow-lg transition-shadow dark:border-white/10 dark:bg-white/5"
+              className="relative overflow-hidden rounded-2xl border border-slate-200/70 bg-white/90 backdrop-blur group shadow-md hover:shadow-lg transition-shadow"
             >
               <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/20 to-transparent opacity-95" />
               {featuredCover && (
@@ -204,14 +203,14 @@ export default function BlogListClient({ initialBlogs = [] }: BlogListClientProp
       </div>
 
       {/* Search & Filters */}
-      <div className="space-y-4">
+      <div className="space-y-4 rounded-2xl border border-slate-200/70 bg-white/80 p-4 sm:p-5 shadow-[0_20px_65px_-55px_rgba(59,130,246,0.55)] backdrop-blur">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Search articles..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 h-11 bg-white/90 border-slate-200 dark:bg-slate-900/60 dark:border-slate-700"
+            className="pl-10 h-11 bg-white/90 border-slate-200"
           />
         </div>
 
@@ -220,7 +219,7 @@ export default function BlogListClient({ initialBlogs = [] }: BlogListClientProp
           <div>
             <div className="flex items-center gap-2 mb-3">
               <Filter className="h-4 w-4" />
-              <span className="text-sm font-medium text-slate-700 dark:text-slate-200">Filter by topic</span>
+              <span className="text-sm font-medium text-slate-700">Filter by topic</span>
               {hasFilter && (
                 <Button
                   variant="ghost"
@@ -238,7 +237,7 @@ export default function BlogListClient({ initialBlogs = [] }: BlogListClientProp
                 <Badge
                   key={tag}
                   variant={selectedTags.includes(tag) ? 'default' : 'outline'}
-                  className="cursor-pointer transition-all dark:border-slate-700"
+                  className="cursor-pointer transition-all"
                   onClick={() => toggleTag(tag)}
                 >
                   {tag}
@@ -250,7 +249,7 @@ export default function BlogListClient({ initialBlogs = [] }: BlogListClientProp
       </div>
 
       {/* Results Info */}
-      <div className="text-sm text-muted-foreground">
+      <div className="text-sm text-slate-600">
         {filteredBlogs.length === 0 ? (
           <p>No articles found. Try adjusting your filters.</p>
         ) : (
@@ -269,8 +268,8 @@ export default function BlogListClient({ initialBlogs = [] }: BlogListClientProp
           ))}
         </div>
       ) : paginatedBlogs.length === 0 ? (
-        <div className="text-center py-12">
-          <p className="text-lg text-muted-foreground">No articles yet</p>
+        <div className="text-center py-12 rounded-2xl border border-slate-200/70 bg-white/80">
+          <p className="text-lg text-slate-600">No articles yet</p>
         </div>
       ) : (
         <motion.div
@@ -326,10 +325,3 @@ export default function BlogListClient({ initialBlogs = [] }: BlogListClientProp
     </div>
   );
 }
-
-
-
-
-
-
-

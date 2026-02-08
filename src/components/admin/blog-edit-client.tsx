@@ -112,6 +112,11 @@ export default function BlogEditClient({ slug }: Props) {
 
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
+        if (res.status === 413) {
+          throw new Error(
+            data?.error || 'Request too large. Use smaller inline image or paste a hosted image URL.'
+          );
+        }
         throw new Error(data?.error || data?.details || `Failed to update blog (${res.status})`);
       }
 

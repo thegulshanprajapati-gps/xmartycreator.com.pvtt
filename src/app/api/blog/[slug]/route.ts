@@ -34,6 +34,9 @@ function buildExcerpt(inputExcerpt: any, htmlContent: string) {
   return plainText.length > 220 ? `${plainText.slice(0, 217)}...` : plainText;
 }
 
+const MAX_HTML_CONTENT_CHARS = 2_500_000;
+const MAX_INLINE_COVER_IMAGE_CHARS = 1_250_000;
+
 function revalidateBlogPages(slugs: string[]) {
   revalidateTag('blog-content');
   revalidateTag('blog-related');
@@ -186,6 +189,24 @@ export async function PUT(
 
     const finalContent = validateAndFixContent(content || contentJSON || {});
     const finalHtmlContent = htmlContent || contentHTML;
+
+    if (typeof finalHtmlContent === 'string' && finalHtmlContent.length > MAX_HTML_CONTENT_CHARS) {
+      return NextResponse.json(
+        { error: 'Content is too large. Please reduce article size.' },
+        { status: 413 }
+      );
+    }
+
+    if (
+      typeof coverImage === 'string'
+      && coverImage.startsWith('data:image/')
+      && coverImage.length > MAX_INLINE_COVER_IMAGE_CHARS
+    ) {
+      return NextResponse.json(
+        { error: 'Cover image is too large for inline upload. Use an image URL or smaller image.' },
+        { status: 413 }
+      );
+    }
 
     const normalizedExcerpt = buildExcerpt(excerpt, finalHtmlContent);
 

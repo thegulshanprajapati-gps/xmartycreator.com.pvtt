@@ -4,7 +4,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 export default function BlogCardSkeleton() {
   return (
-    <div className="rounded-lg border border-border overflow-hidden">
+    <div className="rounded-2xl border border-slate-200/70 bg-gradient-to-br from-white/95 via-slate-50 to-slate-100/80 overflow-hidden shadow-[0_25px_80px_-60px_rgba(59,130,246,0.45)]">
       {/* Image Skeleton */}
       <Skeleton className="h-48 w-full" />
 
@@ -30,7 +30,7 @@ export default function BlogCardSkeleton() {
         </div>
 
         {/* Author */}
-        <div className="flex items-center gap-2 pt-4 border-t border-border">
+        <div className="flex items-center gap-2 pt-4 border-t border-slate-200/70">
           <Skeleton className="h-8 w-8 rounded-full" />
           <div className="flex-1 space-y-2">
             <Skeleton className="h-4 w-24" />
