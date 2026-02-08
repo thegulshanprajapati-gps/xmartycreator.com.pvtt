@@ -9,6 +9,7 @@
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "setup:db": "ts-node scripts/setup-db.ts",
+    "brain:seed": "node scripts/seed-brain-db.js",
     "load-test:k6": "k6 run load-test.k6.js",
     "load-test:artillery": "artillery run artillery.yml",
     "deploy": "bash deploy.sh",

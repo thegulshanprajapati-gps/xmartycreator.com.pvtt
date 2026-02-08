@@ -32,7 +32,9 @@ export const metadata: Metadata = {
 export default function BlogLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
-      {children}
+      <div className="blog-no-select select-none [&_input]:select-text [&_textarea]:select-text [&_[contenteditable='true']]:select-text">
+        {children}
+      </div>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{

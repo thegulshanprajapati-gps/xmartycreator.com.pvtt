@@ -26,6 +26,7 @@ export default function RootLayoutClient({ children }: { children: ReactNode }) 
       <SessionProvider isLoggedIn={false}>
         <ContextMenu />
         <Header />
+        <div className="h-16 w-full shrink-0" aria-hidden="true" />
         {children}
         <HelpWidget />
         <Toaster />
