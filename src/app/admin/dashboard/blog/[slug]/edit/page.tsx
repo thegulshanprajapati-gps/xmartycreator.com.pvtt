@@ -4,10 +4,25 @@ import { useEffect, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { BlogEditorForm, BlogFormValues } from '@/components/admin/blog-editor-form';
 import { useParams, useRouter } from 'next/navigation';
+import { useToast } from '@/hooks/use-toast';
+
+function buildFallbackExcerpt(explicitExcerpt: string, htmlContent: string) {
+  const explicit = (explicitExcerpt || '').trim();
+  if (explicit) return explicit;
+
+  const plain = (htmlContent || '')
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  if (!plain) return '';
+  return plain.length > 220 ? `${plain.slice(0, 217)}...` : plain;
+}
 
 export default function EditBlogPage() {
   const { slug } = useParams<{ slug: string }>();
   const router = useRouter();
+  const { toast } = useToast();
   const [blog, setBlog] = useState<BlogFormValues | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -56,7 +71,13 @@ export default function EditBlogPage() {
         setBlog(mapToFormValues(data));
       } catch (err) {
         console.warn('Error fetching blog:', err);
-        setError(err instanceof Error ? err.message : 'Failed to load blog');
+        const message = err instanceof Error ? err.message : 'Failed to load blog';
+        setError(message);
+        toast({
+          title: 'Load failed',
+          description: message,
+          variant: 'destructive',
+        });
       } finally {
         setLoading(false);
       }
@@ -70,17 +91,45 @@ export default function EditBlogPage() {
     try {
       const tagsArray = values.tags ? values.tags.split(',').map(t => t.trim()).filter(Boolean) : [];
       const metaKeywordsArray = values.metaKeywords ? values.metaKeywords.split(',').map(t => t.trim()).filter(Boolean) : [];
-      await fetch(`/api/blog/${slug}`, {
+      const htmlBody = values.htmlContent || values.content || '';
+      const normalizedExcerpt = buildFallbackExcerpt(values.excerpt, htmlBody);
+
+      const res = await fetch(`/api/blog/${slug}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...values,
+          excerpt: normalizedExcerpt,
           tags: tagsArray,
           metaKeywords: metaKeywordsArray,
           metaTitle: values.metaTitle || values.title,
-          metaDescription: values.metaDescription || values.excerpt,
-          htmlContent: values.htmlContent || values.content,
+          metaDescription: values.metaDescription || normalizedExcerpt,
+          htmlContent: htmlBody,
         }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const message = data?.error || data?.details || `Failed to update blog (${res.status})`;
+        throw new Error(message);
+      }
+
+      toast({
+        title: 'Blog updated',
+        description: values.status === 'published'
+          ? 'Published article updated successfully.'
+          : 'Draft updated successfully.',
+      });
+
+      const updatedSlug = typeof data?.slug === 'string' ? data.slug : values.slug;
+      if (updatedSlug && updatedSlug !== slug) {
+        router.replace(`/admin/dashboard/blog/${updatedSlug}/edit`);
+      }
+    } catch (error) {
+      toast({
+        title: 'Update failed',
+        description: error instanceof Error ? error.message : 'Could not update blog.',
+        variant: 'destructive',
       });
     } finally {
       setSaving(false);

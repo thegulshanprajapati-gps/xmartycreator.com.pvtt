@@ -3,13 +3,28 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { BlogEditorForm, BlogFormValues } from '@/components/admin/blog-editor-form';
+import { useToast } from '@/hooks/use-toast';
 
 interface Props {
   slug: string;
 }
 
+function buildFallbackExcerpt(explicitExcerpt: string, htmlContent: string) {
+  const explicit = (explicitExcerpt || '').trim();
+  if (explicit) return explicit;
+
+  const plain = (htmlContent || '')
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  if (!plain) return '';
+  return plain.length > 220 ? `${plain.slice(0, 217)}...` : plain;
+}
+
 export default function BlogEditClient({ slug }: Props) {
   const router = useRouter();
+  const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [initial, setInitial] = useState<BlogFormValues>({
@@ -33,13 +48,18 @@ export default function BlogEditClient({ slug }: Props) {
         const res = await fetch(`/api/blog/${slug}`);
         if (res.ok) {
           const data = await res.json();
+          const htmlBody = typeof data.htmlContent === 'string'
+            ? data.htmlContent
+            : typeof data.content === 'string'
+              ? data.content
+              : '';
           setInitial({
             title: data.title || '',
             excerpt: data.excerpt || '',
-            content: data.content || data.htmlContent || '',
-            htmlContent: data.htmlContent || data.content || '',
+            content: htmlBody,
+            htmlContent: htmlBody,
             author: data.author || '',
-            coverImage: data.coverImage || '',
+            coverImage: typeof data.coverImage === 'string' ? data.coverImage : data.coverImage?.url || '',
             status: data.status || 'draft',
             slug: data.slug || slug,
             tags: Array.isArray(data.tags) ? data.tags.join(', ') : '',
@@ -47,7 +67,16 @@ export default function BlogEditClient({ slug }: Props) {
             metaDescription: data.metaDescription || data.excerpt || '',
             metaKeywords: Array.isArray(data.metaKeywords) ? data.metaKeywords.join(', ') : '',
           });
+        } else {
+          const data = await res.json().catch(() => ({}));
+          throw new Error(data?.error || `Failed to load blog (${res.status})`);
         }
+      } catch (error) {
+        toast({
+          title: 'Load failed',
+          description: error instanceof Error ? error.message : 'Could not load blog.',
+          variant: 'destructive',
+        });
       } finally {
         setLoading(false);
       }
@@ -64,19 +93,41 @@ export default function BlogEditClient({ slug }: Props) {
       const metaKeywordsArray = values.metaKeywords
         ? values.metaKeywords.split(',').map((t) => t.trim()).filter(Boolean)
         : [];
-      await fetch(`/api/blog/${slug}`, {
+      const htmlBody = values.htmlContent || values.content || '';
+      const normalizedExcerpt = buildFallbackExcerpt(values.excerpt, htmlBody);
+
+      const res = await fetch(`/api/blog/${slug}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...values,
+          excerpt: normalizedExcerpt,
           tags: tagsArray,
           metaKeywords: metaKeywordsArray,
           metaTitle: values.metaTitle || values.title,
-          metaDescription: values.metaDescription || values.excerpt,
-          htmlContent: values.htmlContent || values.content,
+          metaDescription: values.metaDescription || normalizedExcerpt,
+          htmlContent: htmlBody,
         }),
       });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data?.error || data?.details || `Failed to update blog (${res.status})`);
+      }
+
+      toast({
+        title: 'Blog updated',
+        description: values.status === 'published'
+          ? 'Published article updated successfully.'
+          : 'Draft updated successfully.',
+      });
       router.push('/admin/dashboard/blog');
+    } catch (error) {
+      toast({
+        title: 'Update failed',
+        description: error instanceof Error ? error.message : 'Could not update blog.',
+        variant: 'destructive',
+      });
     } finally {
       setSaving(false);
     }

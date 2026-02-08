@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Search, Filter, X, Sparkles } from 'lucide-react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 
 interface BlogPost {
@@ -32,6 +32,7 @@ interface BlogListClientProps {
 
 export default function BlogListClient({ initialBlogs = [] }: BlogListClientProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const [blogs, setBlogs] = useState<BlogPost[]>(initialBlogs);
   const [isLoading, setIsLoading] = useState(initialBlogs.length === 0);
@@ -104,12 +105,18 @@ export default function BlogListClient({ initialBlogs = [] }: BlogListClientProp
     setPage(1);
 
     // Update URL
-    const params = new URLSearchParams();
-    if (searchQuery) params.set('q', searchQuery);
-    if (selectedTags.length > 0) params.set('tags', selectedTags.join(','));
-    const newURL = params.toString() ? `?${params.toString()}` : '';
-    router.push(`/blog${newURL}`, { shallow: true } as any);
-  }, [searchQuery, selectedTags, blogs, router]);
+    const nextParams = new URLSearchParams();
+    if (searchQuery) nextParams.set('q', searchQuery);
+    if (selectedTags.length > 0) nextParams.set('tags', selectedTags.join(','));
+
+    const nextQuery = nextParams.toString();
+    const currentQuery = searchParams?.toString() || '';
+    if (nextQuery !== currentQuery) {
+      const targetPath = pathname || '/blog';
+      const nextUrl = nextQuery ? `${targetPath}?${nextQuery}` : targetPath;
+      router.replace(nextUrl, { scroll: false });
+    }
+  }, [searchQuery, selectedTags, blogs, router, pathname, searchParams]);
 
   const toggleTag = (tag: string) => {
     setSelectedTags((prev) =>
@@ -145,7 +152,7 @@ export default function BlogListClient({ initialBlogs = [] }: BlogListClientProp
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
+          transition={{ duration: 0.3 }}
           className="relative px-6 py-10 md:px-10 md:py-14 grid gap-8 lg:grid-cols-[1.2fr_1fr]"
         >
           <div className="space-y-4">
@@ -269,7 +276,7 @@ export default function BlogListClient({ initialBlogs = [] }: BlogListClientProp
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 0.5 }}
+          transition={{ duration: 0.25 }}
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
         >
           {paginatedBlogs.map((blog, i) => (
@@ -277,7 +284,7 @@ export default function BlogListClient({ initialBlogs = [] }: BlogListClientProp
               key={blog._id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.1 }}
+              transition={{ delay: Math.min(i * 0.03, 0.18), duration: 0.2 }}
             >
               <BlogCard {...blog} />
             </motion.div>
@@ -319,8 +326,6 @@ export default function BlogListClient({ initialBlogs = [] }: BlogListClientProp
     </div>
   );
 }
-
-
 
 
 

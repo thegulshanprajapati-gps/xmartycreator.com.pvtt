@@ -1,16 +1,17 @@
 import { Metadata } from "next";
 import { Suspense } from "react";
-import { headers } from "next/headers";
 import { Sparkles, BookOpen, PenLine } from "lucide-react";
 import BlogListClient from "@/components/blog/blog-list-client";
 import BlogCardSkeleton from "@/components/blog/blog-card-skeleton";
 import { getPageContent } from "@/lib/page-content-cache";
+import connectDB from "@/lib/db-connection";
+import Blog from "@/lib/models/blog";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Footer } from "@/components/layout/footer";
 import { cn } from "@/lib/utils";
 
-export const revalidate = 0;
+export const revalidate = 120;
 
 export const metadata: Metadata = {
   title: "Blog | Xmarty Creator",
@@ -34,25 +35,28 @@ function BlogSkeleton() {
 }
 
 async function fetchBlogs() {
-  const host = headers().get("host");
-  const protocol = host?.startsWith("localhost") ? "http" : "https";
-  const baseUrl =
-    process.env.NEXT_PUBLIC_URL ||
-    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : `${protocol}://${host || "localhost:3000"}`);
+  try {
+    await connectDB();
+    const blogs = await Blog.find({ status: "published" })
+      .select("_id title slug excerpt author authorImage readTime tags views publishedAt status coverImage")
+      .sort({ publishedAt: -1 })
+      .limit(100)
+      .maxTimeMS(5000)
+      .lean()
+      .exec();
 
-  const res = await fetch(`${baseUrl}/api/blog?status=published&limit=100`, {
-    cache: "force-cache",
-    next: { revalidate: 300 },
-  });
-
-  if (!res.ok) return [];
-  return res.json();
+    return Array.isArray(blogs) ? JSON.parse(JSON.stringify(blogs)) : [];
+  } catch (error) {
+    console.error("Blog page fetchBlogs error:", error);
+    return [];
+  }
 }
 
 export default async function BlogPage() {
-  const content = await getPageContent('blog', true).catch(() => ({}));
-  const initialBlogs = await fetchBlogs();
-  console.log('?? [Blog Page] Loaded hero content', content?.hero || {});
+  const [content, initialBlogs] = await Promise.all([
+    getPageContent("blog").catch(() => ({})),
+    fetchBlogs(),
+  ]);
   const hero = {
     badgeText: content?.hero?.badgeText || '',
     title: content?.hero?.title || '',
@@ -147,5 +151,4 @@ export default async function BlogPage() {
     </div>
   );
 }
-
 

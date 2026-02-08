@@ -21,6 +21,19 @@ function validateAndFixContent(content: any) {
   return { type: 'doc', content: [] };
 }
 
+function buildExcerpt(inputExcerpt: any, htmlContent: string) {
+  const explicit = typeof inputExcerpt === 'string' ? inputExcerpt.trim() : '';
+  if (explicit) return explicit;
+
+  const plainText = htmlContent
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  if (!plainText) return '';
+  return plainText.length > 220 ? `${plainText.slice(0, 217)}...` : plainText;
+}
+
 function revalidateBlogPages(slugs: string[]) {
   revalidateTag('blog-content');
   revalidateTag('blog-related');
@@ -174,12 +187,14 @@ export async function PUT(
     const finalContent = validateAndFixContent(content || contentJSON || {});
     const finalHtmlContent = htmlContent || contentHTML;
 
-    if (!title || !finalHtmlContent || !author || !excerpt) {
+    const normalizedExcerpt = buildExcerpt(excerpt, finalHtmlContent);
+
+    if (!title || !finalHtmlContent || !author || !normalizedExcerpt) {
       const missing = [];
       if (!title) missing.push('title');
       if (!finalHtmlContent) missing.push('htmlContent');
       if (!author) missing.push('author');
-      if (!excerpt) missing.push('excerpt');
+      if (!normalizedExcerpt) missing.push('excerpt');
       return NextResponse.json(
         { error: `Missing required fields: ${missing.join(', ')}` }, 
         { status: 400 }
@@ -245,14 +260,14 @@ export async function PUT(
     blog.slug = newSlug;
     blog.content = finalContent;
     blog.htmlContent = finalHtmlContent;
-    blog.excerpt = excerpt;
+    blog.excerpt = normalizedExcerpt;
     blog.author = author;
     blog.authorImage = authorImage || '';
     blog.coverImage = coverImageData;
     blog.tags = tags || [];
     blog.readTime = readTime;
     blog.metaTitle = metaTitle || title;
-    blog.metaDescription = metaDescription || excerpt;
+    blog.metaDescription = metaDescription || normalizedExcerpt;
     blog.metaKeywords = metaKeywords || [];
     blog.status = status || 'draft';
     blog.updatedAt = new Date();
@@ -281,6 +296,18 @@ export async function PUT(
       `blogs:list:published:content-on`,
       `blogs:list:all:content-off`,
       `blogs:list:all:content-on`,
+      `blogs:list:${blog.status}:content-off:limit-100`,
+      `blogs:list:${blog.status}:content-on:limit-100`,
+      `blogs:list:${blog.status}:content-off:limit-200`,
+      `blogs:list:${blog.status}:content-on:limit-200`,
+      'blogs:list:published:content-off:limit-100',
+      'blogs:list:published:content-on:limit-100',
+      'blogs:list:published:content-off:limit-200',
+      'blogs:list:published:content-on:limit-200',
+      'blogs:list:all:content-off:limit-100',
+      'blogs:list:all:content-on:limit-100',
+      'blogs:list:all:content-off:limit-200',
+      'blogs:list:all:content-on:limit-200',
     ]);
 
     revalidateBlogPages([slug, newSlug]);
@@ -348,6 +375,18 @@ export async function DELETE(
       `blogs:list:all:content-on`,
       `blogs:list:draft:content-off`,
       `blogs:list:draft:content-on`,
+      'blogs:list:published:content-off:limit-100',
+      'blogs:list:published:content-on:limit-100',
+      'blogs:list:published:content-off:limit-200',
+      'blogs:list:published:content-on:limit-200',
+      'blogs:list:all:content-off:limit-100',
+      'blogs:list:all:content-on:limit-100',
+      'blogs:list:all:content-off:limit-200',
+      'blogs:list:all:content-on:limit-200',
+      'blogs:list:draft:content-off:limit-100',
+      'blogs:list:draft:content-on:limit-100',
+      'blogs:list:draft:content-off:limit-200',
+      'blogs:list:draft:content-on:limit-200',
     ]);
 
     revalidateBlogPages([slug]);

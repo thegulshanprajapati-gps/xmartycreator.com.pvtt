@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Edit2, Trash2, Plus, Eye, FileText, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
 
 interface BlogPost {
   _id: string;
@@ -21,8 +22,14 @@ interface BlogPost {
   publishedAt?: string;
 }
 
+type Notice = {
+  tone: 'success' | 'error' | 'info';
+  message: string;
+} | null;
+
 export default function BlogDashboardPage() {
   const router = useRouter();
+  const { toast } = useToast();
   const [blogs, setBlogs] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -39,6 +46,8 @@ export default function BlogDashboardPage() {
   });
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
+  const [notice, setNotice] = useState<Notice>(null);
+  const [deletingSlugs, setDeletingSlugs] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     loadBlogs();
@@ -47,11 +56,23 @@ export default function BlogDashboardPage() {
 
   const loadBlogs = async () => {
     try {
-      const res = await fetch('/api/blog');
+      const res = await fetch('/api/blog?status=all&limit=200&fresh=true', { cache: 'no-store' });
       const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data?.error || `Failed to fetch blogs (${res.status})`);
+      }
       setBlogs(Array.isArray(data) ? data : data.posts || []);
     } catch (error) {
       console.error('Error fetching blogs:', error);
+      setNotice({
+        tone: 'error',
+        message: error instanceof Error ? error.message : 'Could not load blog posts.',
+      });
+      toast({
+        title: 'Fetch failed',
+        description: error instanceof Error ? error.message : 'Could not load blog posts.',
+        variant: 'destructive',
+      });
     } finally {
       setLoading(false);
     }
@@ -91,21 +112,78 @@ export default function BlogDashboardPage() {
         throw new Error('Failed to save');
       }
       setSaveMessage('Saved: Blog hero updated.');
+      toast({
+        title: 'Saved',
+        description: 'Blog hero content updated successfully.',
+      });
     } catch (error) {
       console.error(error);
       setSaveMessage('Error: Could not save blog hero.');
+      toast({
+        title: 'Save failed',
+        description: error instanceof Error ? error.message : 'Could not save blog hero.',
+        variant: 'destructive',
+      });
     } finally {
       setSaving(false);
     }
   };
 
   const handleDelete = async (slug: string) => {
+    if (deletingSlugs.has(slug)) return;
     if (!confirm('Delete this blog?')) return;
+
+    setDeletingSlugs((prev) => {
+      const next = new Set(prev);
+      next.add(slug);
+      return next;
+    });
+    setNotice({ tone: 'info', message: 'Deleting blog post...' });
+
     try {
-      await fetch(`/api/blog/${slug}`, { method: 'DELETE' });
-      loadBlogs();
+      const res = await fetch(`/api/blog/${encodeURIComponent(slug)}`, {
+        method: 'DELETE',
+        cache: 'no-store',
+      });
+      const data = await res.json().catch(() => ({}));
+
+      if (res.status === 404) {
+        setBlogs((prev) => prev.filter((blog) => blog.slug !== slug));
+        setNotice({ tone: 'success', message: 'Blog was already deleted. Removed from list.' });
+        toast({
+          title: 'Already deleted',
+          description: 'This post no longer exists in database.',
+        });
+        return;
+      }
+
+      if (!res.ok) {
+        throw new Error(data?.error || `Delete failed (${res.status})`);
+      }
+
+      setBlogs((prev) => prev.filter((blog) => blog.slug !== slug));
+      setNotice({ tone: 'success', message: 'Blog deleted successfully.' });
+      toast({
+        title: 'Deleted',
+        description: 'Blog deleted successfully.',
+      });
     } catch (error) {
       console.error('Error deleting blog:', error);
+      setNotice({
+        tone: 'error',
+        message: error instanceof Error ? error.message : 'Could not delete blog.',
+      });
+      toast({
+        title: 'Delete failed',
+        description: error instanceof Error ? error.message : 'Could not delete blog.',
+        variant: 'destructive',
+      });
+    } finally {
+      setDeletingSlugs((prev) => {
+        const next = new Set(prev);
+        next.delete(slug);
+        return next;
+      });
     }
   };
 
@@ -208,6 +286,22 @@ export default function BlogDashboardPage() {
         />
       </div>
 
+      {notice && (
+        <div
+          className={`mb-4 rounded-md border px-3 py-2 text-sm ${
+            notice.tone === 'success'
+              ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300'
+              : notice.tone === 'error'
+                ? 'border-red-500/40 bg-red-500/10 text-red-300'
+                : 'border-blue-500/40 bg-blue-500/10 text-blue-300'
+          }`}
+          role="status"
+          aria-live="polite"
+        >
+          {notice.message}
+        </div>
+      )}
+
       <div className="border rounded-lg overflow-hidden bg-white dark:bg-slate-900">
         <Table>
           <TableHeader>
@@ -243,7 +337,7 @@ export default function BlogDashboardPage() {
                       ? new Date(blog.publishedAt).toLocaleDateString()
                       : new Date(blog.updatedAt).toLocaleDateString()}
                   </TableCell>
-                  <TableCell>{blog.readTime || '—'}</TableCell>
+                  <TableCell>{blog.readTime || '--'}</TableCell>
                   <TableCell className="text-right space-x-2">
                     <Button
                       size="sm"
@@ -265,8 +359,13 @@ export default function BlogDashboardPage() {
                       size="sm"
                       variant="ghost"
                       className="text-destructive hover:text-destructive"
+                      disabled={deletingSlugs.has(blog.slug)}
                       onClick={() => handleDelete(blog.slug)}>
-                      <Trash2 className="h-4 w-4" />
+                      {deletingSlugs.has(blog.slug) ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="h-4 w-4" />
+                      )}
                     </Button>
                   </TableCell>
                 </TableRow>

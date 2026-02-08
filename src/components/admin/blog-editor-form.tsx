@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, ImageIcon } from 'lucide-react';
 import { BlogRichEditor } from './blog-rich-editor';
+import { useToast } from '@/hooks/use-toast';
 
 export type BlogFormValues = {
   title: string;
@@ -49,6 +50,7 @@ const DEFAULT_INITIAL: BlogFormValues = {
 
 export function BlogEditorForm({ initial, saving = false, onSubmit, mode = 'create' }: BlogEditorFormProps) {
   const router = useRouter();
+  const { toast } = useToast();
   const resolvedInitial = initial ?? DEFAULT_INITIAL;
   const [values, setValues] = useState<BlogFormValues>(resolvedInitial);
   const [statusOverride, setStatusOverride] = useState<'draft' | 'published'>(resolvedInitial.status);
@@ -62,7 +64,7 @@ export function BlogEditorForm({ initial, saving = false, onSubmit, mode = 'crea
   // Auto-slugify on title change (only if slug empty or auto)
   useEffect(() => {
     if (!values.title) return;
-    if (!values.slug || values.slug === initial.slug) {
+    if (!values.slug || values.slug === (initial?.slug || '')) {
       const slug = values.title
         .toLowerCase()
         .trim()
@@ -94,6 +96,43 @@ export function BlogEditorForm({ initial, saving = false, onSubmit, mode = 'crea
   };
 
   const handleSubmit = async (desiredStatus?: 'draft' | 'published') => {
+    if (!values.title.trim()) {
+      toast({
+        title: 'Title required',
+        description: 'Please enter a blog title before saving.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!values.slug.trim()) {
+      toast({
+        title: 'Slug required',
+        description: 'Please enter a valid slug.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!values.author.trim()) {
+      toast({
+        title: 'Author required',
+        description: 'Please enter author name.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const htmlBody = (values.content || values.htmlContent || '').trim();
+    if (!htmlBody) {
+      toast({
+        title: 'Content required',
+        description: 'Please add blog content before saving.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     const nextStatus = desiredStatus || statusOverride;
     await onSubmit({ ...values, status: nextStatus, htmlContent: values.content });
   };
