@@ -144,7 +144,7 @@ export default function CommunityPage() {
   useEffect(() => {
     const fetchContent = async () => {
       try {
-        const res = await fetch('/api/pages/community');
+        const res = await fetch('/api/pages/community', { cache: 'no-store' });
         if (res.ok) {
           const data = await res.json();
           // Merge with defaults to avoid undefined nested props

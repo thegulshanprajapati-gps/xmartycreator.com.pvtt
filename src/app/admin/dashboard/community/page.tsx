@@ -33,7 +33,7 @@ export default function AdminCommunityPage() {
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await fetch('/api/pages/community');
+        const res = await fetch('/api/pages/community', { cache: 'no-store' });
         if (res.ok) {
           const json = await res.json();
           setData((prev) => ({
@@ -73,10 +73,26 @@ export default function AdminCommunityPage() {
       const res = await fetch('/api/pages/community', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        cache: 'no-store',
         body: JSON.stringify(data),
       });
       if (!res.ok) throw new Error(await res.text());
-      toast({ title: 'Saved', description: 'Community page updated successfully.' });
+      const json = await res.json();
+      if (json?.content) {
+        setData((prev) => ({
+          ...prev,
+          ...json.content,
+          hero: { ...prev.hero, ...(json.content?.hero || {}) },
+          youtube: { ...prev.youtube, ...(json.content?.youtube || {}) },
+          whatsapp: { ...prev.whatsapp, ...(json.content?.whatsapp || {}) },
+          app: { ...prev.app, ...(json.content?.app || {}) },
+          telegram: { ...prev.telegram, ...(json.content?.telegram || {}) },
+        }));
+      }
+      toast({
+        title: 'Saved',
+        description: `Community page updated successfully (DB: ${json?._meta?.db || 'xmartydb'}).`,
+      });
     } catch (err) {
       console.error('Save error', err);
       toast({ title: 'Save failed', description: 'Please try again.', variant: 'destructive' });
