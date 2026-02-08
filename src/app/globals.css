@@ -31,6 +31,11 @@
     --chart-5: 340 75% 55%;
     --radius: 0.5rem;
     --site-cursor: auto;
+    --vasant-bg: 196 50% 96%;
+    --vasant-panel: 0 0% 100%;
+    --vasant-text: 210 29% 14%;
+    --vasant-assistant: 198 44% 98%;
+    --vasant-chip: 186 46% 95%;
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 0 0% 3.9%;
     --sidebar-primary: 0 72% 51%;
@@ -66,6 +71,11 @@
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
+    --vasant-bg: 203 36% 8%;
+    --vasant-panel: 204 34% 11%;
+    --vasant-text: 210 40% 96%;
+    --vasant-assistant: 205 26% 18%;
+    --vasant-chip: 201 24% 17%;
     --sidebar-background: 0 0% 3.9%;
     --sidebar-foreground: 0 0% 98%;
     --sidebar-primary: 0 72% 51%;
@@ -93,8 +103,12 @@
   }
   html,
   body {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
     -ms-overflow-style: none;
     scrollbar-width: none;
+    -webkit-text-size-adjust: 100%;
     cursor: var(--site-cursor, auto);
   }
 

@@ -1,7 +1,6 @@
 'use client';
 
 import { Send } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 
 interface ChatInputProps {
   value: string;
@@ -12,8 +11,9 @@ interface ChatInputProps {
 
 export default function ChatInput({ value, onChange, onSend, disabled }: ChatInputProps) {
   return (
-    <div className="border-t border-slate-200/80 dark:border-white/10 p-3 bg-white/95 dark:bg-slate-950/90 transition-colors pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
-      <div className="flex items-end gap-2">
+    <div className="px-3.5 pb-[calc(0.8rem+env(safe-area-inset-bottom))] pt-1.5">
+      <div className="relative rounded-[999px] border border-cyan-300/30 bg-[hsl(var(--vasant-panel)/0.72)] p-1 shadow-[0_18px_40px_-28px_rgba(6,182,212,0.8)] backdrop-blur-xl transition-all duration-200 ease-out focus-within:border-teal-300/65 focus-within:shadow-[0_20px_44px_-24px_rgba(20,184,166,0.55)] dark:border-cyan-200/20 dark:bg-[hsl(var(--vasant-panel)/0.52)] dark:focus-within:border-cyan-300/55">
+        <div className="pointer-events-none absolute inset-0 rounded-[999px] bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.45),transparent_65%)] dark:bg-[radial-gradient(circle_at_top,rgba(34,211,238,0.18),transparent_60%)]" />
         <textarea
           value={value}
           onChange={(e) => onChange(e.target.value)}
@@ -23,21 +23,21 @@ export default function ChatInput({ value, onChange, onSend, disabled }: ChatInp
               if (!disabled && value.trim()) onSend();
             }
           }}
-          placeholder="Ask anything..."
+          placeholder="Ask anything about your studies..."
           rows={1}
-          className="flex-1 resize-none px-4 py-2.5 rounded-2xl border border-slate-200/80 bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 shadow-inner text-slate-900 placeholder:text-slate-400 dark:border-white/10 dark:bg-white/5 dark:text-slate-50 dark:placeholder:text-slate-400 dark:focus:ring-emerald-300/70"
+          className="relative min-h-[42px] max-h-28 w-full resize-none rounded-[999px] bg-transparent px-4 py-2.5 pr-12 text-sm leading-relaxed text-[hsl(var(--vasant-text))] outline-none placeholder:text-slate-500/80 dark:text-slate-100 dark:placeholder:text-slate-300/70"
           disabled={disabled}
           aria-label="Chat message"
         />
-        <Button
-          size="icon"
+        <button
+          type="button"
           onClick={onSend}
           disabled={disabled || !value.trim()}
-          className="rounded-2xl h-11 w-11 bg-gradient-to-r from-emerald-500 via-sky-500 to-amber-400 text-white shadow-lg hover:scale-[1.02] transition"
+          className="absolute right-1.5 top-1/2 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-full bg-gradient-to-br from-teal-500 via-cyan-500 to-sky-500 text-white shadow-[0_16px_32px_-18px_rgba(6,182,212,0.95)] ring-1 ring-white/40 transition-all duration-200 ease-out hover:scale-105 hover:brightness-110 active:scale-95 disabled:cursor-not-allowed disabled:opacity-55"
           aria-label="Send message"
         >
-          <Send className="w-4 h-4" />
-        </Button>
+          <Send className="h-4 w-4" />
+        </button>
       </div>
     </div>
   );

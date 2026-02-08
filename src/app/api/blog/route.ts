@@ -7,6 +7,7 @@ import { slugify } from '@/lib/slugify';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { cacheGet, cacheSet, cacheDel } from '@/lib/redis-cache';
 import { toPlainObject, toPlainObjectArray } from '@/lib/mongoose-helpers';
+import { revalidatePath, revalidateTag } from 'next/cache';
 
 // Ensure content has valid TipTap structure
 function validateAndFixContent(content: any) {
@@ -18,6 +19,13 @@ function validateAndFixContent(content: any) {
   }
   // If it's empty or malformed, return default
   return { type: 'doc', content: [] };
+}
+
+function revalidateBlogPages(slug: string) {
+  revalidateTag('blog-content');
+  revalidateTag('blog-related');
+  revalidatePath('/blog');
+  revalidatePath(`/blog/${slug}`);
 }
 
 /**
@@ -213,6 +221,7 @@ export async function POST(request: NextRequest) {
       `blog:${slug}`,
     ];
     await cacheDel(cacheKeys);
+    revalidateBlogPages(slug);
     
     // SAFE CONVERSION: toPlainObject handles the Mongoose document
     const savedBlog = toPlainObject<any>(blog);

@@ -1,7 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { readFile } from 'node:fs/promises';
+import path from 'node:path';
+
+export const runtime = 'nodejs';
 
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
-const BRAIN_TEXT = `Namaste! I am Vasant AI. Stay concise (max ~80 words unless asked). Use friendly Hinglish. Avoid medical/legal/financial advice. If info missing, ask one clarifying question.`; // fallback brain
+const FALLBACK_BRAIN_TEXT =
+  'Namaste! I am Vasant AI. Stay concise (max ~80 words unless asked). Use friendly Hinglish. Avoid medical/legal/financial advice. If info missing, ask one clarifying question.';
+
+const BRAIN_FILE_CANDIDATES = ['src/app/brain.txt', 'src/app/brain.text'];
+
+async function loadBrainText() {
+  for (const relativePath of BRAIN_FILE_CANDIDATES) {
+    const filePath = path.join(process.cwd(), relativePath);
+    try {
+      const content = await readFile(filePath, 'utf8');
+      const normalized = content.trim();
+      if (normalized) {
+        return normalized;
+      }
+    } catch {
+      // Try next candidate file.
+    }
+  }
+  return FALLBACK_BRAIN_TEXT;
+}
 
 export async function POST(req: NextRequest) {
   if (!GROQ_API_KEY) {
@@ -23,6 +46,7 @@ export async function POST(req: NextRequest) {
     }
 
     const { message, pageUrl, pageTitle } = body;
+    const brainText = await loadBrainText();
 
     if (!message) {
       return NextResponse.json(
@@ -35,7 +59,7 @@ export async function POST(req: NextRequest) {
 Current Page: ${pageTitle} (${pageUrl})
 Style: Speak in Hinglish (mix of simple Hindi + English), sound like a real person at the front desk.
 Tone: Warm, short, human, and to-the-point. 1-3 short sentences max.
-Brain: ${BRAIN_TEXT}
+Brain: ${brainText}
 Behavior: Acknowledge briefly, then give a clear answer or next step. Avoid long explanations.`; 
 
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {

@@ -1,24 +1,30 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import ChatHeader from '@/components/help-widget/ChatHeader';
 import ChatMessages, { type ChatMessage } from '@/components/help-widget/ChatMessages';
 import ChatInput from '@/components/help-widget/ChatInput';
 import QuickActionChips from '@/components/help-widget/QuickActionChips';
+import { cn } from '@/lib/utils';
 
-// Single, site-wide persona (no page-based switching)
 const PERSONA = {
   name: 'Vasant AI',
   greeting: 'Namaste! I am Vasant AI. How can I guide you today?',
-  subtitle: 'Instant answers - Smarter help',
+  subtitle: 'Student support assistant',
 };
 
-const QUICK_ACTIONS = ['Summarize this page', 'Give me next steps'];
+const QUICK_ACTIONS = ['Summarize this topic', 'Create a study plan', 'Explain in simple steps'];
 
-export function HelpWidget() {
-  const [isOpen, setIsOpen] = useState(false);
+interface HelpWidgetProps {
+  variant?: 'floating' | 'embedded';
+  className?: string;
+}
+
+export function HelpWidget({ variant = 'floating', className }: HelpWidgetProps) {
+  const isEmbedded = variant === 'embedded';
+  const [isOpen, setIsOpen] = useState(() => isEmbedded);
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: '1',
@@ -33,9 +39,15 @@ export function HelpWidget() {
   const [hovering, setHovering] = useState(false);
   const overlayRef = useRef<HTMLDivElement>(null);
 
+  useEffect(() => {
+    if (isEmbedded) {
+      setIsOpen(true);
+    }
+  }, [isEmbedded]);
+
   const handleSendMessage = async (overrideMessage?: string) => {
     const text = (overrideMessage ?? input).trim();
-    if (!text) return;
+    if (!text || isLoading) return;
 
     const userMessage: ChatMessage = {
       id: Date.now().toString(),
@@ -96,88 +108,102 @@ export function HelpWidget() {
     }
   };
 
-  // close when clicking outside
   useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (isOpen && overlayRef.current && !overlayRef.current.contains(e.target as Node)) {
+    if (isEmbedded || !isOpen) return;
+
+    const handler = (event: MouseEvent) => {
+      if (overlayRef.current && !overlayRef.current.contains(event.target as Node)) {
         setIsOpen(false);
       }
     };
+
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
-  }, [isOpen]);
+  }, [isEmbedded, isOpen]);
+
+  const showPanel = isEmbedded || isOpen;
 
   return (
     <>
-      {/* Floating Button */}
-      <div
-        className="fixed bottom-8 right-4 z-30 pointer-events-none md:right-6"
-        onMouseEnter={() => setHovering(true)}
-        onMouseLeave={() => setHovering(false)}
-      >
-        <motion.div
-          animate={{ rotate: isOpen ? 4 : 0, scale: hovering ? 1.08 : 1 }}
-          transition={{ type: 'spring', stiffness: 260, damping: 18 }}
-          className="pointer-events-auto"
+      {!isEmbedded && (
+        <div
+          className="fixed bottom-8 right-4 z-30 pointer-events-none md:right-6"
+          onMouseEnter={() => setHovering(true)}
+          onMouseLeave={() => setHovering(false)}
         >
-          <button
-            onClick={() => setIsOpen(!isOpen)}
-            className="relative flex items-center justify-center w-12 h-12 rounded-[16px] bg-white/70 text-white shadow-[0_14px_45px_-22px_rgba(120,53,15,0.7)] border border-white/60 backdrop-blur-xl transition-all duration-200 hover:shadow-[0_18px_55px_-20px_rgba(234,88,12,0.6)] overflow-hidden"
-            aria-label="Open chat"
+          <motion.div
+            animate={{ y: isOpen ? -2 : 0, scale: hovering ? 1.04 : 1 }}
+            transition={{ duration: 0.24, ease: 'easeInOut' }}
+            className="pointer-events-auto"
           >
-            <motion.span
-              className="absolute inset-[-30%] bg-[conic-gradient(from_120deg,rgba(239,68,68,0.95),rgba(249,115,22,0.95),rgba(251,191,36,0.9),rgba(239,68,68,0.95))]"
-              animate={{ rotate: isOpen ? 40 : 0 }}
-              transition={{ duration: 0.5 }}
-            />
-            <div className="absolute inset-[2px] rounded-[14px] bg-white/90 backdrop-blur-xl" />
-            <div className="absolute inset-[6px] rounded-[10px] border border-orange-200/70" />
-            <div className="relative flex flex-col items-center gap-0.5 text-[10px] font-semibold text-slate-900">
-              <div className="relative">
-                <div className="absolute inset-[-7px] rounded-2xl bg-gradient-to-br from-red-500/30 via-orange-400/25 to-amber-300/30 blur" />
-                <Image
-                  src="/logo/1000010559.png"
-                  alt="Vasant AI icon"
-                  width={22}
-                  height={22}
-                  className="rounded-lg shadow-sm"
-                />
-                <span className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_0_3px_rgba(16,185,129,0.25)]" />
-              </div>
-              <span className="leading-tight">Vasant</span>
-            </div>
-          </button>
-        </motion.div>
-        <motion.div
-          initial={{ opacity: 0, y: 6 }}
-          animate={{ opacity: hovering ? 1 : 0, y: hovering ? 0 : 6 }}
-          transition={{ duration: 0.18 }}
-          className="mt-2 px-3 py-2 rounded-lg bg-[#0f172a]/90 text-slate-50 text-xs shadow-lg border border-white/10 backdrop-blur pointer-events-none w-max"
-        >
-          {PERSONA.name}
-        </motion.div>
-      </div>
+            <button
+              type="button"
+              onClick={() => setIsOpen((prev) => !prev)}
+              className="group relative grid h-14 w-14 place-items-center overflow-hidden rounded-[18px] border border-cyan-300/35 bg-[linear-gradient(160deg,rgba(6,182,212,0.95),rgba(20,184,166,0.95))] text-white shadow-[0_20px_46px_-22px_rgba(8,145,178,0.95)] ring-1 ring-white/35 transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-[0_24px_52px_-20px_rgba(6,182,212,0.95)] active:scale-95"
+              aria-label={isOpen ? 'Close chat' : 'Open chat'}
+            >
+              <span className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.34),transparent_45%)]" />
+              <span className="pointer-events-none absolute -inset-2 rounded-[22px] bg-cyan-300/30 opacity-70 blur-xl transition-opacity duration-200 group-hover:opacity-100" />
+              <Image
+                src="/logo/1000010559.png"
+                alt="Vasant AI icon"
+                width={26}
+                height={26}
+                className="relative rounded-lg shadow-sm"
+              />
+              <span className="absolute right-1.5 top-1.5 h-2.5 w-2.5 rounded-full bg-emerald-300 shadow-[0_0_0_3px_rgba(16,185,129,0.3)]" />
+            </button>
+          </motion.div>
 
-      {/* Chat Widget */}
-      {isOpen && (
-        <motion.div
-          initial={{ opacity: 0, y: 20, scale: 0.95 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 20, scale: 0.95 }}
-          transition={{ duration: 0.2 }}
-          ref={overlayRef}
-          className="fixed bottom-20 left-3 right-3 md:left-auto md:right-6 md:bottom-28 z-40 md:w-[400px] max-h-[78vh]"
-        >
-          <div className="relative rounded-[26px] p-[1px] bg-[conic-gradient(from_140deg,rgba(16,185,129,0.5),rgba(14,165,233,0.5),rgba(251,191,36,0.5),rgba(16,185,129,0.5))] dark:bg-[conic-gradient(from_140deg,rgba(16,185,129,0.35),rgba(14,165,233,0.35),rgba(251,191,36,0.35),rgba(16,185,129,0.35))] shadow-[0_30px_90px_-65px_rgba(14,116,144,0.9)]">
-            <div className="rounded-[24px] border border-slate-200/80 dark:border-white/10 bg-white/95 dark:bg-slate-950/90 backdrop-blur-2xl text-slate-900 dark:text-slate-50 flex flex-col overflow-hidden min-h-0 max-h-[78vh]">
-              <ChatHeader name={PERSONA.name} subtitle={PERSONA.subtitle} onClose={() => setIsOpen(false)} />
-              <ChatMessages messages={messages} isTyping={isLoading} apiError={apiError} />
-              <QuickActionChips actions={QUICK_ACTIONS} onAction={(action) => handleSendMessage(action)} />
-              <ChatInput value={input} onChange={setInput} onSend={() => handleSendMessage()} disabled={isLoading} />
-            </div>
-          </div>
-        </motion.div>
+          <motion.div
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: hovering ? 1 : 0, y: hovering ? 0 : 6 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
+            className="pointer-events-none mt-2 w-max rounded-full border border-cyan-300/25 bg-[#07131c]/92 px-3 py-1.5 text-xs font-medium text-cyan-50 shadow-[0_10px_32px_-18px_rgba(6,182,212,0.9)] backdrop-blur"
+          >
+            {PERSONA.name}
+          </motion.div>
+        </div>
       )}
+
+      <AnimatePresence>
+        {showPanel && (
+          <motion.div
+            initial={{ opacity: 0, y: 14, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 14, scale: 0.98 }}
+            transition={{ duration: 0.24, ease: 'easeOut' }}
+            ref={overlayRef}
+            className={cn(
+              'font-["Inter","Poppins","Segoe_UI","system-ui",sans-serif] max-h-[82vh]',
+              isEmbedded
+                ? 'relative w-full max-w-[460px]'
+                : 'fixed bottom-20 left-3 right-3 z-40 md:bottom-24 md:left-auto md:right-6 md:w-[430px]',
+              className
+            )}
+          >
+            <div className="relative rounded-[28px] p-[1px] bg-[linear-gradient(140deg,rgba(13,148,136,0.92),rgba(6,182,212,0.88),rgba(250,204,21,0.22),rgba(13,148,136,0.92))] shadow-[0_35px_90px_-55px_rgba(6,182,212,0.9)]">
+              <div className="relative min-h-0 overflow-hidden rounded-[27px] border border-cyan-300/25 bg-[hsl(var(--vasant-panel)/0.9)] text-[hsl(var(--vasant-text))] backdrop-blur-2xl dark:border-cyan-200/20 dark:bg-[hsl(var(--vasant-panel)/0.62)]">
+                <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(34,211,238,0.24),transparent_42%),radial-gradient(circle_at_bottom_left,rgba(16,185,129,0.17),transparent_55%),linear-gradient(180deg,rgba(7,18,24,0.02),rgba(2,6,23,0.18))]" />
+                <div className="relative flex min-h-0 max-h-[82vh] flex-col">
+                  <ChatHeader
+                    name={PERSONA.name}
+                    subtitle={PERSONA.subtitle}
+                    onClose={isEmbedded ? undefined : () => setIsOpen(false)}
+                  />
+                  <ChatMessages messages={messages} isTyping={isLoading} apiError={apiError} />
+                  <QuickActionChips actions={QUICK_ACTIONS} onAction={(action) => handleSendMessage(action)} />
+                  <ChatInput value={input} onChange={setInput} onSend={() => handleSendMessage()} disabled={isLoading} />
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
+}
+
+export function EmbeddedHelpWidget({ className }: { className?: string }) {
+  return <HelpWidget variant="embedded" className={className} />;
 }

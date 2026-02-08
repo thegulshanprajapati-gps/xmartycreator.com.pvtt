@@ -91,10 +91,10 @@ export function Header() {
   return (
     <>
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
-          <Link href="/" className="mr-6 flex items-center space-x-2">
+        <div className="container mx-auto flex h-16 min-w-0 items-center justify-between px-3 sm:px-4 md:px-6">
+          <Link href="/" className="mr-1 flex min-w-0 flex-1 items-center space-x-2 md:mr-6 md:flex-none">
             <Image src="/logo/1000010559.png" alt="Xmarty Creator Logo" width={32} height={32} className="h-8 w-8" />
-            <span className="font-bold sm:inline-block font-headline text-lg">
+            <span className="max-w-[130px] truncate font-bold font-headline text-base min-[380px]:max-w-[170px] sm:max-w-none sm:text-lg">
               Xmarty Creator
             </span>
           </Link>
@@ -134,7 +134,7 @@ export function Header() {
              </ul>
            </nav>
 
-          <div className="flex items-center gap-2 md:gap-4">
+          <div className="flex shrink-0 items-center gap-1.5 min-[380px]:gap-2 md:gap-4">
             <UpdateBell />
             <ThemeToggle />
             <Button variant="ghost" size="icon" className="hidden md:inline-flex" onClick={() => setShowSearch(true)}>

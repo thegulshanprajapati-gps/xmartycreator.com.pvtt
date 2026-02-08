@@ -9,6 +9,16 @@ interface BlogContentProps {
   title?: string;
 }
 
+function unwrapOuterArticle(html: string): string {
+  const trimmed = html.trim();
+  const articleMatch = trimmed.match(/^<article\b[^>]*>([\s\S]*?)<\/article>$/i);
+  if (!articleMatch) {
+    return trimmed;
+  }
+
+  return articleMatch[1].trim();
+}
+
 /**
  * BlogContent - Minimal Production Renderer
  * 
@@ -41,7 +51,8 @@ export function BlogContent({
 
   // ✅ Render clean HTML from TipTap
   if (htmlContent) {
-    const sanitizedHtml = scrubCurrencyInHtml(htmlContent);
+    const normalizedHtml = unwrapOuterArticle(htmlContent);
+    const sanitizedHtml = scrubCurrencyInHtml(normalizedHtml);
     console.log('✅ xo');
     return (
       <article

@@ -179,55 +179,55 @@ function HeroMiniCarousel({ compact = false }: { compact?: boolean }) {
   }, []);
 
   return (
-    <div className={`relative w-full ${compact ? '' : 'max-w-md'}`}>
-      <div className={`absolute ${compact ? '-right-6 -top-6 h-20 w-20' : '-right-10 -top-10 h-24 w-24'} rounded-full bg-blue-400/20 blur-3xl`} />
-      <div className={`absolute ${compact ? '-left-8 bottom-4 h-24 w-24' : '-left-12 bottom-6 h-28 w-28'} rounded-full bg-purple-400/20 blur-3xl`} />
+    <div className={`relative w-full min-w-0 ${compact ? '' : 'max-w-md'}`}>
+      <div className={`absolute ${compact ? '-right-3 -top-3 h-14 w-14' : '-right-10 -top-10 h-24 w-24'} rounded-full bg-blue-400/20 blur-3xl`} />
+      <div className={`absolute ${compact ? '-left-4 bottom-2 h-16 w-16' : '-left-12 bottom-6 h-28 w-28'} rounded-full bg-purple-400/20 blur-3xl`} />
 
       <div className={`relative overflow-hidden rounded-3xl border border-slate-200/70 dark:border-white/10 bg-white/85 dark:bg-slate-900/60 shadow-[0_30px_90px_-70px_rgba(59,130,246,0.9)] backdrop-blur ${compact ? 'mx-auto max-w-[420px]' : ''}`}>
         <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-transparent to-purple-500/10" />
 
         <motion.div
-          className="flex"
+          className="flex w-full"
           animate={{ x: `-${activeIndex * 100}%` }}
-          transition={{ type: 'spring', stiffness: 140, damping: 22 }}
+          transition={{ duration: 0.45, ease: 'easeInOut' }}
         >
           {heroCarouselSlides.map((slide) => (
-            <div key={slide.title} className={`min-w-full ${compact ? 'p-5' : 'p-6 md:p-8'}`}>
+            <div key={slide.title} className={`min-w-full shrink-0 ${compact ? 'p-4' : 'p-6 md:p-8'}`}>
               <div className={`absolute inset-0 ${slide.gradient} pointer-events-none`} />
-              <div className="relative flex items-center justify-between">
-                <div className={`h-12 w-12 rounded-2xl ${slide.glow} border border-white/50 dark:border-white/10 flex items-center justify-center shadow-inner`}>
+              <div className="relative flex items-center justify-between gap-3">
+                <div className={`h-12 w-12 shrink-0 rounded-2xl ${slide.glow} border border-white/50 dark:border-white/10 flex items-center justify-center shadow-inner`}>
                   <slide.icon className={`h-6 w-6 ${slide.accent}`} />
                 </div>
-                <span className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-300 bg-white/70 dark:bg-white/10 border border-slate-200/70 dark:border-white/10 rounded-full px-3 py-1">
+                <span className={`shrink-0 font-semibold uppercase text-slate-500 dark:text-slate-300 bg-white/70 dark:bg-white/10 border border-slate-200/70 dark:border-white/10 rounded-full ${compact ? 'px-2.5 py-1 text-[10px] tracking-[0.14em]' : 'px-3 py-1 text-xs tracking-[0.2em]'}`}>
                   {slide.badge}
                 </span>
               </div>
 
-              <div className="mt-6 space-y-3">
-                <h3 className={`font-bold text-slate-900 dark:text-white ${compact ? 'text-xl' : 'text-2xl'}`}>{slide.title}</h3>
-                <p className={`text-slate-600 dark:text-slate-300 ${compact ? 'text-xs' : 'text-sm'}`}>
+              <div className={`space-y-3 ${compact ? 'mt-5' : 'mt-6'}`}>
+                <h3 className={`font-bold text-slate-900 dark:text-white ${compact ? 'text-lg' : 'text-2xl'}`}>{slide.title}</h3>
+                <p className={`text-slate-600 dark:text-slate-300 ${compact ? 'text-xs leading-relaxed' : 'text-sm'}`}>
                   {slide.description}
                 </p>
               </div>
 
-              <div className="mt-6 flex items-center justify-between">
-                <div className={`font-extrabold text-slate-900 dark:text-white ${compact ? 'text-2xl' : 'text-3xl'}`}>
+              <div className={`mt-6 flex items-center ${compact ? 'flex-wrap gap-2' : 'justify-between'}`}>
+                <div className={`font-extrabold text-slate-900 dark:text-white ${compact ? 'text-xl' : 'text-3xl'}`}>
                   {slide.stat}
                 </div>
-                <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.25em] text-slate-500 dark:text-slate-400">
+                <div className={`flex items-center gap-2 font-semibold uppercase text-slate-500 dark:text-slate-400 ${compact ? 'text-[10px] tracking-[0.14em]' : 'text-xs tracking-[0.25em]'}`}>
                   <span className="h-2 w-2 rounded-full bg-emerald-400" />
                   Active
                 </div>
               </div>
 
-              <div className="mt-6 flex gap-2">
+              <div className={`flex gap-2 ${compact ? 'mt-5' : 'mt-6'}`}>
                 {heroCarouselSlides.map((_, dotIndex) => (
                   <button
                     key={`hero-dot-${dotIndex}`}
                     type="button"
                     aria-label={`Go to slide ${dotIndex + 1}`}
                     onClick={() => setActiveIndex(dotIndex)}
-                    className={`h-2.5 w-8 rounded-full transition-all ${
+                    className={`${compact ? 'h-2 w-6' : 'h-2.5 w-8'} rounded-full transition-all ${
                       dotIndex === activeIndex
                         ? 'bg-slate-900/80 dark:bg-white/70'
                         : 'bg-slate-200/80 dark:bg-white/10'
@@ -240,18 +240,18 @@ function HeroMiniCarousel({ compact = false }: { compact?: boolean }) {
         </motion.div>
       </div>
 
-      <div className={`mt-4 grid grid-cols-2 gap-3 ${compact ? 'mx-auto max-w-[420px]' : ''}`}>
+      <div className={`mt-4 grid ${compact ? 'grid-cols-1 min-[390px]:grid-cols-2' : 'grid-cols-2'} gap-3 ${compact ? 'mx-auto max-w-[420px]' : ''}`}>
         {heroCarouselSlides.slice(0, 2).map((slide) => (
           <div
             key={`${slide.title}-mini`}
-            className="rounded-2xl border border-slate-200/70 dark:border-white/10 bg-white/80 dark:bg-slate-900/60 px-4 py-3 shadow-sm flex items-center gap-3"
+            className="min-w-0 rounded-2xl border border-slate-200/70 dark:border-white/10 bg-white/80 dark:bg-slate-900/60 px-4 py-3 shadow-sm flex items-center gap-3"
           >
             <div className={`h-9 w-9 rounded-xl ${slide.glow} flex items-center justify-center`}>
               <slide.icon className={`h-5 w-5 ${slide.accent}`} />
             </div>
-            <div>
-              <div className="text-sm font-semibold text-slate-900 dark:text-white">{slide.badge}</div>
-              <div className="text-xs text-slate-500 dark:text-slate-400">{slide.stat}</div>
+            <div className="min-w-0">
+              <div className="truncate text-sm font-semibold text-slate-900 dark:text-white">{slide.badge}</div>
+              <div className="truncate text-xs text-slate-500 dark:text-slate-400">{slide.stat}</div>
             </div>
           </div>
         ))}
@@ -384,7 +384,7 @@ export default function HomePageClient({ initialHomeContent }: HomePageClientPro
 
   return (
     <>
-      <div className="flex flex-col min-h-screen">
+      <div className="flex min-h-screen flex-col overflow-x-clip">
         {/* ===== HERO SECTION ===== */}
         <section className="relative w-full min-h-[calc(100vh_-_64px)] md:min-h-[calc(100vh_-_80px)] flex items-center justify-center overflow-hidden">
           {/* Gradient Background */}
@@ -435,11 +435,11 @@ export default function HomePageClient({ initialHomeContent }: HomePageClientPro
             <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent"></div>
           </div>
 
-          <div className="container mx-auto px-4 md:px-6 relative z-10 max-w-6xl">
-            <div className="grid items-center gap-10 md:grid-cols-2 md:gap-16 py-12 md:py-0">
+          <div className="container relative z-10 mx-auto max-w-6xl px-4 md:px-6">
+            <div className="grid min-w-0 items-center gap-10 py-12 md:grid-cols-2 md:gap-16 md:py-0">
               {/* Left Content */}
               <motion.div
-                className="flex flex-col justify-center space-y-6 text-center md:text-left md:items-start items-center"
+                className="flex min-w-0 flex-col items-center justify-center space-y-6 text-center md:items-start md:text-left"
                 initial="hidden"
                 animate="visible"
                 variants={slideInFromLeft}
@@ -457,7 +457,7 @@ export default function HomePageClient({ initialHomeContent }: HomePageClientPro
 
                 {/* Title */}
                 <h1 
-                  className="font-headline text-5xl lg:text-7xl font-bold tracking-tight leading-tight bg-gradient-to-r from-foreground via-foreground to-foreground/70 bg-clip-text text-transparent"
+                  className="max-w-full break-words font-headline text-4xl min-[420px]:text-5xl lg:text-7xl font-bold tracking-tight leading-tight [text-wrap:balance] bg-gradient-to-r from-foreground via-foreground to-foreground/70 bg-clip-text text-transparent"
                   dangerouslySetInnerHTML={{ __html: initialHomeContent?.hero?.title || 'Learn & Grow' }}
                 />
 
@@ -512,7 +512,7 @@ export default function HomePageClient({ initialHomeContent }: HomePageClientPro
 
               {/* Right Visual */}
               <motion.div
-                className="relative hidden md:flex flex-col justify-center items-center h-full"
+                className="relative hidden h-full min-w-0 flex-col items-center justify-center md:flex"
                 initial="hidden"
                 animate="visible"
                 variants={slideInFromRight}

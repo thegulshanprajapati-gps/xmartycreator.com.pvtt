@@ -61,7 +61,7 @@ const getBlogBySlug = unstable_cache(
     }
   },
   ['blog-by-slug'],
-  { revalidate: 300 }
+  { revalidate: 300, tags: ['blog-content'] }
 );
 
 const getRelatedBlogs = unstable_cache(
@@ -87,7 +87,7 @@ const getRelatedBlogs = unstable_cache(
     }
   },
   ['blog-related'],
-  { revalidate: 300 }
+  { revalidate: 300, tags: ['blog-related'] }
 );
 
 export async function generateMetadata(

@@ -7,6 +7,7 @@ import { slugify } from '@/lib/slugify';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { cacheGet, cacheSet, cacheDel } from '@/lib/redis-cache';
 import { toPlainObject, serializeDocument } from '@/lib/mongoose-helpers';
+import { revalidatePath, revalidateTag } from 'next/cache';
 
 // Ensure content has valid TipTap structure
 function validateAndFixContent(content: any) {
@@ -18,6 +19,15 @@ function validateAndFixContent(content: any) {
   }
   // If it's empty or malformed, return default
   return { type: 'doc', content: [] };
+}
+
+function revalidateBlogPages(slugs: string[]) {
+  revalidateTag('blog-content');
+  revalidateTag('blog-related');
+  revalidatePath('/blog');
+  slugs
+    .filter(Boolean)
+    .forEach((currentSlug) => revalidatePath(`/blog/${currentSlug}`));
 }
 
 /**
@@ -272,6 +282,8 @@ export async function PUT(
       `blogs:list:all:content-off`,
       `blogs:list:all:content-on`,
     ]);
+
+    revalidateBlogPages([slug, newSlug]);
     
     // SAFE CONVERSION: toPlainObject handles both Mongoose docs and plain objects
     const savedBlog = toPlainObject<any>(blog);
@@ -338,10 +350,11 @@ export async function DELETE(
       `blogs:list:draft:content-on`,
     ]);
 
+    revalidateBlogPages([slug]);
+
     return NextResponse.json({ message: 'Blog deleted', slug });
   } catch (error) {
     console.error('Blog DELETE error:', error);
     return NextResponse.json({ error: 'Failed to delete blog', details: error instanceof Error ? error.message : 'Unknown error' }, { status: 500 });
   }
 }
-
