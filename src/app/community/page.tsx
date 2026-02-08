@@ -33,7 +33,9 @@ type CommunityContent = {
     description: string;
   };
   youtube: {
+    channelId?: string;
     videoId: string;
+    latestVideoId?: string;
   };
   whatsapp: {
     title: string;
@@ -54,6 +56,16 @@ type CommunityContent = {
     buttonText: string;
   };
 };
+
+const VIDEO_ID_PATTERN = /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)?([A-Za-z0-9_-]{11})/;
+
+function normalizeVideoId(value?: string): string {
+  const raw = (value || '').trim();
+  if (!raw) return '';
+  if (/^[A-Za-z0-9_-]{11}$/.test(raw)) return raw;
+  const match = raw.match(VIDEO_ID_PATTERN);
+  return match?.[1] || '';
+}
 
 function CommunityIllustration(props: SVGProps<SVGSVGElement>) {
     return (
@@ -122,11 +134,12 @@ function CommunityIllustration(props: SVGProps<SVGSVGElement>) {
 export default function CommunityPage() {
   const [communityContent, setCommunityContent] = useState<CommunityContent>({
     hero: { title: 'Community', description: 'Join our community' },
-    youtube: { videoId: '' },
+    youtube: { channelId: '', videoId: '' },
     whatsapp: { title: 'WhatsApp', description: '', link: '#', buttonText: 'Join' },
     app: { title: 'App', description: '', link: '#', buttonText: 'Download' },
     telegram: { title: 'Telegram', description: '', link: '#', buttonText: 'Join' }
   });
+  const [resolvedVideoId, setResolvedVideoId] = useState('');
 
   useEffect(() => {
     const fetchContent = async () => {
@@ -153,7 +166,39 @@ export default function CommunityPage() {
     fetchContent();
   }, []);
 
-  const videoId = communityContent?.youtube?.videoId || '';
+  useEffect(() => {
+    const fallback = normalizeVideoId(
+      communityContent?.youtube?.latestVideoId || communityContent?.youtube?.videoId || ''
+    );
+    setResolvedVideoId(fallback);
+
+    const channelId = (communityContent?.youtube?.channelId || '').trim();
+    if (!channelId) return;
+
+    let cancelled = false;
+
+    const fetchLatestFromChannel = async () => {
+      try {
+        const res = await fetch(`/api/youtube/latest?channelId=${encodeURIComponent(channelId)}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        const latest = normalizeVideoId(data?.videoId);
+        if (!cancelled && latest) {
+          setResolvedVideoId(latest);
+        }
+      } catch (error) {
+        console.error('Error resolving latest YouTube video:', error);
+      }
+    };
+
+    fetchLatestFromChannel();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [communityContent?.youtube?.channelId, communityContent?.youtube?.latestVideoId, communityContent?.youtube?.videoId]);
+
+  const videoId = resolvedVideoId;
 
   const communityPlatforms = [
     {
