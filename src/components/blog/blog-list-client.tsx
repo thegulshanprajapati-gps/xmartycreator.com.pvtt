@@ -28,14 +28,18 @@ interface BlogPost {
 
 interface BlogListClientProps {
   initialBlogs?: BlogPost[];
+  initialBlogsLoaded?: boolean;
 }
 
-export default function BlogListClient({ initialBlogs = [] }: BlogListClientProps) {
+export default function BlogListClient({
+  initialBlogs = [],
+  initialBlogsLoaded = false,
+}: BlogListClientProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [blogs, setBlogs] = useState<BlogPost[]>(initialBlogs);
-  const [isLoading, setIsLoading] = useState(initialBlogs.length === 0);
+  const [isLoading, setIsLoading] = useState(!initialBlogsLoaded && initialBlogs.length === 0);
   const [filteredBlogs, setFilteredBlogs] = useState<BlogPost[]>([]);
   const [searchQuery, setSearchQuery] = useState(searchParams?.get('q') || '');
   const [selectedTags, setSelectedTags] = useState<string[]>(
@@ -54,7 +58,7 @@ export default function BlogListClient({ initialBlogs = [] }: BlogListClientProp
 
   // Fetch Blogs
   useEffect(() => {
-    if (initialBlogs.length > 0) {
+    if (initialBlogsLoaded || initialBlogs.length > 0) {
       setIsLoading(false);
       return;
     }
@@ -79,7 +83,7 @@ export default function BlogListClient({ initialBlogs = [] }: BlogListClientProp
     };
 
     fetchBlogs();
-  }, [initialBlogs.length]);
+  }, [initialBlogs.length, initialBlogsLoaded]);
 
   // Filter blogs by search and tags
   useEffect(() => {
