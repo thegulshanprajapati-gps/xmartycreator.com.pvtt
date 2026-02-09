@@ -10,16 +10,15 @@ import Blog from "@/lib/models/blog";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Footer } from "@/components/layout/footer";
-import { cn } from "@/lib/utils";
 
 export const revalidate = 120;
 
 export const metadata: Metadata = {
   title: "Blog | Xmarty Creator",
-  description: "Read articles about technology, design, and digital growth.",
+  description: "Study-focused blog for diploma students with tech guides, exam updates, and practical learning support.",
   openGraph: {
     title: "Blog | Xmarty Creator",
-    description: "Read articles about technology, design, and digital growth.",
+    description: "Study-focused blog for diploma students with tech guides, exam updates, and practical learning support.",
     type: "website",
     url: "https://xmartycreator.com/blog",
   },
@@ -40,12 +39,33 @@ type HeroData = {
 };
 
 const DEFAULT_HERO: HeroData = {
-  badgeText: "Curated insights",
-  title: "Insights & Knowledge",
-  description: "Discover articles on technology, design, and digital growth.",
+  badgeText: "Student Insights",
+  title: "Blog for Diploma Success",
+  description: "Clear explanations, PYQs, exam updates, and real guidance for better results.",
   primaryButton: { text: "Explore Blog", href: "/blog" },
   secondaryButton: { text: "Latest Posts", href: "/blog" },
-  pills: [],
+  pills: [
+    { title: "Study Guides", description: "Semester-wise notes and PYQs" },
+    { title: "Exam Updates", description: "SBTE notices and key dates" },
+  ],
+};
+
+const toPlainText = (value: unknown): string =>
+  String(value ?? "")
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+const normalizeHeroText = (
+  value: unknown,
+  fallback: string,
+  options?: { treatBlogAsEmpty?: boolean }
+): string => {
+  const plain = toPlainText(value);
+  if (!plain) return fallback;
+  if (options?.treatBlogAsEmpty && /^blog$/i.test(plain)) return fallback;
+  return plain;
 };
 
 const getBlogPageContent = unstable_cache(
@@ -123,53 +143,56 @@ function BlogHeroFallback() {
   );
 }
 
-const sanitizeHeroHtml = (value: string) => {
-  if (!value) return "";
-  return value
-    .replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, "")
-    .replace(/<iframe[\s\S]*?>[\s\S]*?<\/iframe>/gi, "")
-    .replace(/\son\w+="[^"]*"/gi, "")
-    .replace(/\son\w+='[^']*'/gi, "")
-    .replace(/javascript:/gi, "");
-};
-
 async function BlogHeroSection() {
   const content = (await getBlogPageContent()) as any;
-  const hero = {
-    badgeText: content?.hero?.badgeText || DEFAULT_HERO.badgeText,
-    title: content?.hero?.title || DEFAULT_HERO.title,
-    description: content?.hero?.description || DEFAULT_HERO.description,
-    primaryButton: content?.hero?.primaryButton || DEFAULT_HERO.primaryButton,
-    secondaryButton: content?.hero?.secondaryButton || DEFAULT_HERO.secondaryButton,
-    pills: Array.isArray(content?.hero?.pills) ? content.hero.pills : [],
-  };
+  const normalizedPills = [0, 1].map((index) => {
+    const defaultPill = DEFAULT_HERO.pills[index] || { title: "", description: "" };
+    const sourcePill =
+      Array.isArray(content?.hero?.pills) && content.hero.pills[index]
+        ? content.hero.pills[index]
+        : defaultPill;
 
-  const hasHeroTitleHtml = /</.test(hero.title || "");
-  const heroTitleHtml = sanitizeHeroHtml(hero.title || DEFAULT_HERO.title);
-  const heroDescriptionHtml = sanitizeHeroHtml(hero.description || DEFAULT_HERO.description);
-  const heroBadgeHtml = sanitizeHeroHtml(hero.badgeText || DEFAULT_HERO.badgeText);
+    return {
+      title: normalizeHeroText(sourcePill?.title, defaultPill.title || ""),
+      description: normalizeHeroText(sourcePill?.description, defaultPill.description || ""),
+    };
+  });
+
+  const hero = {
+    badgeText: normalizeHeroText(content?.hero?.badgeText, DEFAULT_HERO.badgeText),
+    title: normalizeHeroText(content?.hero?.title, DEFAULT_HERO.title, { treatBlogAsEmpty: true }),
+    description: normalizeHeroText(content?.hero?.description, DEFAULT_HERO.description),
+    primaryButton: {
+      text: normalizeHeroText(
+        content?.hero?.primaryButton?.text,
+        DEFAULT_HERO.primaryButton.text
+      ),
+      href: toPlainText(content?.hero?.primaryButton?.href) || DEFAULT_HERO.primaryButton.href,
+    },
+    secondaryButton: {
+      text: normalizeHeroText(
+        content?.hero?.secondaryButton?.text,
+        DEFAULT_HERO.secondaryButton.text
+      ),
+      href:
+        toPlainText(content?.hero?.secondaryButton?.href) ||
+        DEFAULT_HERO.secondaryButton.href,
+    },
+    pills: normalizedPills,
+  };
 
   return (
     <header className="container mx-auto px-4 md:px-6 max-w-6xl pt-12 pb-10 relative space-y-8">
       <div className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-500/12 via-purple-500/12 to-pink-500/12 border border-slate-200/60 dark:border-white/20 text-slate-800 dark:text-white rounded-full px-4 py-2 w-fit shadow-[0_10px_40px_-30px_rgba(59,130,246,0.8)] transition-colors">
         <Sparkles className="w-4 h-4" />
-        <span dangerouslySetInnerHTML={{ __html: heroBadgeHtml }} />
+        <span>{hero.badgeText}</span>
       </div>
       <div className="flex flex-wrap gap-8 items-start">
         <div className="flex-1 min-w-[280px] space-y-4">
-          <h1
-            className={cn(
-              "font-headline text-4xl md:text-5xl font-bold leading-tight",
-              hasHeroTitleHtml
-                ? "text-slate-900 dark:text-white"
-                : "bg-gradient-to-r from-foreground via-foreground to-foreground/70 bg-clip-text text-transparent"
-            )}
-            dangerouslySetInnerHTML={{ __html: heroTitleHtml }}
-          />
-          <p
-            className="text-lg text-slate-700 dark:text-slate-200 max-w-2xl"
-            dangerouslySetInnerHTML={{ __html: heroDescriptionHtml }}
-          />
+          <h1 className="font-headline text-4xl md:text-5xl font-bold leading-tight text-slate-900 dark:text-white">
+            {hero.title}
+          </h1>
+          <p className="text-lg text-slate-700 dark:text-slate-200 max-w-2xl">{hero.description}</p>
           <div className="flex flex-wrap gap-3 pt-2">
             {hero.primaryButton?.text && (
               <Button asChild size="lg" className="bg-primary hover:bg-primary/90">
@@ -197,9 +220,9 @@ async function BlogHeroSection() {
             <div key={i} className="rounded-2xl border border-slate-200/70 dark:border-white/10 bg-white/85 dark:bg-slate-900/60 px-4 py-4 shadow-[0_15px_50px_-35px_rgba(0,0,0,0.25)] dark:shadow-[0_20px_60px_-45px_rgba(37,99,235,0.45)] backdrop-blur">
               <div className="flex items-center gap-3 mb-2 text-slate-700 dark:text-slate-200">
                 {i === 0 ? <BookOpen className="w-5 h-5" /> : <PenLine className="w-5 h-5" />}
-                <span className="text-sm font-semibold text-slate-900 dark:text-white">{pill.title || (i === 0 ? "Deep dives" : "Creator desk")}</span>
+                <span className="text-sm font-semibold text-slate-900 dark:text-white">{pill.title || (i === 0 ? "Study Guides" : "Exam Updates")}</span>
               </div>
-              <div className="text-sm text-slate-700 dark:text-slate-200">{pill.description || (i === 0 ? "Guides and how-tos" : "Release briefs")}</div>
+              <div className="text-sm text-slate-700 dark:text-slate-200">{pill.description || (i === 0 ? "Semester-wise notes and PYQs" : "SBTE notices and key dates")}</div>
             </div>
           ))}
         </div>

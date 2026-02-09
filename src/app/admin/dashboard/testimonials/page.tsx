@@ -126,6 +126,7 @@ async function getTestimonials() {
           testimonial: doc.testimonial || '',
           rating: Number(doc.rating) || 5,
           avatar: doc.avatar || '',
+          gender: doc.gender === 'female' ? 'female' : doc.gender === 'male' ? 'male' : undefined,
         }));
         const aggregated = { title: '', description: '', reviews };
         await testimonialsCollection.updateOne(
@@ -165,6 +166,7 @@ async function getTestimonials() {
         testimonial: doc.testimonial || '',
         rating: Number(doc.rating) || 5,
         avatar: doc.avatar || '',
+        gender: doc.gender === 'female' ? 'female' : doc.gender === 'male' ? 'male' : undefined,
       }));
 
       const seen = new Set<string>();

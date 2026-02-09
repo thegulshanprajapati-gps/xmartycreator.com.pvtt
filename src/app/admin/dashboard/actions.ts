@@ -25,12 +25,14 @@ function getReviewsFromFormData(formData: FormData) {
     const reviews = [];
     let index = 0;
     while (formData.has(`review-name-${index}`)) {
+        const genderRaw = (formData.get(`review-gender-${index}`) as string) || '';
         reviews.push({
             name: formData.get(`review-name-${index}`) as string,
             role: formData.get(`review-role-${index}`) as string,
             testimonial: formData.get(`review-text-${index}`) as string,
             rating: Number(formData.get(`review-rating-${index}`)),
             avatar: formData.get(`review-avatar-${index}`) as string,
+            gender: genderRaw === 'female' ? 'female' : genderRaw === 'male' ? 'male' : undefined,
         });
         index++;
     }
@@ -129,6 +131,29 @@ function getUpdatesFromFormData(formData: FormData) {
     return updates;
 }
 
+function getAchievementStatsFromFormData(formData: FormData) {
+    const stats = [];
+    let index = 0;
+    while (
+      formData.has(`achievements-value-${index}`) ||
+      formData.has(`achievements-label-${index}`) ||
+      formData.has(`achievements-suffix-${index}`)
+    ) {
+        const value = Number(formData.get(`achievements-value-${index}`));
+        const label = (formData.get(`achievements-label-${index}`) as string) || '';
+        const suffix = (formData.get(`achievements-suffix-${index}`) as string) || '';
+        if (label.trim() || Number.isFinite(value)) {
+            stats.push({
+                value: Number.isFinite(value) ? value : 0,
+                label: label,
+                suffix: suffix,
+            });
+        }
+        index++;
+    }
+    return stats;
+}
+
 function getBlogPostsFromFormData(formData: FormData) {
     const posts = [];
     let index = 0;
@@ -184,6 +209,12 @@ export async function updateHomeContent(prevState: { message: string, data: any 
                 title: formData.get('testimonials-title') as string,
                 description: formData.get('testimonials-description') as string,
                 reviews: getReviewsFromFormData(formData),
+            },
+            achievements: {
+                badge: formData.get('achievements-badge') as string,
+                title: formData.get('achievements-title') as string,
+                description: formData.get('achievements-description') as string,
+                stats: getAchievementStatsFromFormData(formData),
             },
         };
         const testimonialsData = {
@@ -369,12 +400,14 @@ export async function updateNotificationContent(prevState: { message: string, da
 export async function updateCoursesContent(prevState: { message: string, data: any }, formData: FormData) {
     try {
         console.log('🔄 [Admin] Updating courses content...');
+        const developmentMode = (formData.get('courses-development-mode') as string) === 'true';
         const newContent = {
             hero: {
                 title: formData.get('hero-title') as string,
                 description: formData.get('hero-description') as string,
             },
             courses: getCoursesFromFormData(formData),
+            developmentMode,
         };
 
         const client = await clientPromise;

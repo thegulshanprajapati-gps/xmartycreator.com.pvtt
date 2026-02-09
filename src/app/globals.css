@@ -384,6 +384,204 @@
   }
 }
 
+@layer components {
+  .community-premium-section {
+    background:
+      radial-gradient(circle at 10% 10%, rgba(125, 211, 252, 0.22), transparent 35%),
+      radial-gradient(circle at 92% 14%, rgba(129, 140, 248, 0.2), transparent 42%),
+      linear-gradient(135deg, #f4f8ff 0%, #eef4ff 52%, #eaf1ff 100%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.82), 0 34px 90px -72px rgba(15, 23, 42, 0.35);
+  }
+
+  .dark .community-premium-section {
+    background:
+      radial-gradient(circle at 10% 10%, rgba(56, 189, 248, 0.16), transparent 34%),
+      radial-gradient(circle at 92% 14%, rgba(99, 102, 241, 0.18), transparent 42%),
+      linear-gradient(135deg, #071031 0%, #071a46 46%, #07193f 100%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 42px 110px -68px rgba(2, 6, 23, 0.92);
+  }
+
+  .channel-grid {
+    perspective: 1000px;
+  }
+
+  .card.channel-card {
+    --card-from-rgb: 45, 143, 220;
+    --card-to-rgb: 30, 165, 233;
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    border-radius: 24px;
+    min-height: 332px;
+    border: 1px solid rgba(255, 255, 255, 0.34);
+    background: linear-gradient(
+      160deg,
+      rgba(var(--card-from-rgb), 0.98) 0%,
+      rgba(var(--card-to-rgb), 0.96) 100%
+    );
+    box-shadow: 0 22px 54px -34px rgba(15, 23, 42, 0.45);
+    transform-style: preserve-3d;
+    transition:
+      transform 0.24s cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 0.24s ease,
+      border-color 0.24s ease,
+      filter 0.24s ease;
+    color: rgb(255, 255, 255);
+  }
+
+  .card.channel-card::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 34%;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0));
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .card.channel-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 50% -12%, rgba(255, 255, 255, 0.26), transparent 56%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .dark .card.channel-card {
+    border-color: rgba(255, 255, 255, 0.28);
+    box-shadow: 0 28px 64px -38px rgba(2, 6, 23, 0.88);
+  }
+
+  .channel-card__content {
+    position: relative;
+    z-index: 1;
+  }
+
+  .channel-card__content h3,
+  .channel-card__content p {
+    color: rgba(255, 255, 255, 0.97);
+  }
+
+  .channel-card__content p {
+    max-width: 270px;
+    margin-left: auto;
+    margin-right: auto;
+    opacity: 0.95;
+  }
+
+  .channel-card__icon {
+    display: grid;
+    place-items: center;
+    width: 76px;
+    height: 76px;
+    border-radius: 9999px;
+    border: 1px solid rgba(255, 255, 255, 0.42);
+    background: rgba(255, 255, 255, 0.15);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.36), 0 14px 24px -16px rgba(2, 6, 23, 0.6);
+    transition: transform 0.24s ease, background 0.24s ease, border-color 0.24s ease;
+  }
+
+  .channel-card__icon svg,
+  .channel-card__icon img,
+  .channel-card__icon i {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem !important;
+    height: 2rem !important;
+    color: #ffffff !important;
+    font-size: 2rem;
+    line-height: 1;
+    transition: transform 0.24s ease, filter 0.24s ease;
+    filter: drop-shadow(0 2px 8px rgba(2, 6, 23, 0.3));
+  }
+
+  .channel-card__cta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 150px;
+    border: 1px solid rgba(255, 255, 255, 0.44);
+    border-radius: 9999px;
+    background: rgba(255, 255, 255, 0.18);
+    color: #ffffff;
+    padding: 0.68rem 1.8rem;
+    font-size: 1.05rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25);
+    transition:
+      background 0.24s ease,
+      border-color 0.24s ease,
+      box-shadow 0.24s ease,
+      transform 0.24s ease;
+  }
+
+  .card.whatsapp {
+    --card-from-rgb: 34, 172, 120;
+    --card-to-rgb: 39, 198, 123;
+  }
+
+  .card.telegram {
+    --card-from-rgb: 58, 168, 227;
+    --card-to-rgb: 74, 189, 243;
+  }
+
+  .card.app {
+    --card-from-rgb: 50, 132, 220;
+    --card-to-rgb: 76, 172, 239;
+  }
+
+  .card.youtube {
+    --card-from-rgb: 242, 60, 77;
+    --card-to-rgb: 255, 71, 88;
+  }
+
+  @media (hover: hover) {
+    .card.channel-card:hover,
+    .card.channel-card:focus-within {
+      transform: translateY(-8px);
+      border-color: rgba(255, 255, 255, 0.56);
+      box-shadow: 0 34px 74px -40px rgba(15, 23, 42, 0.55);
+      filter: saturate(1.04);
+    }
+
+    .card.channel-card:hover .channel-card__icon,
+    .card.channel-card:focus-within .channel-card__icon {
+      background: rgba(255, 255, 255, 0.22);
+      border-color: rgba(255, 255, 255, 0.6);
+      transform: translateY(-1px) scale(1.03);
+    }
+
+    .card.channel-card:hover .channel-card__icon svg,
+    .card.channel-card:focus-within .channel-card__icon svg,
+    .card.channel-card:hover .channel-card__icon img,
+    .card.channel-card:focus-within .channel-card__icon img,
+    .card.channel-card:hover .channel-card__icon i,
+    .card.channel-card:focus-within .channel-card__icon i {
+      transform: scale(1.03);
+      filter: drop-shadow(0 2px 9px rgba(2, 6, 23, 0.38));
+    }
+
+    .card.channel-card:hover .channel-card__cta,
+    .card.channel-card:focus-within .channel-card__cta {
+      border-color: rgba(255, 255, 255, 0.62);
+      background: rgba(255, 255, 255, 0.24);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.34), 0 8px 20px -14px rgba(15, 23, 42, 0.55);
+      transform: translateY(-1px);
+    }
+  }
+
+  @media (max-width: 640px) {
+    .card.channel-card {
+      min-height: 320px;
+    }
+  }
+}
+
 @layer utilities {
   .hover-lift {
     transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;

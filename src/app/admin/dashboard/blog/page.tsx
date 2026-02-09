@@ -27,23 +27,71 @@ type Notice = {
   message: string;
 } | null;
 
+const DEFAULT_HERO_CONTENT = {
+  badgeText: 'Student Insights',
+  title: 'Blog for Diploma Success',
+  description: 'Clear explanations, PYQs, exam updates, and real guidance for better results.',
+  primaryButton: { text: 'Explore Blog', href: '/blog' },
+  secondaryButton: { text: 'Latest Posts', href: '/blog' },
+  pills: [
+    { title: 'Study Guides', description: 'Semester-wise notes and PYQs' },
+    { title: 'Exam Updates', description: 'SBTE notices and key dates' },
+  ],
+};
+
+const toPlainText = (value: unknown): string =>
+  String(value ?? '')
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+const normalizeHeroText = (
+  value: unknown,
+  fallback: string,
+  options?: { treatBlogAsEmpty?: boolean }
+) => {
+  const plain = toPlainText(value);
+  if (!plain) return fallback;
+  if (options?.treatBlogAsEmpty && /^blog$/i.test(plain)) return fallback;
+  return plain;
+};
+
+const normalizeHeroPayload = (input: any) => ({
+  badgeText: normalizeHeroText(input?.badgeText, DEFAULT_HERO_CONTENT.badgeText),
+  title: normalizeHeroText(input?.title, DEFAULT_HERO_CONTENT.title, { treatBlogAsEmpty: true }),
+  description: normalizeHeroText(input?.description, DEFAULT_HERO_CONTENT.description),
+  primaryButton: {
+    text: normalizeHeroText(
+      input?.primaryButton?.text,
+      DEFAULT_HERO_CONTENT.primaryButton.text
+    ),
+    href: toPlainText(input?.primaryButton?.href) || DEFAULT_HERO_CONTENT.primaryButton.href,
+  },
+  secondaryButton: {
+    text: normalizeHeroText(
+      input?.secondaryButton?.text,
+      DEFAULT_HERO_CONTENT.secondaryButton.text
+    ),
+    href: toPlainText(input?.secondaryButton?.href) || DEFAULT_HERO_CONTENT.secondaryButton.href,
+  },
+  pills: [0, 1].map((index) => {
+    const fallback = DEFAULT_HERO_CONTENT.pills[index];
+    const source = Array.isArray(input?.pills) ? input.pills[index] : undefined;
+    return {
+      title: normalizeHeroText(source?.title, fallback.title),
+      description: normalizeHeroText(source?.description, fallback.description),
+    };
+  }),
+});
+
 export default function BlogDashboardPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [blogs, setBlogs] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [hero, setHero] = useState<any>({
-    badgeText: '',
-    title: '',
-    description: '',
-    primaryButton: { text: '', href: '' },
-    secondaryButton: { text: '', href: '' },
-    pills: [
-      { title: '', description: '' },
-      { title: '', description: '' },
-    ],
-  });
+  const [hero, setHero] = useState<any>(DEFAULT_HERO_CONTENT);
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [notice, setNotice] = useState<Notice>(null);
@@ -83,16 +131,7 @@ export default function BlogDashboardPage() {
       const res = await fetch('/api/pages/blog');
       if (res.ok) {
         const data = await res.json();
-        setHero({
-          badgeText: data?.hero?.badgeText || '',
-          title: data?.hero?.title || '',
-          description: data?.hero?.description || '',
-          primaryButton: data?.hero?.primaryButton || { text: '', href: '' },
-          secondaryButton: data?.hero?.secondaryButton || { text: '', href: '' },
-          pills: Array.isArray(data?.hero?.pills) && data.hero.pills.length >= 2
-            ? data.hero.pills.slice(0,2)
-            : [{ title: '', description: '' }, { title: '', description: '' }],
-        });
+        setHero(normalizeHeroPayload(data?.hero || {}));
       }
     } catch (error) {
       console.error('Error fetching blog hero content:', error);
@@ -103,10 +142,13 @@ export default function BlogDashboardPage() {
     setSaving(true);
     setSaveMessage(null);
     try {
+      const normalizedHero = normalizeHeroPayload(hero);
+      setHero(normalizedHero);
+
       const res = await fetch('/api/pages/blog', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ hero }),
+        body: JSON.stringify({ hero: normalizedHero }),
       });
       if (!res.ok) {
         throw new Error('Failed to save');

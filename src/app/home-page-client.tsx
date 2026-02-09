@@ -52,6 +52,7 @@ export type Review = {
     testimonial: string;
     rating: number;
     avatar: string;
+    gender?: 'male' | 'female';
 };
 
 type HomeContent = {
@@ -78,7 +79,13 @@ type HomeContent = {
         description: string;
         reviews: Review[];
     };
-}
+    achievements: {
+        badge: string;
+        title: string;
+        description: string;
+        stats: { value: number; suffix: string; label: string }[];
+    };
+};
 
 type QuickLink = HomeContent['quickAccess']['items'][number] & { icon: LucideIcon };
 
@@ -104,6 +111,15 @@ const quickAccessFallbackIcons: LucideIcon[] = [
   Users,
   NotebookPen,
 ];
+
+const normalizeReviewGender = (value: unknown): 'male' | 'female' =>
+  value === 'female' ? 'female' : 'male';
+
+const getReviewAvatar = (name: string, gender: 'male' | 'female') => {
+  const safeSeed = encodeURIComponent((name || 'user').replace(/\s/g, '') || 'user');
+  const style = gender === 'female' ? 'lorelei' : 'adventurer';
+  return `https://api.dicebear.com/8.x/${style}/svg?seed=${safeSeed}`;
+};
 
 const resolveQuickAccessIcon = (title: string, index: number): LucideIcon => {
   const normalizedTitle = (title || '').toLowerCase();
@@ -347,14 +363,15 @@ export default function HomePageClient({ initialHomeContent }: HomePageClientPro
     .filter((review): review is Review => !!review && typeof review === 'object')
     .map((r) => {
       const safeName = r.name || 'Anonymous';
-      const safeSeed = safeName.replace(/\s/g, '') || 'user';
+      const gender = normalizeReviewGender((r as any).gender);
       return {
         ...r,
         name: safeName,
         role: r.role || '',
         testimonial: r.testimonial || '',
         rating: Number.isFinite(r.rating) ? Math.max(1, Math.min(5, r.rating)) : 5,
-        avatar: r.avatar || `https://api.dicebear.com/8.x/adventurer/svg?seed=${safeSeed}`,
+        gender,
+        avatar: r.avatar || getReviewAvatar(safeName, gender),
       };
     });
   const [testimonials, setTestimonials] = useState<Review[]>(initialReviews);
@@ -375,12 +392,38 @@ export default function HomePageClient({ initialHomeContent }: HomePageClientPro
     });
   };
   
-  const achievements = [
-    { icon: Users, value: 50000, label: "Happy Students", suffix: "+" },
-    { icon: BookOpen, value: 50, label: "Expert Courses", suffix: "+" },
-    { icon: Video, value: 1000, label: "Hours of Content", suffix: "+" },
-    { icon: Award, value: 20, label: "Awards Won", suffix: "+" },
-  ];
+  const defaultAchievements = {
+    badge: "Proven Track Record",
+    title: "Our Impact by the Numbers",
+    description: "Join thousands of learners who are transforming their careers and skills",
+    stats: [
+      { value: 50000, label: "Happy Students", suffix: "+" },
+      { value: 50, label: "Expert Courses", suffix: "+" },
+      { value: 1000, label: "Hours of Content", suffix: "+" },
+      { value: 20, label: "Awards Won", suffix: "+" },
+    ],
+  };
+
+  const achievementsContent = {
+    badge: initialHomeContent?.achievements?.badge || defaultAchievements.badge,
+    title: initialHomeContent?.achievements?.title || defaultAchievements.title,
+    description: initialHomeContent?.achievements?.description || defaultAchievements.description,
+    stats: Array.isArray(initialHomeContent?.achievements?.stats)
+      ? initialHomeContent.achievements.stats
+      : defaultAchievements.stats,
+  };
+
+  const achievementIcons: LucideIcon[] = [Users, BookOpen, Video, Award];
+  const achievementDefaults = defaultAchievements.stats;
+  const achievements = (achievementsContent.stats.length > 0
+    ? achievementsContent.stats
+    : achievementDefaults
+  ).slice(0, 4).map((item, index) => ({
+    icon: achievementIcons[index % achievementIcons.length],
+    value: Number.isFinite(Number(item?.value)) ? Number(item.value) : achievementDefaults[index]?.value || 0,
+    label: (item?.label || achievementDefaults[index]?.label || "").trim(),
+    suffix: (item?.suffix || achievementDefaults[index]?.suffix || "").trim(),
+  }));
 
   return (
     <>
@@ -644,15 +687,15 @@ export default function HomePageClient({ initialHomeContent }: HomePageClientPro
             >
               <div className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium shadow-sm bg-emerald-50 text-emerald-700 border border-emerald-200/70 dark:bg-emerald-500/10 dark:border-emerald-400/40 dark:text-emerald-200">
                 <Award className="h-4 w-4" />
-                Proven Track Record
+                {achievementsContent.badge}
               </div>
               
               <h2 className="font-headline text-4xl lg:text-5xl font-bold tracking-tight text-slate-900 dark:text-white">
-              Our Impact by the Numbers
+                {achievementsContent.title}
               </h2>
               
               <p className="max-w-[800px] text-lg text-slate-600 dark:text-slate-200/80 leading-relaxed">
-                Join thousands of learners who are transforming their careers and skills
+                {achievementsContent.description}
               </p>
             </motion.div>
 

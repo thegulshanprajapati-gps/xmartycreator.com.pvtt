@@ -3,9 +3,7 @@
 
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Download, Users, Sparkles, MessageCircle, ArrowRight, Play, ShieldCheck, Video, Send } from "lucide-react";
-import { WhatsAppIcon, TelegramIcon } from "@/components/icons";
 import { trackLinkClick } from "@/app/analytics/actions";
 import { Footer } from "@/components/layout/footer";
 import { motion } from "framer-motion";
@@ -76,52 +74,67 @@ function CommunityIllustration(props: SVGProps<SVGSVGElement>) {
       >
         <g fill="none" fillRule="evenodd">
           <motion.path
-            initial={{ pathLength: 0, opacity: 0 }}
-            animate={{ pathLength: 1, opacity: 1 }}
-            transition={{ duration: 1.5, ease: "easeInOut", delay: 0.5 }}
+            initial={{ pathLength: 0.25, opacity: 0.35, strokeDashoffset: 0 }}
+            animate={{
+              pathLength: [0.25, 1, 0.25],
+              opacity: [0.35, 0.95, 0.35],
+              strokeDashoffset: [0, -18, -36],
+            }}
+            transition={{ duration: 4.2, ease: "linear", repeat: Infinity }}
             d="M175 250l75-150"
             className="stroke-rose-500/60 dark:stroke-rose-300/35"
             strokeWidth="3"
-            strokeDasharray="5, 5"
+            strokeDasharray="8, 8"
           />
            <motion.path
-            initial={{ pathLength: 0, opacity: 0 }}
-            animate={{ pathLength: 1, opacity: 1 }}
-            transition={{ duration: 1.5, ease: "easeInOut", delay: 0.7 }}
+            initial={{ pathLength: 0.25, opacity: 0.35, strokeDashoffset: 0 }}
+            animate={{
+              pathLength: [0.25, 1, 0.25],
+              opacity: [0.35, 0.95, 0.35],
+              strokeDashoffset: [0, -18, -36],
+            }}
+            transition={{ duration: 4.2, ease: "linear", repeat: Infinity, delay: 0.35 }}
             d="M325 250l-75-150"
             className="stroke-rose-500/60 dark:stroke-rose-300/35"
             strokeWidth="3"
-            strokeDasharray="5, 5"
+            strokeDasharray="8, 8"
           />
            <motion.path
-            initial={{ pathLength: 0, opacity: 0 }}
-            animate={{ pathLength: 1, opacity: 1 }}
-            transition={{ duration: 1.5, ease: "easeInOut", delay: 0.9 }}
+            initial={{ pathLength: 0.25, opacity: 0.35, strokeDashoffset: 0 }}
+            animate={{
+              pathLength: [0.25, 1, 0.25],
+              opacity: [0.35, 0.95, 0.35],
+              strokeDashoffset: [0, -18, -36],
+            }}
+            transition={{ duration: 4.2, ease: "linear", repeat: Infinity, delay: 0.7 }}
             d="M190 250h120"
             className="stroke-rose-500/60 dark:stroke-rose-300/35"
             strokeWidth="3"
-            strokeDasharray="5, 5"
+            strokeDasharray="8, 8"
           />
           <motion.g
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
+            initial={{ opacity: 0.85 }}
+            animate={{ opacity: [0.8, 1, 0.8], y: [0, -6, 0], scale: [1, 1.05, 1] }}
+            transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut" }}
+            style={{ transformOrigin: "250px 100px" }}
           >
             <circle className="stroke-rose-500 dark:stroke-rose-200/70" strokeWidth="3" cx="250" cy="100" r="40" />
             <circle className="fill-rose-500 dark:fill-rose-200/70" cx="250" cy="100" r="15" />
           </motion.g>
           <motion.g
-             initial={{ opacity: 0, x: -20 }}
-             animate={{ opacity: 1, x: 0 }}
-             transition={{ duration: 0.5, delay: 0.4 }}
+             initial={{ opacity: 0.85 }}
+             animate={{ opacity: [0.8, 1, 0.8], x: [0, -5, 0], y: [0, 4, 0], scale: [1, 1.04, 1] }}
+             transition={{ duration: 3.6, repeat: Infinity, ease: "easeInOut", delay: 0.2 }}
+             style={{ transformOrigin: "150px 250px" }}
           >
             <circle className="stroke-rose-500 dark:stroke-rose-200/70" strokeWidth="3" cx="150" cy="250" r="40" />
             <circle className="fill-rose-500 dark:fill-rose-200/70" cx="150" cy="250" r="15" />
           </motion.g>
           <motion.g
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5, delay: 0.6 }}
+            initial={{ opacity: 0.85 }}
+            animate={{ opacity: [0.8, 1, 0.8], x: [0, 5, 0], y: [0, 4, 0], scale: [1, 1.04, 1] }}
+            transition={{ duration: 3.6, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
+            style={{ transformOrigin: "350px 250px" }}
           >
             <circle className="stroke-rose-500 dark:stroke-rose-200/70" strokeWidth="3" cx="350" cy="250" r="40" />
             <circle className="fill-rose-500 dark:fill-rose-200/70" cx="350" cy="250" r="15" />
@@ -199,30 +212,54 @@ export default function CommunityPage() {
   }, [communityContent?.youtube?.channelId, communityContent?.youtube?.latestVideoId, communityContent?.youtube?.videoId]);
 
   const videoId = resolvedVideoId;
+  const youtubeChannelId = (communityContent?.youtube?.channelId || "").trim();
+  const youtubeLink = youtubeChannelId
+    ? `https://www.youtube.com/channel/${youtubeChannelId}`
+    : videoId
+      ? `https://www.youtube.com/watch?v=${videoId}`
+      : "https://www.youtube.com";
 
   const communityPlatforms = [
     {
-      ...communityContent.whatsapp,
-      icon: <WhatsAppIcon className="h-8 w-8 text-green-600" />,
-      trackId: 'WhatsApp',
-      bgColor: 'from-emerald-50/80 via-white/70 to-cyan-50/60 dark:from-emerald-900/30 dark:via-slate-900/50 dark:to-slate-900/40',
-      iconBg: 'bg-white/80 dark:bg-emerald-900/40'
+      title: communityContent.whatsapp.title || "WhatsApp",
+      description:
+        communityContent.whatsapp.description || "Get instant updates, notes, and quick support from the main group.",
+      link: communityContent.whatsapp.link || "#",
+      ctaText: communityContent.whatsapp.buttonText || "Join",
+      icon: <i className="fa-brands fa-whatsapp" aria-hidden="true" />,
+      trackId: "WhatsApp",
+      platformClass: "whatsapp",
     },
     {
-      ...communityContent.app,
-      icon: <Download className="h-8 w-8 text-blue-600" />,
-      trackId: 'App-Download',
-      bgColor: 'from-blue-50/80 via-white/70 to-purple-50/60 dark:from-blue-900/30 dark:via-slate-900/50 dark:to-slate-900/40',
-      iconBg: 'bg-white/80 dark:bg-blue-900/40'
+      title: communityContent.app.title || "App",
+      description:
+        communityContent.app.description || "Access classes, announcements, and community resources in one place.",
+      link: communityContent.app.link || "#",
+      ctaText: communityContent.app.buttonText || "Download",
+      icon: <Download className="h-8 w-8 text-white" />,
+      trackId: "App-Download",
+      platformClass: "app",
     },
     {
-      ...communityContent.telegram,
-      icon: <TelegramIcon className="h-8 w-8 text-sky-500" />,
-      trackId: 'Telegram',
-      bgColor: 'from-sky-50/80 via-white/70 to-cyan-50/60 dark:from-sky-900/30 dark:via-slate-900/50 dark:to-slate-900/40',
-      iconBg: 'bg-white/80 dark:bg-sky-900/40'
+      title: communityContent.telegram.title || "Telegram",
+      description:
+        communityContent.telegram.description || "Join focused discussion channels and fast-moving updates.",
+      link: communityContent.telegram.link || "#",
+      ctaText: communityContent.telegram.buttonText || "Join",
+      icon: <i className="fa-brands fa-telegram" aria-hidden="true" />,
+      trackId: "Telegram",
+      platformClass: "telegram",
     },
-  ]
+    {
+      title: "YouTube",
+      description: "Watch latest videos, tutorials, and live sessions from XMarty Creator.",
+      link: youtubeLink,
+      ctaText: "Subscribe",
+      icon: <i className="fa-brands fa-youtube" aria-hidden="true" />,
+      trackId: "YouTube",
+      platformClass: "youtube",
+    },
+  ];
 
   return (
     <>
@@ -271,7 +308,7 @@ export default function CommunityPage() {
                 <div className="mt-8 grid grid-cols-2 gap-3 max-w-lg">
                   <div className="rounded-2xl border border-slate-100 dark:border-slate-800 bg-white/80 dark:bg-slate-900/60 p-4 shadow-sm backdrop-blur">
                     <div className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Channels</div>
-                    <div className="text-lg font-semibold mt-1 text-slate-900 dark:text-white">WhatsApp · Telegram · App</div>
+                    <div className="text-lg font-semibold mt-1 text-slate-900 dark:text-white">WhatsApp, Telegram, App</div>
                   </div>
                   <div className="rounded-2xl border border-slate-100 dark:border-slate-800 bg-white/80 dark:bg-slate-900/60 p-4 shadow-sm backdrop-blur">
                     <div className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Live events</div>
@@ -405,52 +442,64 @@ export default function CommunityPage() {
         {/* Platforms */}
         <section className="w-full py-14 md:py-20">
           <div className="container mx-auto px-4 md:px-6">
-            <motion.div 
-              className="text-center mb-14 space-y-3"
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, amount: 0.5 }}
-              variants={fadeIn}
-            >
-                <div className="inline-flex items-center gap-2 rounded-full bg-cyan-50 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-100 px-4 py-2 border border-cyan-100 dark:border-cyan-800">
+            <div className="community-premium-section relative overflow-hidden rounded-[30px] border border-slate-200/70 dark:border-white/10 px-5 py-10 sm:px-8 md:px-10 md:py-12">
+              <div className="pointer-events-none absolute -left-24 top-4 h-48 w-48 rounded-full bg-cyan-300/20 dark:bg-cyan-300/12 blur-3xl" />
+              <div className="pointer-events-none absolute -right-20 bottom-2 h-52 w-52 rounded-full bg-indigo-300/18 dark:bg-indigo-300/14 blur-3xl" />
+
+              <motion.div
+                className="mb-10 space-y-3 text-center md:mb-12"
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true, amount: 0.5 }}
+                variants={fadeIn}
+              >
+                <div className="inline-flex items-center gap-2 rounded-full border border-slate-200/80 bg-white/65 px-4 py-2 text-slate-700 dark:border-white/20 dark:bg-white/10 dark:text-cyan-100 backdrop-blur">
                   <Users className="h-4 w-4" />
                   Join our communities
                 </div>
-                <h2 className="font-headline text-3xl font-bold tracking-tight sm:text-4xl text-slate-900 dark:text-white">Pick your favorite channel</h2>
-                <p className="max-w-2xl mx-auto text-slate-600 dark:text-slate-300">Connect with us where you spend time the most—one tap to hop in.</p>
-            </motion.div>
+                <h2 className="font-headline text-3xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-4xl">
+                  Pick your favorite channel
+                </h2>
+                <p className="mx-auto max-w-2xl text-sm text-slate-600 dark:text-slate-200/80 sm:text-base">
+                  Choose where you want to stay connected with XMarty Creator
+                </p>
+              </motion.div>
 
-            <motion.div 
-              className="grid grid-cols-1 md:grid-cols-3 gap-8"
-              variants={staggerContainer}
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, amount: 0.4 }}
-            >
-                {communityPlatforms.map((platform, index) => (
-                  <motion.div key={index} variants={fadeIn} whileHover={{ y: -6 }}>
-                    <Card className={`h-full flex flex-col justify-between overflow-hidden transition-all duration-300 border-none bg-gradient-to-br ${platform.bgColor} shadow-[0_25px_70px_-60px_rgba(59,130,246,0.8)]`}>
-                        <CardHeader className="items-center">
-                            <div className={`mb-4 rounded-full p-4 shadow-sm ${platform.iconBg}`}>
-                              {platform.icon}
-                            </div>
-                            <CardTitle className="font-headline text-2xl text-slate-900 dark:text-white">{platform.title}</CardTitle>
-                        </CardHeader>
-                        <CardContent className="px-6 text-center">
-                            <p className="text-slate-600 dark:text-slate-300">{platform.description}</p>
-                        </CardContent>
-                         <CardDescription className="p-6">
-                            <Button asChild onClick={() => trackLinkClick(platform.trackId)} className="w-full gap-2">
-                                <Link href={platform.link || '#'} target="_blank">
-                                  {platform.buttonText}
-                                  <ArrowRight className="h-4 w-4" />
-                                </Link>
-                            </Button>
-                        </CardDescription>
-                    </Card>
-                  </motion.div>
-                ))}
-            </motion.div>
+              <motion.div
+                className="channel-grid grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4"
+                variants={staggerContainer}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true, amount: 0.35 }}
+              >
+                {communityPlatforms.map((platform) => {
+                  const href = platform.link || "#";
+                  const openInNewTab = /^https?:\/\//i.test(href);
+                  return (
+                    <motion.article key={platform.trackId} variants={fadeIn} className="h-full">
+                      <div className={`card channel-card ${platform.platformClass} flex h-full flex-col`}>
+                        <div className="channel-card__content flex flex-1 flex-col items-center px-6 pt-8 pb-8 text-center">
+                          <div className="channel-card__icon mb-5">{platform.icon}</div>
+                          <h3 className="text-2xl font-semibold text-white">{platform.title}</h3>
+                          <p className="mt-3 text-sm leading-relaxed text-white/90">
+                            {platform.description}
+                          </p>
+                          <Link
+                            href={href}
+                            target={openInNewTab ? "_blank" : undefined}
+                            rel={openInNewTab ? "noopener noreferrer" : undefined}
+                            onClick={() => trackLinkClick(platform.trackId)}
+                            className="channel-card__cta mt-7"
+                          >
+                            <span>{platform.ctaText} &rarr;</span>
+                          </Link>
+                        </div>
+                      </div>
+                    </motion.article>
+                  );
+                })}
+              </motion.div>
+            </div>
           </div>
         </section>
       </div>
@@ -458,3 +507,4 @@ export default function CommunityPage() {
     </>
   );
 }
+

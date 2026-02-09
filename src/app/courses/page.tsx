@@ -1,7 +1,9 @@
 ﻿import { Metadata } from "next";
 import { Suspense } from "react";
+import { redirect } from "next/navigation";
 import CourseListClient from "@/components/course/course-list-client";
 import CourseCardSkeleton from "@/components/course/course-card-skeleton";
+import { getPageContent } from "@/lib/page-content-cache";
 
 export const metadata: Metadata = {
   title: "Courses | Xmarty Creator",
@@ -14,6 +16,12 @@ export const metadata: Metadata = {
   },
 };
 
+export const dynamic = "force-dynamic";
+
+type CoursesSettings = {
+  developmentMode?: boolean;
+};
+
 function CourseSkeleton() {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -24,7 +32,21 @@ function CourseSkeleton() {
   );
 }
 
-export default function CoursesPage() {
+async function isCoursesDevelopmentModeEnabled() {
+  try {
+    const content = (await getPageContent("courses", true)) as CoursesSettings;
+    return Boolean(content?.developmentMode);
+  } catch (error) {
+    console.error("Failed to load courses page settings:", error);
+    return false;
+  }
+}
+
+export default async function CoursesPage() {
+  if (await isCoursesDevelopmentModeEnabled()) {
+    redirect("/courses/development");
+  }
+
   return (
     <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
       {/* soft glows */}

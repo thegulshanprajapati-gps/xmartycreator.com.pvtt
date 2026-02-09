@@ -35,6 +35,8 @@ export default function CoursePage() {
   const [shareTooltip, setShareTooltip] = useState(false);
 
   useEffect(() => {
+    let cancelled = false;
+
     const fetchCourse = async () => {
       try {
         const res = await fetch(`/api/courses?slug=${slug}`, { cache: 'no-store' });
@@ -43,44 +45,60 @@ export default function CoursePage() {
           const foundCourse = Array.isArray(courses) 
             ? courses.find((c: Course) => c.slug === slug)
             : courses;
-          setCourse(foundCourse);
+          if (!cancelled) {
+            setCourse(foundCourse);
+          }
           
           if (foundCourse?._id) {
             // Initialize from database values first
-            setShareCount(foundCourse?.shareCount || 0);
-            setViewCount(foundCourse?.viewsCount || 0);
-            setEnrollCount(foundCourse?.enrollClickCount || 0);
+            if (!cancelled) {
+              setShareCount(foundCourse?.shareCount || 0);
+              setViewCount(foundCourse?.viewsCount || 0);
+              setEnrollCount(foundCourse?.enrollClickCount || 0);
+            }
             
             // Track page view
             const viewRes = await fetch(`/api/courses/${foundCourse._id}/view`, { method: 'POST' }).catch(() => null);
             if (viewRes?.ok) {
               const { viewsCount } = await viewRes.json();
-              setViewCount(viewsCount || 0);
+              if (!cancelled) {
+                setViewCount(viewsCount || 0);
+              }
             }
             
             const shareRes = await fetch(`/api/courses/${foundCourse._id}/share`);
             if (shareRes.ok) {
               const { shareCount } = await shareRes.json();
-              setShareCount(shareCount || 0);
+              if (!cancelled) {
+                setShareCount(shareCount || 0);
+              }
             }
 
             const enrollRes = await fetch(`/api/courses/${foundCourse._id}/enroll-click`);
             if (enrollRes.ok) {
               const { enrollClickCount } = await enrollRes.json();
-              setEnrollCount(enrollClickCount || 0);
+              if (!cancelled) {
+                setEnrollCount(enrollClickCount || 0);
+              }
             }
           }
         }
       } catch (error) {
         console.error('Error fetching course:', error);
       } finally {
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     };
 
     if (slug) {
       fetchCourse();
     }
+
+    return () => {
+      cancelled = true;
+    };
   }, [slug]);
 
   if (loading) {

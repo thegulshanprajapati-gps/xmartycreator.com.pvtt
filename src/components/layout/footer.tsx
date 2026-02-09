@@ -12,7 +12,7 @@ import { type Review } from "@/app/home-page-client";
 import { handleNewReview } from "@/app/actions";
 import { useToast } from "@/hooks/use-toast";
 
-type ReviewFormData = Omit<Review, 'avatar'>;
+type ReviewFormData = Omit<Review, 'avatar'> & { gender: 'male' | 'female' };
 
 const QuickLink = ({ href, children }: { href: string; children: React.ReactNode }) => (
     <Link href={href} className="group flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-primary hover-lift-sm">

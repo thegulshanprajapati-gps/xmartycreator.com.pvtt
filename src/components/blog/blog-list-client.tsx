@@ -7,7 +7,7 @@ import BlogCardSkeleton from './blog-card-skeleton';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Search, Filter, X, Sparkles } from 'lucide-react';
+import { Search, Filter, X, Sparkles, ArrowUpRight } from 'lucide-react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 
@@ -150,29 +150,32 @@ export default function BlogListClient({
   return (
     <div className="space-y-10">
       {/* Hero Section */}
-      <div className="relative overflow-hidden rounded-3xl border border-slate-200/70 dark:border-white/10 bg-gradient-to-br from-white/95 via-slate-50 to-slate-100/90 dark:from-slate-900/70 dark:via-slate-900/40 dark:to-slate-800/60 shadow-[0_30px_90px_-70px_rgba(59,130,246,0.65)] dark:shadow-[0_30px_90px_-65px_rgba(56,189,248,0.35)] backdrop-blur">
-        <div className="absolute inset-0 opacity-55 bg-[radial-gradient(circle_at_18%_18%,rgba(59,130,246,0.12),transparent_38%),radial-gradient(circle_at_82%_12%,rgba(236,72,153,0.1),transparent_32%),radial-gradient(circle_at_55%_85%,rgba(99,102,241,0.12),transparent_40%)] dark:bg-[radial-gradient(circle_at_18%_18%,rgba(56,189,248,0.22),transparent_40%),radial-gradient(circle_at_82%_12%,rgba(168,85,247,0.2),transparent_35%),radial-gradient(circle_at_55%_85%,rgba(59,130,246,0.18),transparent_42%)]" />
+      <div className="relative isolate overflow-hidden rounded-[32px] border border-white/10 bg-[linear-gradient(130deg,#13092f_0%,#171542_34%,#0f1f66_100%)] shadow-[0_40px_120px_-68px_rgba(17,24,77,0.95)]">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_14%_18%,rgba(56,189,248,0.3),transparent_34%),radial-gradient(circle_at_82%_10%,rgba(129,140,248,0.32),transparent_40%),radial-gradient(circle_at_50%_100%,rgba(37,99,235,0.2),transparent_52%)]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-white/[0.08] via-transparent to-black/20" />
+        <div className="absolute -left-20 top-1/2 h-56 w-56 -translate-y-1/2 rounded-full bg-cyan-300/20 blur-3xl" />
+        <div className="absolute -right-16 top-12 h-52 w-52 rounded-full bg-indigo-300/20 blur-3xl" />
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-          className="relative px-6 py-10 md:px-10 md:py-14 grid gap-8 lg:grid-cols-[1.2fr_1fr]"
+          transition={{ duration: 0.35 }}
+          className="relative z-10 grid gap-8 px-6 py-8 sm:px-8 sm:py-10 lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:px-10 lg:py-12"
         >
-          <div className="space-y-4">
-            <div className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-blue-500/12 via-purple-500/12 to-pink-500/12 border border-slate-200/60 dark:border-white/20 text-slate-800 dark:text-white px-4 py-2 text-sm font-semibold shadow-[0_10px_40px_-30px_rgba(59,130,246,0.8)]">
+          <div className="space-y-5">
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-cyan-100 shadow-[0_12px_28px_-16px_rgba(125,211,252,0.75)] backdrop-blur">
               <Sparkles className="h-4 w-4" />
-              Curated insights
+              Student Insights
             </div>
-            <h1 className="text-4xl md:text-5xl font-bold tracking-tight bg-gradient-to-r from-foreground via-foreground to-foreground/70 bg-clip-text text-transparent">
-              Insights & Knowledge
+            <h1 className="text-3xl font-bold leading-[1.08] tracking-tight text-white sm:text-4xl lg:text-5xl [text-wrap:balance]">
+              Blog for Diploma Success
             </h1>
-            <p className="text-lg text-slate-700 dark:text-slate-300 max-w-2xl">
-              Discover articles on technology, design, and digital growth, exactly as saved in admin.
+            <p className="max-w-xl text-sm leading-relaxed text-slate-200/90 sm:text-base">
+              Clear explanations, PYQs, exam updates, and real guidance for better results.
             </p>
-            <div className="flex flex-wrap gap-3">
-              <Badge className="bg-white/80 dark:bg-white/5 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-white/10">Guides</Badge>
-              <Badge className="bg-white/80 dark:bg-white/5 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-white/10">Releases</Badge>
-              <Badge className="bg-white/80 dark:bg-white/5 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-white/10">Community</Badge>
+            <div className="flex flex-wrap gap-2.5">
+              <Badge className="border border-white/20 bg-white/10 px-3 py-1 text-slate-100 hover:bg-white/15">Guides</Badge>
+              <Badge className="border border-white/20 bg-white/10 px-3 py-1 text-slate-100 hover:bg-white/15">Exam Updates</Badge>
+              <Badge className="border border-white/20 bg-white/10 px-3 py-1 text-slate-100 hover:bg-white/15">Community</Badge>
             </div>
           </div>
 
@@ -180,25 +183,39 @@ export default function BlogListClient({
           {featured && (
             <Link
               href={`/blog/${featured.slug}`}
-              className="relative overflow-hidden rounded-2xl border border-slate-200/70 dark:border-white/10 bg-white/90 dark:bg-slate-900/65 backdrop-blur group shadow-md dark:shadow-[0_25px_80px_-55px_rgba(59,130,246,0.4)] hover:shadow-lg transition-shadow"
+              className="group relative block overflow-hidden rounded-2xl border border-white/20 bg-slate-950/35 shadow-[0_28px_80px_-48px_rgba(34,211,238,0.72)] backdrop-blur transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_36px_100px_-44px_rgba(37,99,235,0.78)]"
             >
-              <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/20 to-transparent opacity-95" />
-              {featuredCover && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={featuredCover}
-                  alt={featured.title}
-                  className="absolute inset-0 h-full w-full object-cover opacity-85 transition-transform duration-500 group-hover:scale-105"
-                />
-              )}
-              <div className="relative p-6 space-y-3 text-white">
-                <Badge className="bg-primary text-white border-0">Featured</Badge>
-                <h3 className="text-2xl font-bold leading-snug line-clamp-2">{featured.title}</h3>
-                <p className="text-sm text-white/80 line-clamp-2">{featured.excerpt}</p>
-                <div className="flex items-center gap-4 text-xs text-white/70">
-                  <span>{featured.author}</span>
-                  {featured.readTime && <span>{featured.readTime} min read</span>}
-                  {featured.publishedAt && <span>{new Date(featured.publishedAt).toLocaleDateString('en-IN')}</span>}
+              <div className="relative min-h-[250px] sm:min-h-[280px]">
+                {featuredCover ? (
+                  <>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={featuredCover}
+                      alt={featured.title}
+                      className="absolute inset-0 h-full w-full object-cover opacity-90 transition-transform duration-500 group-hover:scale-105"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/42 to-black/18" />
+                    <div className="absolute inset-0 bg-gradient-to-br from-cyan-300/12 via-transparent to-indigo-400/22" />
+                  </>
+                ) : (
+                  <div className="absolute inset-0 bg-[linear-gradient(135deg,#0f172a_0%,#1e1b4b_45%,#2563eb_100%)]" />
+                )}
+                <div className="absolute left-4 top-4">
+                  <Badge className="border-0 bg-red-500 px-3 text-white shadow-md">Must Read</Badge>
+                </div>
+                <div className="absolute inset-x-0 bottom-0 space-y-3 p-5 text-white sm:p-6">
+                  <h3 className="line-clamp-2 text-xl font-bold leading-snug sm:text-2xl">{featured.title}</h3>
+                  <p className="line-clamp-2 text-sm text-white/85">{featured.excerpt}</p>
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-white/75">
+                    <span>{featured.author}</span>
+                    {featured.readTime && <span>{featured.readTime} min read</span>}
+                    {featured.publishedAt && (
+                      <span>{new Date(featured.publishedAt).toLocaleDateString('en-IN')}</span>
+                    )}
+                  </div>
+                  <span className="inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-[0.16em] text-cyan-200/95">
+                    Read now <ArrowUpRight className="h-3.5 w-3.5" />
+                  </span>
                 </div>
               </div>
             </Link>

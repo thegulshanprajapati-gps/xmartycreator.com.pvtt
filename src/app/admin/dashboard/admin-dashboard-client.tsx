@@ -60,7 +60,14 @@ type HomeContent = {
       testimonial: string;
       rating: number;
       avatar: string;
+      gender?: 'male' | 'female';
     }[];
+  };
+  achievements: {
+    badge: string;
+    title: string;
+    description: string;
+    stats: { value: number; suffix: string; label: string }[];
   };
 };
 
@@ -140,7 +147,8 @@ export default function AdminDashboardClient({ initialHomeContent }: AdminDashbo
                     role: '', 
                     testimonial: '', 
                     rating: 5, 
-                    avatar: '' 
+                    avatar: '',
+                    gender: 'male',
                 }]
             }
         }));
@@ -153,6 +161,26 @@ export default function AdminDashboardClient({ initialHomeContent }: AdminDashbo
                 ...prev.testimonials,
                 reviews: (prev.testimonials?.reviews || []).filter((_, index) => index !== indexToRemove)
             }
+        }));
+    };
+
+    const handleAddAchievementStat = () => {
+        setHomeContent(prev => ({
+            ...prev,
+            achievements: {
+                ...prev.achievements,
+                stats: [...(prev.achievements?.stats || []), { value: 0, suffix: '+', label: '' }],
+            },
+        }));
+    };
+
+    const handleRemoveAchievementStat = (indexToRemove: number) => {
+        setHomeContent(prev => ({
+            ...prev,
+            achievements: {
+                ...prev.achievements,
+                stats: (prev.achievements?.stats || []).filter((_, index) => index !== indexToRemove),
+            },
         }));
     };
     
@@ -233,9 +261,10 @@ export default function AdminDashboardClient({ initialHomeContent }: AdminDashbo
             <Button type="submit" disabled={isPending}>{isPending ? 'Saving...' : 'Save Changes'}</Button>
         </div>
         <Tabs defaultValue="hero" className="mt-4">
-            <TabsList className="grid w-full grid-cols-5">
+            <TabsList className="grid w-full grid-cols-6">
                 <TabsTrigger value="hero">Hero</TabsTrigger>
                 <TabsTrigger value="quick-access">Quick Access</TabsTrigger>
+                <TabsTrigger value="achievements">Impact</TabsTrigger>
                 <TabsTrigger value="why-choose-us">Why Choose Us</TabsTrigger>
                 <TabsTrigger value="testimonials">Testimonials</TabsTrigger>
                 <TabsTrigger value="updates">Updates</TabsTrigger>
@@ -344,6 +373,110 @@ export default function AdminDashboardClient({ initialHomeContent }: AdminDashbo
                             </div>
                         </div>
                     </TabsContent>
+
+                    <TabsContent value="achievements" forceMount className="mt-0 data-[state=inactive]:hidden">
+                        <div className="space-y-4 pt-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="achievements-badge">Section Badge</Label>
+                                <Input
+                                  id="achievements-badge"
+                                  name="achievements-badge"
+                                  value={homeContent.achievements?.badge || ''}
+                                  onChange={e => setHomeContent({
+                                    ...homeContent,
+                                    achievements: { ...homeContent.achievements, badge: e.target.value }
+                                  })}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="achievements-title">Section Title</Label>
+                                <Input
+                                  id="achievements-title"
+                                  name="achievements-title"
+                                  value={homeContent.achievements?.title || ''}
+                                  onChange={e => setHomeContent({
+                                    ...homeContent,
+                                    achievements: { ...homeContent.achievements, title: e.target.value }
+                                  })}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="achievements-description">Section Description</Label>
+                                <Textarea
+                                  id="achievements-description"
+                                  name="achievements-description"
+                                  value={homeContent.achievements?.description || ''}
+                                  onChange={e => setHomeContent({
+                                    ...homeContent,
+                                    achievements: { ...homeContent.achievements, description: e.target.value }
+                                  })}
+                                />
+                            </div>
+                            <div className="flex justify-end mb-2">
+                                <Button type="button" variant="outline" onClick={handleAddAchievementStat}>
+                                    <PlusCircle className="mr-2 h-4 w-4" />
+                                    Add Stat Card
+                                </Button>
+                            </div>
+                            <div className="max-h-[420px] overflow-y-auto space-y-4 pr-4">
+                                {(homeContent.achievements?.stats || []).map((stat, index) => (
+                                  <Card key={index} className="p-4 relative">
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                      <div className="space-y-2">
+                                        <Label htmlFor={`achievements-value-${index}`}>Value</Label>
+                                        <Input
+                                          type="number"
+                                          id={`achievements-value-${index}`}
+                                          name={`achievements-value-${index}`}
+                                          value={stat.value}
+                                          onChange={e => handleArrayChange('achievements', 'stats', index, 'value', Number(e.target.value))}
+                                        />
+                                      </div>
+                                      <div className="space-y-2">
+                                        <Label htmlFor={`achievements-suffix-${index}`}>Suffix</Label>
+                                        <Input
+                                          id={`achievements-suffix-${index}`}
+                                          name={`achievements-suffix-${index}`}
+                                          value={stat.suffix}
+                                          onChange={e => handleArrayChange('achievements', 'stats', index, 'suffix', e.target.value)}
+                                        />
+                                      </div>
+                                      <div className="space-y-2">
+                                        <Label htmlFor={`achievements-label-${index}`}>Label</Label>
+                                        <Input
+                                          id={`achievements-label-${index}`}
+                                          name={`achievements-label-${index}`}
+                                          value={stat.label}
+                                          onChange={e => handleArrayChange('achievements', 'stats', index, 'label', e.target.value)}
+                                        />
+                                      </div>
+                                    </div>
+                                    <AlertDialog>
+                                      <AlertDialogTrigger asChild>
+                                        <Button variant="ghost" size="icon" className="absolute top-2 right-2 text-destructive hover:text-destructive">
+                                          <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                      </AlertDialogTrigger>
+                                      <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                          <AlertDialogTitle>Remove this stat?</AlertDialogTitle>
+                                          <AlertDialogDescription>
+                                            This card will be removed after you click Save Changes.
+                                          </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                          <AlertDialogAction onClick={() => handleRemoveAchievementStat(index)} className="bg-destructive hover:bg-destructive/90">
+                                            Remove
+                                          </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                      </AlertDialogContent>
+                                    </AlertDialog>
+                                  </Card>
+                                ))}
+                            </div>
+                        </div>
+                    </TabsContent>
                     
                     <TabsContent value="why-choose-us" forceMount className="mt-0 data-[state=inactive]:hidden">
                         <div className="space-y-4 pt-4">
@@ -391,6 +524,7 @@ export default function AdminDashboardClient({ initialHomeContent }: AdminDashbo
                             <div className="max-h-[400px] overflow-y-auto space-y-4 pr-4">
                                 {(homeContent.testimonials?.reviews || []).map((review, index) => (
                                     <Card key={index} className="p-4 relative">
+                                        <input type="hidden" name={`review-gender-${index}`} value={review.gender || ''} />
                                         <div className="space-y-2">
                                             <Label htmlFor={`review-name-${index}`}>Reviewer Name</Label>
                                             <Input id={`review-name-${index}`} name={`review-name-${index}`} value={review.name} onChange={e => handleArrayChange('testimonials', 'reviews', index, 'name', e.target.value)} />

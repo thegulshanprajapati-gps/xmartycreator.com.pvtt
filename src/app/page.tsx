@@ -53,7 +53,14 @@ type HomeContent = {
       testimonial: string;
       rating: number;
       avatar: string;
+      gender?: 'male' | 'female';
     }[];
+  };
+  achievements: {
+    badge: string;
+    title: string;
+    description: string;
+    stats: { value: number; suffix: string; label: string }[];
   };
 };
 
@@ -73,6 +80,17 @@ const DEFAULT_HOME_CONTENT: HomeContent = {
   },
   whyChooseUs: { title: '', description: '', features: [] },
   testimonials: { title: '', description: '', reviews: [] },
+  achievements: {
+    badge: 'Proven Track Record',
+    title: 'Our Impact by the Numbers',
+    description: 'Join thousands of learners who are transforming their careers and skills',
+    stats: [
+      { value: 50000, suffix: '+', label: 'Happy Students' },
+      { value: 50, suffix: '+', label: 'Expert Courses' },
+      { value: 1000, suffix: '+', label: 'Hours of Content' },
+      { value: 20, suffix: '+', label: 'Awards Won' },
+    ],
+  },
 };
 
 async function getHomeContent(): Promise<HomeContent> {
@@ -129,6 +147,13 @@ async function getHomeContent(): Promise<HomeContent> {
             ? rawTestimonials.items
             : DEFAULT_HOME_CONTENT.testimonials.reviews
         ).filter((review: any) => review && typeof review === 'object'),
+      },
+      achievements: {
+        ...DEFAULT_HOME_CONTENT.achievements,
+        ...(content as any).achievements,
+        stats: Array.isArray((content as any).achievements?.stats)
+          ? (content as any).achievements.stats
+          : DEFAULT_HOME_CONTENT.achievements.stats,
       },
     };
 
@@ -331,6 +356,7 @@ async function getTestimonialsContent(): Promise<HomeContent['testimonials'] | n
           testimonial: doc.testimonial || '',
           rating: Number(doc.rating) || 5,
           avatar: doc.avatar || '',
+          gender: doc.gender === 'female' ? 'female' : doc.gender === 'male' ? 'male' : undefined,
         }));
         const aggregated = {
           title: '',
@@ -357,6 +383,7 @@ async function getTestimonialsContent(): Promise<HomeContent['testimonials'] | n
         testimonial: doc.testimonial || '',
         rating: Number(doc.rating) || 5,
         avatar: doc.avatar || '',
+        gender: doc.gender === 'female' ? 'female' : doc.gender === 'male' ? 'male' : undefined,
       }));
 
       const seen = new Set<string>();

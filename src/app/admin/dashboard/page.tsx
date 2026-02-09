@@ -37,7 +37,14 @@ type HomeContent = {
       testimonial: string;
       rating: number;
       avatar: string;
+      gender?: 'male' | 'female';
     }[];
+  };
+  achievements: {
+    badge: string;
+    title: string;
+    description: string;
+    stats: { value: number; suffix: string; label: string }[];
   };
 };
 
@@ -67,6 +74,17 @@ async function getHomeContent(): Promise<HomeContent> {
       quickAccess: { title: '', description: '', items: [] },
       whyChooseUs: { title: '', description: '', features: [] },
       testimonials: { title: '', description: '', reviews: [] },
+      achievements: {
+        badge: 'Proven Track Record',
+        title: 'Our Impact by the Numbers',
+        description: 'Join thousands of learners who are transforming their careers and skills',
+        stats: [
+          { value: 50000, suffix: '+', label: 'Happy Students' },
+          { value: 50, suffix: '+', label: 'Expert Courses' },
+          { value: 1000, suffix: '+', label: 'Hours of Content' },
+          { value: 20, suffix: '+', label: 'Awards Won' },
+        ],
+      },
     };
 
     if (page?.content) {
@@ -93,6 +111,7 @@ async function getHomeContent(): Promise<HomeContent> {
         testimonial: doc.testimonial || '',
         rating: Number(doc.rating) || 5,
         avatar: doc.avatar || '',
+        gender: doc.gender === 'female' ? 'female' : doc.gender === 'male' ? 'male' : undefined,
       }));
       const seen = new Set<string>();
       const mergedReviews: any[] = [];
@@ -163,6 +182,13 @@ async function getHomeContent(): Promise<HomeContent> {
           description: rawTestimonials?.description || '',
           reviews: mergedReviews,
         },
+        achievements: {
+          ...defaultContent.achievements,
+          ...(page.content.achievements || {}),
+          stats: Array.isArray(page.content.achievements?.stats)
+            ? page.content.achievements.stats
+            : defaultContent.achievements.stats,
+        },
       };
       return mergedContent;
     }
@@ -200,6 +226,17 @@ async function getHomeContent(): Promise<HomeContent> {
       quickAccess: { title: '', description: '', items: [] },
       whyChooseUs: { title: '', description: '', features: [] },
       testimonials: { title: '', description: '', reviews: [] },
+      achievements: {
+        badge: 'Proven Track Record',
+        title: 'Our Impact by the Numbers',
+        description: 'Join thousands of learners who are transforming their careers and skills',
+        stats: [
+          { value: 50000, suffix: '+', label: 'Happy Students' },
+          { value: 50, suffix: '+', label: 'Expert Courses' },
+          { value: 1000, suffix: '+', label: 'Hours of Content' },
+          { value: 20, suffix: '+', label: 'Awards Won' },
+        ],
+      },
     };
   }
 }
