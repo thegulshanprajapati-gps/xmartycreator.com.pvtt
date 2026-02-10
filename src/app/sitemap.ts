@@ -1,100 +1,128 @@
-import { MetadataRoute } from 'next';
-import clientPromise from '@/lib/mongodb';
+import type { MetadataRoute } from 'next';
+import connectDB from '@/lib/db-connection';
 import Blog from '@/lib/models/blog';
-import mongoose from 'mongoose';
+import Course from '@/lib/models/course';
+import { slugify } from '@/lib/slugify';
 
-let mongooseInitialized = false;
+export const revalidate = 3600;
 
-async function initializeMongoose() {
-  if (mongooseInitialized) return;
-  try {
-    const client = await clientPromise;
-    await mongoose.connect(process.env.MONGODB_URI || '');
-    mongooseInitialized = true;
-  } catch (error) {
-    console.error('MongoDB connection error:', error);
-  }
-}
+type BlogDoc = {
+  slug?: string;
+  updatedAt?: Date | string;
+  publishedAt?: Date | string;
+  tags?: string[];
+};
 
-async function getAllTags() {
-  try {
-    await initializeMongoose();
-    const blogs = await Blog.find({ status: 'published' })
-      .select('tags')
-      .lean();
-    const tagsSet = new Set<string>();
-    blogs.forEach((blog: any) => {
-      blog.tags?.forEach((tag: string) => tagsSet.add(tag));
-    });
-    return Array.from(tagsSet);
-  } catch (error) {
-    console.error('Error fetching tags:', error);
-    return [];
-  }
-}
+type CourseDoc = {
+  slug?: string;
+  updatedAt?: Date | string;
+  createdAt?: Date | string;
+};
+
+const now = () => new Date();
+
+const normalizeBaseUrl = (value: string) => value.replace(/\/+$/, '');
+
+const toSafeDate = (value?: Date | string) => {
+  if (!value) return now();
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? now() : date;
+};
+
+const staticRoutes: Array<{
+  path: string;
+  changeFrequency: MetadataRoute.Sitemap[number]['changeFrequency'];
+  priority: number;
+}> = [
+  { path: '/', changeFrequency: 'weekly', priority: 1 },
+  { path: '/blog', changeFrequency: 'daily', priority: 0.9 },
+  { path: '/courses', changeFrequency: 'daily', priority: 0.9 },
+  { path: '/community', changeFrequency: 'weekly', priority: 0.8 },
+  { path: '/community/hub', changeFrequency: 'weekly', priority: 0.75 },
+  { path: '/updates', changeFrequency: 'daily', priority: 0.8 },
+  { path: '/about', changeFrequency: 'monthly', priority: 0.7 },
+  { path: '/contact', changeFrequency: 'monthly', priority: 0.6 },
+  { path: '/faq', changeFrequency: 'monthly', priority: 0.6 },
+  { path: '/privacy-policy', changeFrequency: 'yearly', priority: 0.4 },
+  { path: '/terms-of-service', changeFrequency: 'yearly', priority: 0.4 },
+];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  await initializeMongoose();
+  const baseUrl = normalizeBaseUrl(process.env.NEXT_PUBLIC_URL || 'https://xmartycreator.com');
+  const entries: MetadataRoute.Sitemap = [];
+  const seen = new Set<string>();
 
-  const baseUrl = process.env.NEXT_PUBLIC_URL || 'https://xmartycreator.com';
+  const addEntry = (entry: MetadataRoute.Sitemap[number]) => {
+    if (seen.has(entry.url)) return;
+    seen.add(entry.url);
+    entries.push(entry);
+  };
 
-  // Fetch all published blogs
-  let blogs: any[] = [];
-  try {
-    blogs = await Blog.find({ status: 'published' })
-      .select('slug updatedAt publishedAt')
-      .lean()
-      .exec();
-  } catch (error) {
-    console.error('Error fetching blogs for sitemap:', error);
+  for (const route of staticRoutes) {
+    addEntry({
+      url: `${baseUrl}${route.path}`,
+      lastModified: now(),
+      changeFrequency: route.changeFrequency,
+      priority: route.priority,
+    });
   }
 
-  // Get all tags
-  const tags = await getAllTags();
+  let blogs: BlogDoc[] = [];
+  let courses: CourseDoc[] = [];
 
-  // Static pages
-  const staticPages: MetadataRoute.Sitemap = [
-    {
-      url: baseUrl,
-      lastModified: new Date(),
+  try {
+    await connectDB();
+
+    [blogs, courses] = await Promise.all([
+      Blog.find({ status: 'published' })
+        .select('slug updatedAt publishedAt tags')
+        .lean<BlogDoc[]>(),
+      Course.find({})
+        .select('slug updatedAt createdAt')
+        .lean<CourseDoc[]>(),
+    ]);
+  } catch (error) {
+    console.error('[sitemap] Failed to fetch dynamic routes:', error);
+    return entries;
+  }
+
+  const topicSlugs = new Set<string>();
+
+  for (const blog of blogs) {
+    if (!blog.slug) continue;
+
+    addEntry({
+      url: `${baseUrl}/blog/${blog.slug}`,
+      lastModified: toSafeDate(blog.updatedAt || blog.publishedAt),
       changeFrequency: 'weekly',
-      priority: 1,
-    },
-    {
-      url: `${baseUrl}/blog`,
-      lastModified: new Date(),
-      changeFrequency: 'daily',
+      priority: 0.75,
+    });
+
+    for (const tag of blog.tags || []) {
+      const topic = slugify(tag || '');
+      if (topic) topicSlugs.add(topic);
+    }
+  }
+
+  for (const course of courses) {
+    if (!course.slug) continue;
+
+    addEntry({
+      url: `${baseUrl}/courses/${course.slug}`,
+      lastModified: toSafeDate(course.updatedAt || course.createdAt),
+      changeFrequency: 'weekly',
       priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/courses`,
-      lastModified: new Date(),
-      changeFrequency: 'daily',
-      priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/about`,
-      lastModified: new Date(),
-      changeFrequency: 'monthly',
-      priority: 0.6,
-    },
-  ];
+    });
+  }
 
-  // Blog posts
-  const blogSitemap: MetadataRoute.Sitemap = blogs.map(blog => ({
-    url: `${baseUrl}/blog/${blog.slug}`,
-    lastModified: blog.updatedAt || blog.publishedAt || new Date(),
-    changeFrequency: 'weekly' as const,
-    priority: 0.7,
-  }));
+  for (const topic of topicSlugs) {
+    addEntry({
+      url: `${baseUrl}/topic/${topic}`,
+      lastModified: now(),
+      changeFrequency: 'weekly',
+      priority: 0.65,
+    });
+  }
 
-  // Topic pages
-  const tagSitemap: MetadataRoute.Sitemap = tags.map(tag => ({
-    url: `${baseUrl}/topic/${tag.toLowerCase().replace(/\s+/g, '-')}`,
-    lastModified: new Date(),
-    changeFrequency: 'weekly' as const,
-    priority: 0.6,
-  }));
-
-  return [...staticPages, ...blogSitemap, ...tagSitemap];
+  return entries;
 }
