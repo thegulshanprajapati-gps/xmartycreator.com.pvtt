@@ -493,19 +493,19 @@ export default function HomePageClient({ initialHomeContent }: HomePageClientPro
                   variants={fadeIn}
                 >
                   <Sparkles className="h-4 w-4" />
-                  <span className="text-sm font-medium">
+                  <span className="text-sm type-emphasis">
                     Trusted by industry leaders
                   </span>
                 </motion.div>
 
                 {/* Title */}
                 <h1 
-                  className="max-w-full break-words font-headline text-4xl min-[420px]:text-5xl lg:text-7xl font-bold tracking-tight leading-tight [text-wrap:balance] bg-gradient-to-r from-foreground via-foreground to-foreground/70 bg-clip-text text-transparent"
+                  className="type-h1 type-important max-w-full break-words bg-gradient-to-r from-foreground via-foreground to-muted-foreground bg-clip-text text-transparent"
                   dangerouslySetInnerHTML={{ __html: initialHomeContent?.hero?.title || 'Learn & Grow' }}
                 />
 
                 {/* Description */}
-                <p className="max-w-[600px] text-lg text-muted-foreground leading-relaxed">
+                <p className="type-body max-w-[600px] leading-relaxed">
                   {initialHomeContent?.hero?.description || 'Master new skills with our expert courses'}
                 </p>
 
@@ -598,19 +598,19 @@ export default function HomePageClient({ initialHomeContent }: HomePageClientPro
           
           <div className="container mx-auto px-4 md:px-6 relative z-10">
             <motion.div 
-              className="text-center max-w-3xl mx-auto space-y-3"
+              className="type-rhythm text-center max-w-3xl mx-auto space-y-3"
               variants={fadeIn}
             >
               <div className="inline-flex items-center gap-2 bg-cyan-500/10 border border-cyan-100 dark:border-cyan-900/50 rounded-full px-4 py-2 text-cyan-700 dark:text-cyan-200 text-sm font-medium">
                 Quick Access
               </div>
               
-              <h2 className="font-headline text-4xl lg:text-5xl font-bold tracking-tight text-slate-900 dark:text-white">
+              <h2 className="type-h2 type-heading-accent inline-block text-slate-900 dark:text-white">
                 {initialHomeContent?.quickAccess?.title || 'Quick Access'}
               </h2>
               
               {initialHomeContent?.quickAccess?.description && (
-                <p className="text-lg text-slate-600 dark:text-slate-300 leading-relaxed">
+                <p className="type-body text-slate-600 dark:text-slate-300 leading-relaxed">
                   {initialHomeContent.quickAccess.description}
                 </p>
               )}
@@ -682,7 +682,7 @@ export default function HomePageClient({ initialHomeContent }: HomePageClientPro
           <div className="container mx-auto px-4 md:px-6 relative z-10">
             {/* Header */}
             <motion.div 
-              className="flex flex-col items-center justify-center space-y-4 text-center mb-14"
+              className="type-rhythm flex flex-col items-center justify-center space-y-4 text-center mb-14"
               variants={fadeIn}
             >
               <div className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium shadow-sm bg-emerald-50 text-emerald-700 border border-emerald-200/70 dark:bg-emerald-500/10 dark:border-emerald-400/40 dark:text-emerald-200">
@@ -690,11 +690,11 @@ export default function HomePageClient({ initialHomeContent }: HomePageClientPro
                 {achievementsContent.badge}
               </div>
               
-              <h2 className="font-headline text-4xl lg:text-5xl font-bold tracking-tight text-slate-900 dark:text-white">
+              <h2 className="type-h2 type-heading-accent inline-block text-slate-900 dark:text-white">
                 {achievementsContent.title}
               </h2>
               
-              <p className="max-w-[800px] text-lg text-slate-600 dark:text-slate-200/80 leading-relaxed">
+              <p className="type-body max-w-[800px] text-slate-600 dark:text-slate-200/80 leading-relaxed">
                 {achievementsContent.description}
               </p>
             </motion.div>
@@ -757,7 +757,7 @@ export default function HomePageClient({ initialHomeContent }: HomePageClientPro
             <div className="container mx-auto px-4 md:px-6 relative z-10">
               {/* Header */}
               <motion.div 
-                className="flex flex-col items-center justify-center space-y-4 text-center mb-16"
+                className="type-rhythm flex flex-col items-center justify-center space-y-4 text-center mb-16"
                 variants={fadeIn}
               >
                 <div className="inline-flex items-center gap-2 bg-amber-500/10 border border-amber-200/50 dark:border-amber-800/50 rounded-full px-4 py-2">
@@ -767,11 +767,11 @@ export default function HomePageClient({ initialHomeContent }: HomePageClientPro
                   </span>
                 </div>
 
-                <h2 className="font-headline text-4xl lg:text-5xl font-bold tracking-tight">
+                <h2 className="type-h2 type-heading-accent inline-block">
                   {initialHomeContent?.whyChooseUs?.title}
                 </h2>
                 
-                <p className="max-w-[800px] text-lg text-muted-foreground leading-relaxed">
+                <p className="type-body max-w-[800px] text-muted-foreground leading-relaxed">
                   {initialHomeContent?.whyChooseUs?.description}
                 </p>
               </motion.div>
@@ -841,7 +841,7 @@ export default function HomePageClient({ initialHomeContent }: HomePageClientPro
             <div className="container mx-auto px-4 md:px-6 relative z-10">
               {/* Header */}
               <motion.div 
-                className="flex flex-col items-center justify-center space-y-4 text-center mb-16"
+                className="type-rhythm flex flex-col items-center justify-center space-y-4 text-center mb-16"
                 variants={fadeIn}
               >
                 <div className="inline-flex items-center gap-2 bg-pink-500/10 border border-pink-200/50 dark:border-pink-800/50 rounded-full px-4 py-2">
@@ -851,11 +851,11 @@ export default function HomePageClient({ initialHomeContent }: HomePageClientPro
                   </span>
                 </div>
 
-                <h2 className="font-headline text-4xl lg:text-5xl font-bold tracking-tight">
+                <h2 className="type-h2 type-heading-accent inline-block">
                   {initialHomeContent?.testimonials?.title || 'What Students Say'}
                 </h2>
                 
-                <p className="max-w-[800px] text-lg text-muted-foreground leading-relaxed">
+                <p className="type-body max-w-[800px] text-muted-foreground leading-relaxed">
                   {initialHomeContent?.testimonials?.description || 'Real feedback from learners who leveled up with Xmarty Creator.'}
                 </p>
               </motion.div>
@@ -963,14 +963,14 @@ export default function HomePageClient({ initialHomeContent }: HomePageClientPro
           <div className="container mx-auto px-4 md:px-6 relative z-10">
             <div className="rounded-3xl bg-gradient-to-r from-blue-600 to-purple-600 p-8 md:p-16 text-center border-2 border-blue-400/30 shadow-2xl">
               <motion.h2 
-                className="font-headline text-3xl lg:text-5xl font-bold text-white mb-6"
+                className="type-h2 !text-white mb-6"
                 variants={fadeIn}
               >
-                Ready to Transform Your Learning?
+                Ready to <span className="type-keyword type-glow">Transform</span> Your Learning?
               </motion.h2>
               
               <motion.p 
-                className="max-w-[600px] text-lg text-blue-50 mx-auto mb-8"
+                className="type-body max-w-[600px] !text-blue-50 mx-auto mb-8"
                 variants={fadeIn}
               >
                 Join our community of learners and start your journey to success today.

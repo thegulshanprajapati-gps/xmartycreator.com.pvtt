@@ -88,7 +88,7 @@ const nextConfig: NextConfig = {
     ];
   },
   experimental: {
-    // Removed unsupported isrMemoryCacheSize
+    instrumentationHook: true,
   },
 };
 

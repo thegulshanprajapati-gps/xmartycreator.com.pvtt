@@ -13,6 +13,11 @@ type AnalyticsData = {
   hourlyTotals?: { hour: string; pageViews: number; linkClicks: number }[];
 };
 
+const toSafeNumber = (value: unknown) => {
+  const parsed = typeof value === 'number' ? value : Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+
 export default function AnalyticsLiveClient({ initial }: { initial: AnalyticsData }) {
   const [data, setData] = useState<AnalyticsData>(initial);
   const [range, setRange] = useState<'today' | '7d' | '30d' | 'all'>('7d');
@@ -59,7 +64,8 @@ export default function AnalyticsLiveClient({ initial }: { initial: AnalyticsDat
   const pageVisitsData = useMemo(
     () =>
       Object.entries(data.pageViews)
-        .map(([name, visits]) => ({ name, visits: visits as number }))
+        .map(([name, visits]) => ({ name, visits: toSafeNumber(visits) }))
+        .filter(({ visits }) => visits > 0)
         .sort((a, b) => b.visits - a.visits),
     [data.pageViews]
   );
@@ -67,7 +73,8 @@ export default function AnalyticsLiveClient({ initial }: { initial: AnalyticsDat
   const linkClicksData = useMemo(
     () =>
       Object.entries(data.linkClicks)
-        .map(([name, clicks]) => ({ name, clicks: clicks as number }))
+        .map(([name, clicks]) => ({ name, clicks: toSafeNumber(clicks) }))
+        .filter(({ clicks }) => clicks > 0)
         .sort((a, b) => b.clicks - a.clicks),
     [data.linkClicks]
   );

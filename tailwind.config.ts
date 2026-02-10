@@ -11,9 +11,51 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        body: ['var(--font-pt-sans)', 'var(--font-noto-sans)', 'sans-serif'],
-        headline: ['var(--font-pt-sans)', 'var(--font-noto-sans)', 'sans-serif'],
+        body: ['var(--font-dm-sans)', 'var(--font-noto-sans-devanagari)', 'sans-serif'],
+        headline: ['var(--font-plus-jakarta-sans)', 'var(--font-noto-sans-devanagari)', 'sans-serif'],
         code: ['monospace'],
+      },
+      fontSize: {
+        'display-hero': [
+          'clamp(3.125rem, 4.4vw, 3.5rem)',
+          {
+            lineHeight: '1.08',
+            letterSpacing: '-0.03em',
+            fontWeight: '700',
+          },
+        ],
+        'display-h2': [
+          'clamp(2.125rem, 3.3vw, 2.5rem)',
+          {
+            lineHeight: '1.14',
+            letterSpacing: '-0.022em',
+            fontWeight: '700',
+          },
+        ],
+        'display-h3': [
+          'clamp(1.375rem, 2.1vw, 1.625rem)',
+          {
+            lineHeight: '1.24',
+            letterSpacing: '-0.015em',
+            fontWeight: '650',
+          },
+        ],
+        'body-base': [
+          'clamp(0.9375rem, 1.05vw, 1.0625rem)',
+          {
+            lineHeight: '1.58',
+            letterSpacing: '-0.002em',
+            fontWeight: '450',
+          },
+        ],
+        caption: [
+          '0.8125rem',
+          {
+            lineHeight: '1.45',
+            letterSpacing: '0.015em',
+            fontWeight: '500',
+          },
+        ],
       },
       colors: {
         background: 'hsl(var(--background))',

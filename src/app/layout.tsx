@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { PT_Sans, Noto_Sans } from 'next/font/google';
+import { Plus_Jakarta_Sans, DM_Sans, Noto_Sans_Devanagari } from 'next/font/google';
 import './globals.css';
 import { Suspense, ReactNode } from 'react';
 import RootLayoutClient from './root-layout-client';
@@ -29,17 +29,22 @@ export const metadata: Metadata = {
   },
 };
 
-const ptSans = PT_Sans({
+const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ['latin', 'latin-ext'],
-  weight: ['400', '700'],
-  variable: '--font-pt-sans',
+  variable: '--font-plus-jakarta-sans',
   display: 'swap',
 });
 
-const notoSans = Noto_Sans({
-  subsets: ['latin', 'latin-ext', 'devanagari'],
-  weight: ['400', '700'],
-  variable: '--font-noto-sans',
+const dmSans = DM_Sans({
+  subsets: ['latin', 'latin-ext'],
+  variable: '--font-dm-sans',
+  display: 'swap',
+});
+
+const notoSansDevanagari = Noto_Sans_Devanagari({
+  subsets: ['devanagari'],
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-noto-sans-devanagari',
   display: 'swap',
 });
 
@@ -90,6 +95,17 @@ export default async function RootLayout({
   return (
     <html lang="en" data-cursor={cursorStyle} suppressHydrationWarning>
       <head>
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-VEZS5RTT7G"></script>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', 'G-VEZS5RTT7G');
+            `,
+          }}
+        />
         <link rel="icon" href="/favicon.ico" sizes="any" />
         <link rel="shortcut icon" href="/favicon.ico" />
         <link rel="apple-touch-icon" href="/favicon.ico" />
@@ -109,7 +125,7 @@ export default async function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       </head>
-      <body className={`font-body antialiased ${ptSans.variable} ${notoSans.variable}`}>
+      <body className={`font-body antialiased ${plusJakartaSans.variable} ${dmSans.variable} ${notoSansDevanagari.variable}`}>
         <RootLayoutClient>{children}</RootLayoutClient>
       </body>
     </html>
