@@ -455,6 +455,38 @@ export default function HomePageClient({ initialHomeContent }: HomePageClientPro
               transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut", delay: 0.2 }}
             />
           </div>
+
+          {/* Aurora ribbons */}
+          <div className="pointer-events-none absolute inset-0 overflow-hidden">
+            <motion.div
+              className="absolute -left-24 top-14 h-80 w-80 rounded-full bg-[conic-gradient(from_120deg,rgba(56,189,248,0.3),rgba(59,130,246,0.08),rgba(129,140,248,0.26),rgba(56,189,248,0.3))] blur-3xl"
+              animate={{
+                x: [0, 40, 0],
+                y: [0, 26, 0],
+                scale: [1, 1.16, 1],
+                rotate: [0, 24, 0],
+              }}
+              transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
+            />
+            <motion.div
+              className="absolute -right-20 bottom-6 h-72 w-72 rounded-full bg-[conic-gradient(from_220deg,rgba(236,72,153,0.28),rgba(124,58,237,0.08),rgba(59,130,246,0.2),rgba(236,72,153,0.28))] blur-3xl"
+              animate={{
+                x: [0, -30, 0],
+                y: [0, -24, 0],
+                scale: [1, 1.12, 1],
+                rotate: [0, -20, 0],
+              }}
+              transition={{ duration: 11.5, repeat: Infinity, ease: 'easeInOut' }}
+            />
+            <motion.div
+              className="absolute left-[-30%] top-[18%] h-56 w-[160%] bg-[radial-gradient(ellipse_at_center,rgba(56,189,248,0.24),transparent_65%)] blur-2xl md:h-72"
+              animate={{
+                x: ['-6%', '8%', '-6%'],
+                opacity: [0.24, 0.46, 0.24],
+              }}
+              transition={{ duration: 9, repeat: Infinity, ease: 'easeInOut' }}
+            />
+          </div>
           
           {/* Animated Gradient Orbs */}
           <div className="absolute inset-0 overflow-hidden">
@@ -541,16 +573,6 @@ export default function HomePageClient({ initialHomeContent }: HomePageClientPro
                   </motion.div>
                 </div>
 
-                {/* Mobile mini carousel */}
-                <motion.div
-                  className="w-full pt-8 md:hidden"
-                  initial={{ opacity: 0, y: 16 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, ease: 'easeOut', delay: 0.2 }}
-                >
-                  <HeroMiniCarousel compact />
-                </motion.div>
-
               </motion.div>
 
               {/* Right Visual */}
@@ -575,7 +597,7 @@ export default function HomePageClient({ initialHomeContent }: HomePageClientPro
           {/* Scroll indicator */}
           <motion.button
             onClick={handleScrollDown}
-            className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 text-foreground/60 hover:text-foreground transition-colors"
+            className="absolute inset-x-0 bottom-8 z-20 mx-auto flex h-10 w-10 items-center justify-center text-foreground/60 hover:text-foreground transition-colors"
             animate={{ y: [0, 8, 0] }}
             transition={{ duration: 2, repeat: Infinity }}
             aria-label="Scroll down"
@@ -601,11 +623,7 @@ export default function HomePageClient({ initialHomeContent }: HomePageClientPro
               className="type-rhythm text-center max-w-3xl mx-auto space-y-3"
               variants={fadeIn}
             >
-              <div className="inline-flex items-center gap-2 bg-cyan-500/10 border border-cyan-100 dark:border-cyan-900/50 rounded-full px-4 py-2 text-cyan-700 dark:text-cyan-200 text-sm font-medium">
-                Quick Access
-              </div>
-              
-              <h2 className="type-h2 type-heading-accent inline-block text-slate-900 dark:text-white">
+              <h2 className="type-h2 inline-block text-slate-900 dark:text-white">
                 {initialHomeContent?.quickAccess?.title || 'Quick Access'}
               </h2>
               
