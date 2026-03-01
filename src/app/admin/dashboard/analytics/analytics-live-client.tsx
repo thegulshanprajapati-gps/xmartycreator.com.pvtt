@@ -13,6 +13,11 @@ type AnalyticsData = {
   hourlyTotals?: { hour: string; pageViews: number; linkClicks: number }[];
 };
 
+const toSafeNumber = (value: unknown) => {
+  const parsed = typeof value === 'number' ? value : Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+
 export default function AnalyticsLiveClient({ initial }: { initial: AnalyticsData }) {
   const [data, setData] = useState<AnalyticsData>(initial);
   const [range, setRange] = useState<'today' | '7d' | '30d' | 'all'>('7d');
@@ -59,7 +64,8 @@ export default function AnalyticsLiveClient({ initial }: { initial: AnalyticsDat
   const pageVisitsData = useMemo(
     () =>
       Object.entries(data.pageViews)
-        .map(([name, visits]) => ({ name, visits: visits as number }))
+        .map(([name, visits]) => ({ name, visits: toSafeNumber(visits) }))
+        .filter(({ visits }) => visits > 0)
         .sort((a, b) => b.visits - a.visits),
     [data.pageViews]
   );
@@ -67,7 +73,8 @@ export default function AnalyticsLiveClient({ initial }: { initial: AnalyticsDat
   const linkClicksData = useMemo(
     () =>
       Object.entries(data.linkClicks)
-        .map(([name, clicks]) => ({ name, clicks: clicks as number }))
+        .map(([name, clicks]) => ({ name, clicks: toSafeNumber(clicks) }))
+        .filter(({ clicks }) => clicks > 0)
         .sort((a, b) => b.clicks - a.clicks),
     [data.linkClicks]
   );
@@ -81,15 +88,15 @@ export default function AnalyticsLiveClient({ initial }: { initial: AnalyticsDat
   const hourlyTotals = data.hourlyTotals || [];
 
   return (
-    <div className="space-y-8">
+    <div className="w-full min-w-0 space-y-8">
       {/* Website Analytics Header */}
-        <div className="flex items-center justify-between gap-3 flex-wrap">
-          <div>
+        <div className="flex min-w-0 items-center justify-between gap-3 flex-wrap">
+          <div className="min-w-0">
             <h1 className="text-lg font-semibold md:text-2xl">Analytics Dashboard</h1>
             <p className="text-sm text-muted-foreground">Live realtime metrics for your platform</p>
           </div>
-          <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-            <div className="flex gap-1">
+          <div className="flex min-w-0 flex-wrap items-center gap-2 text-xs text-muted-foreground">
+            <div className="flex flex-wrap gap-1">
               {(['today','7d','30d','all'] as const).map((opt) => (
                 <button
                   key={opt}
@@ -117,12 +124,12 @@ export default function AnalyticsLiveClient({ initial }: { initial: AnalyticsDat
         </div>
 
       {/* Website Analytics */}
-      <div className="space-y-4">
+      <div className="min-w-0 space-y-4">
         <h2 className="text-xl font-bold flex items-center gap-2">
           <Eye className="h-5 w-5" />
           Website Analytics
         </h2>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid min-w-0 gap-4 md:grid-cols-2 lg:grid-cols-3">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Page Visits</CardTitle>
@@ -164,7 +171,7 @@ export default function AnalyticsLiveClient({ initial }: { initial: AnalyticsDat
       </div>
 
       {/* Course Analytics */}
-      <div className="space-y-4">
+      <div className="min-w-0 space-y-4">
         <h2 className="text-xl font-bold flex items-center gap-2">
           <BookOpen className="h-5 w-5" />
           Course Analytics
@@ -177,7 +184,7 @@ export default function AnalyticsLiveClient({ initial }: { initial: AnalyticsDat
       </div>
 
       {/* Top Pages / Links quick glance */}
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid min-w-0 gap-4 md:grid-cols-2">
         <Card className="border-border/70 bg-card/70">
           <CardHeader className="flex items-center justify-between">
             <CardTitle className="text-sm font-medium flex items-center gap-2">

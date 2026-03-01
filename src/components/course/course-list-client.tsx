@@ -88,7 +88,7 @@ export default function CourseListClient() {
     const fetchCourses = async () => {
       try {
         setIsLoading(true);
-        const res = await fetch('/api/courses?limit=100', { cache: 'no-store' });
+        const res = await fetch('/api/courses?type=course&limit=100', { cache: 'no-store' });
         if (res.ok) {
           const data = await res.json();
           const courseList = Array.isArray(data) 

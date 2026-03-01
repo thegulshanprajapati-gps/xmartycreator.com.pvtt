@@ -83,9 +83,9 @@ export function AnalyticsClientWrapper({ pageVisitsData, linkClicksData, dailyTo
   }, [fetchCourseAnalytics]);
 
   return (
-    <div className="space-y-8">
+    <div className="w-full min-w-0 space-y-8">
       {/* Page Analytics */}
-      <div>
+      <div className="min-w-0">
         <h2 className="text-2xl font-bold mb-4">Website Analytics</h2>
         <AnalyticsCharts
           pageVisitsData={pageVisitsData}
@@ -96,8 +96,8 @@ export function AnalyticsClientWrapper({ pageVisitsData, linkClicksData, dailyTo
       </div>
 
       {/* Course Analytics */}
-      <div>
-        <div className="flex items-center justify-between mb-4">
+      <div className="min-w-0">
+        <div className="mb-4 flex min-w-0 flex-wrap items-center justify-between gap-2">
           <h2 className="text-2xl font-bold">Course Analytics</h2>
           {!loadingCourses && (
             <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-green-500/10 border border-green-500/30">
@@ -123,7 +123,7 @@ export function AnalyticsClientWrapper({ pageVisitsData, linkClicksData, dailyTo
         ) : (
           <>
             {/* Course Metrics Cards */}
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
+            <div className="mb-8 grid min-w-0 gap-4 md:grid-cols-2 lg:grid-cols-4">
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0 }}>
                 <Card className="backdrop-blur-md bg-gradient-to-br from-blue-500/10 to-blue-600/5 border-blue-500/20">
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -180,22 +180,22 @@ export function AnalyticsClientWrapper({ pageVisitsData, linkClicksData, dailyTo
             {/* Course Performance Breakdown */}
             {courses.length > 0 && (
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
-                <Card className="backdrop-blur-md bg-gradient-to-br from-slate-800/30 to-slate-900/30 border-slate-700/50">
+                <Card className="min-w-0 backdrop-blur-md bg-gradient-to-br from-slate-800/30 to-slate-900/30 border-slate-700/50">
                   <CardHeader>
                     <CardTitle>Course Performance Breakdown</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3">
                       {courses.map((course, index) => (
-                        <div key={course._id} className="flex items-center justify-between p-3 rounded-lg bg-slate-900/40 hover:bg-slate-900/60 transition-colors">
-                          <div className="flex items-center gap-3 flex-1">
+                        <div key={course._id} className="flex flex-col gap-3 rounded-lg bg-slate-900/40 p-3 transition-colors hover:bg-slate-900/60 sm:flex-row sm:items-center sm:justify-between">
+                          <div className="flex min-w-0 flex-1 items-center gap-3">
                             <Badge variant="outline" className="text-xs">{index + 1}</Badge>
                             <div className="min-w-0">
                               <p className="font-medium truncate">{course.title}</p>
                               <p className="text-xs text-muted-foreground">/{course.slug}</p>
                             </div>
                           </div>
-                          <div className="flex items-center gap-6 text-sm font-medium">
+                          <div className="flex flex-wrap items-center justify-end gap-4 text-sm font-medium sm:gap-6">
                             <div className="text-right">
                               <p className="text-xs text-muted-foreground">Enrolls</p>
                               <p>{course.enrollClickCount}</p>

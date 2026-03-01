@@ -1,4 +1,4 @@
-
+﻿
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -9,7 +9,7 @@ let isWriting = false;
 const resolveBaseUrl = () =>
   process.env.NEXT_PUBLIC_SITE_URL ||
   process.env.NEXT_PUBLIC_BASE_URL ||
-  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:9002');
+  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
 
 async function readAnalyticsData() {
   try {
@@ -84,3 +84,4 @@ export async function trackLinkClick(linkName: string) {
 
   revalidatePath('/admin/dashboard/analytics');
 }
+

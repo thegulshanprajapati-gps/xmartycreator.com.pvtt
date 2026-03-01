@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import mongoose from 'mongoose';
 import connectDB from '@/lib/db-connection';
 import Blog from '@/lib/models/blog';
 import { calculateReadTime } from '@/lib/readTime';
 import { slugify } from '@/lib/slugify';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { cacheGet, cacheSet, cacheDel } from '@/lib/redis-cache';
-import { toPlainObject, toPlainObjectArray } from '@/lib/mongoose-helpers';
+import { toPlainObject } from '@/lib/mongoose-helpers';
+import { revalidatePath, revalidateTag } from 'next/cache';
 
 // Ensure content has valid TipTap structure
 function validateAndFixContent(content: any) {
@@ -20,6 +20,29 @@ function validateAndFixContent(content: any) {
   return { type: 'doc', content: [] };
 }
 
+function buildExcerpt(inputExcerpt: any, htmlContent: string) {
+  const explicit = typeof inputExcerpt === 'string' ? inputExcerpt.trim() : '';
+  if (explicit) return explicit;
+
+  const plainText = htmlContent
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  if (!plainText) return '';
+  return plainText.length > 220 ? `${plainText.slice(0, 217)}...` : plainText;
+}
+
+const MAX_HTML_CONTENT_CHARS = 2_500_000;
+const MAX_INLINE_COVER_IMAGE_CHARS = 1_250_000;
+
+function revalidateBlogPages(slug: string) {
+  revalidateTag('blog-content');
+  revalidateTag('blog-related');
+  revalidatePath('/blog');
+  revalidatePath(`/blog/${slug}`);
+}
+
 /**
  * GET /api/blog
  * 
@@ -31,12 +54,13 @@ export async function GET(request: NextRequest) {
   try {
     const clientIP = request.headers.get('x-client-ip') || 'unknown';
     const statusParam = request.nextUrl.searchParams.get('status') || 'published';
-    const limit = parseInt(request.nextUrl.searchParams.get('limit') || '100', 10);
+    const defaultLimit = statusParam === 'all' ? 200 : 100;
+    const parsedLimit = parseInt(request.nextUrl.searchParams.get('limit') || `${defaultLimit}`, 10);
+    const limit = Number.isFinite(parsedLimit) && parsedLimit > 0 ? Math.min(parsedLimit, 1000) : defaultLimit;
     const includeContent = request.nextUrl.searchParams.get('includeContent') === 'true';
-    
-    console.log(`\n🔵 [API /api/blog] START - Fetching blogs with status: ${statusParam}`);
-    
-    // Rate limiting
+    const fresh = request.nextUrl.searchParams.get('fresh') === 'true';
+    const shouldBypassCache = statusParam === 'all' || fresh;
+
     const rateLimitKey = `api:blog:${clientIP}`;
     const rateLimit = await checkRateLimit(rateLimitKey);
     if (!rateLimit.success) {
@@ -44,72 +68,48 @@ export async function GET(request: NextRequest) {
     }
 
     await connectDB();
-    console.log(`✅ [MongoDB] Connected`);
-    
-    // ✅ FIXED: Use exact query for published OR include all based on status param
+
     const query: any = {};
-    
-    if (statusParam === 'all') {
-      // Admin: return all blogs regardless of status
-      // No status filter
-      console.log(`📋 [Query] Admin mode - fetching ALL blogs (no status filter)`);
-    } else {
-      // Public: only published blogs
+    if (statusParam !== 'all') {
       query.status = 'published';
-      console.log(`📋 [Query] Public mode - fetching only PUBLISHED blogs`);
     }
 
-    const cacheKey = `blogs:list:${statusParam}:content-${includeContent ? 'on' : 'off'}`;
-    
-    // Check cache first
-    const cached = await cacheGet(cacheKey);
-    if (cached) {
-      console.log(`✅ [Cache HIT] blog list - ${statusParam}, returning ${Array.isArray(cached) ? cached.length : 0} items`);
-      return NextResponse.json(cached);
+    const cacheKey = `blogs:list:${statusParam}:content-${includeContent ? "on" : "off"}:limit-${limit}`;
+
+    if (!shouldBypassCache) {
+      const cached = await cacheGet<any[]>(cacheKey);
+      if (Array.isArray(cached)) {
+        return NextResponse.json(cached);
+      }
     }
 
-    console.log(`🔍 [mongoDB Query] Finding with:`, JSON.stringify(query));
-
-    // ✅ CRITICAL: Fetch htmlContent for rendering + all display fields
-    // Note: + prefix REQUIRED for fields with select: false in schema
     const selectFields = includeContent
       ? '_id title slug excerpt author readTime status publishedAt updatedAt tags views likes coverImage +htmlContent +content'
       : '_id title slug excerpt author readTime status publishedAt updatedAt tags views likes coverImage authorImage';
 
+    const sortConfig = statusParam === 'all'
+      ? { updatedAt: -1 }
+      : { publishedAt: -1 };
+
     const blogs = await Blog.find(query)
       .select(selectFields)
-      .sort({ publishedAt: -1 })
+      .sort(sortConfig)
       .limit(limit)
       .maxTimeMS(5000)
       .lean()
       .exec();
-    
-    console.log(`✅ [MongoDB Result] Found ${blogs.length} blogs for query`, query);
-    
-    if (blogs.length > 0) {
-      console.log(`📄 [First Blog] ${blogs[0].title} (slug: ${blogs[0].slug})`);
-      console.log(`📝 [htmlContent] Exists: ${!!blogs[0].htmlContent}, Length: ${blogs[0].htmlContent?.length || 0}`);
-    }
-    
-    if (!blogs || !Array.isArray(blogs)) {
-      console.warn(`⚠️ [DB Result] blogs is not array:`, typeof blogs);
-      return NextResponse.json([], { status: 200 });
+
+    const response = Array.isArray(blogs) ? blogs : [];
+
+    if (!shouldBypassCache) {
+      await cacheSet(cacheKey, response, { ttl: 'hot' });
     }
 
-    // Ensure response is always array
-    const response = blogs || [];
-    
-    console.log(`✅ [API Response] Returning ${response.length} blogs`);
-    console.log(`🔵 [API /api/blog] DONE\n`);
-    
-    // Cache for 5 minutes  
-    await cacheSet(cacheKey, response, { ttl: 'hot' });
-    
     return NextResponse.json(response, { status: 200 });
   } catch (error) {
-    console.error('❌ [API Error] Blog GET error:', error);
+    console.error('Blog GET error:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch blogs' }, 
+      { error: 'Failed to fetch blogs' },
       { status: 500 }
     );
   }
@@ -141,12 +141,31 @@ export async function POST(request: NextRequest) {
     const content = validateAndFixContent(rawContent);
     
     const { title, slug: providedSlug, excerpt, author, authorImage, coverImage, tags, metaTitle, metaDescription, metaKeywords, status } = body;
+    const normalizedExcerpt = buildExcerpt(excerpt, htmlContent);
+
+    if (typeof htmlContent === 'string' && htmlContent.length > MAX_HTML_CONTENT_CHARS) {
+      return NextResponse.json(
+        { error: 'Content is too large. Please reduce article size.' },
+        { status: 413 }
+      );
+    }
+
+    if (
+      typeof coverImage === 'string'
+      && coverImage.startsWith('data:image/')
+      && coverImage.length > MAX_INLINE_COVER_IMAGE_CHARS
+    ) {
+      return NextResponse.json(
+        { error: 'Cover image is too large for inline upload. Use an image URL or smaller image.' },
+        { status: 413 }
+      );
+    }
 
     const missingFields: string[] = [];
     if (!title) missingFields.push('title');
     if (!htmlContent) missingFields.push('htmlContent');
     if (!author) missingFields.push('author');
-    if (!excerpt) missingFields.push('excerpt');
+    if (!normalizedExcerpt) missingFields.push('excerpt');
 
     if (missingFields.length > 0) {
       return NextResponse.json(
@@ -186,14 +205,14 @@ export async function POST(request: NextRequest) {
       slug,
       content,
       htmlContent,
-      excerpt,
+      excerpt: normalizedExcerpt,
       author,
       authorImage: authorImage || '',
       coverImage: coverImageData,
       tags: tags || [],
       readTime,
       metaTitle: metaTitle || title,
-      metaDescription: metaDescription || excerpt,
+      metaDescription: metaDescription || normalizedExcerpt,
       metaKeywords: metaKeywords || [],
       status: status || 'draft',
     });
@@ -210,9 +229,22 @@ export async function POST(request: NextRequest) {
       `blogs:list:published:content-on`,
       `blogs:list:all:content-off`,
       `blogs:list:all:content-on`,
+      `blogs:list:${statusToInvalidate}:content-off:limit-100`,
+      `blogs:list:${statusToInvalidate}:content-on:limit-100`,
+      `blogs:list:${statusToInvalidate}:content-off:limit-200`,
+      `blogs:list:${statusToInvalidate}:content-on:limit-200`,
+      'blogs:list:published:content-off:limit-100',
+      'blogs:list:published:content-on:limit-100',
+      'blogs:list:published:content-off:limit-200',
+      'blogs:list:published:content-on:limit-200',
+      'blogs:list:all:content-off:limit-100',
+      'blogs:list:all:content-on:limit-100',
+      'blogs:list:all:content-off:limit-200',
+      'blogs:list:all:content-on:limit-200',
       `blog:${slug}`,
     ];
     await cacheDel(cacheKeys);
+    revalidateBlogPages(slug);
     
     // SAFE CONVERSION: toPlainObject handles the Mongoose document
     const savedBlog = toPlainObject<any>(blog);

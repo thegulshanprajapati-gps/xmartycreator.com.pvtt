@@ -27,10 +27,25 @@ type HomeContent = {
       primary: { text: string; link: string };
       secondary: { text: string; link: string };
     };
+    background: {
+      useImage: boolean;
+      imageId: string;
+      image?: ImagePlaceholder;
+    };
+  };
+  scrollingBanner: {
+    enabled: boolean;
+    text: string;
+    linkText: string;
+    linkHref: string;
+    imageId: string;
+    animation: 'slide' | 'pulse' | 'bounce';
+    image?: ImagePlaceholder;
   };
   quickAccess: {
     title: string;
     description: string;
+    columns: 3 | 4;
     items: { 
       title: string; 
       description: string; 
@@ -53,15 +68,42 @@ type HomeContent = {
       testimonial: string;
       rating: number;
       avatar: string;
+      gender?: 'male' | 'female';
     }[];
+  };
+  achievements: {
+    badge: string;
+    title: string;
+    description: string;
+    stats: { value: number; suffix: string; label: string }[];
   };
 };
 
 const DEFAULT_HOME_CONTENT: HomeContent = {
-  hero: { title: 'Learn & Grow', description: 'Master new skills with our expert courses', buttons: { primary: { text: 'Get Started', link: '/courses' }, secondary: { text: 'Join Community', link: '#' }}},
+  hero: {
+    title: 'Learn & Grow',
+    description: 'Master new skills with our expert courses',
+    buttons: {
+      primary: { text: 'Get Started', link: '/courses' },
+      secondary: { text: 'Join Community', link: '#' },
+    },
+    background: {
+      useImage: false,
+      imageId: '',
+    },
+  },
+  scrollingBanner: {
+    enabled: false,
+    text: '',
+    linkText: 'Learn more',
+    linkHref: '#',
+    imageId: '',
+    animation: 'slide',
+  },
   quickAccess: { 
     title: 'Quick Access', 
     description: 'Jump directly to what you need',
+    columns: 3,
     items: [
       { title: 'Latest Notes', description: 'Access the most recent study notes', imageId: 'placeholder-1', link: '#' },
       { title: 'Syllabus', description: 'Download semester-wise syllabus', imageId: 'placeholder-2', link: '#' },
@@ -73,6 +115,22 @@ const DEFAULT_HOME_CONTENT: HomeContent = {
   },
   whyChooseUs: { title: '', description: '', features: [] },
   testimonials: { title: '', description: '', reviews: [] },
+  achievements: {
+    badge: 'Proven Track Record',
+    title: 'Our Impact by the Numbers',
+    description: 'Join thousands of learners who are transforming their careers and skills',
+    stats: [
+      { value: 50000, suffix: '+', label: 'Happy Students' },
+      { value: 50, suffix: '+', label: 'Expert Courses' },
+      { value: 1000, suffix: '+', label: 'Hours of Content' },
+      { value: 20, suffix: '+', label: 'Awards Won' },
+    ],
+  },
+};
+
+const normalizeQuickAccessColumns = (value: unknown): 3 | 4 => {
+  const parsed = Number(value);
+  return parsed === 4 ? 4 : 3;
 };
 
 async function getHomeContent(): Promise<HomeContent> {
@@ -95,17 +153,52 @@ async function getHomeContent(): Promise<HomeContent> {
 
     const rawQuickAccess = (content as any).quickAccess || (content as any).featuredCourses || {};
     const rawTestimonials = (content as any).testimonials || {};
+    const rawScrollingBanner = (content as any).scrollingBanner || (content as any).banner || {};
+    const rawHero = (content as any).hero || {};
+    const rawHeroBackground = rawHero?.background || {};
 
     const normalized: HomeContent = {
       ...DEFAULT_HOME_CONTENT,
       ...content,
       hero: {
         ...DEFAULT_HOME_CONTENT.hero,
-        ...(content as any).hero,
+        ...rawHero,
+        buttons: {
+          ...DEFAULT_HOME_CONTENT.hero.buttons,
+          ...(rawHero?.buttons || {}),
+          primary: {
+            ...DEFAULT_HOME_CONTENT.hero.buttons.primary,
+            ...(rawHero?.buttons?.primary || {}),
+          },
+          secondary: {
+            ...DEFAULT_HOME_CONTENT.hero.buttons.secondary,
+            ...(rawHero?.buttons?.secondary || {}),
+          },
+        },
+        background: {
+          ...DEFAULT_HOME_CONTENT.hero.background,
+          ...rawHeroBackground,
+          useImage: rawHeroBackground?.useImage === true
+            || rawHeroBackground?.useImage === 'true'
+            || rawHeroBackground?.useImage === 'on',
+          imageId: (rawHeroBackground?.imageId || '').trim(),
+        },
+      },
+      scrollingBanner: {
+        ...DEFAULT_HOME_CONTENT.scrollingBanner,
+        ...rawScrollingBanner,
+        enabled: rawScrollingBanner?.enabled === true
+          || rawScrollingBanner?.enabled === 'true'
+          || rawScrollingBanner?.enabled === 'on',
+        animation: rawScrollingBanner?.animation === 'pulse'
+          || rawScrollingBanner?.animation === 'bounce'
+          ? rawScrollingBanner.animation
+          : 'slide',
       },
       quickAccess: {
         ...DEFAULT_HOME_CONTENT.quickAccess,
         ...rawQuickAccess,
+        columns: normalizeQuickAccessColumns(rawQuickAccess?.columns),
         items: (Array.isArray(rawQuickAccess?.items)
           ? rawQuickAccess.items
           : Array.isArray(rawQuickAccess?.courses)
@@ -130,6 +223,13 @@ async function getHomeContent(): Promise<HomeContent> {
             : DEFAULT_HOME_CONTENT.testimonials.reviews
         ).filter((review: any) => review && typeof review === 'object'),
       },
+      achievements: {
+        ...DEFAULT_HOME_CONTENT.achievements,
+        ...(content as any).achievements,
+        stats: Array.isArray((content as any).achievements?.stats)
+          ? (content as any).achievements.stats
+          : DEFAULT_HOME_CONTENT.achievements.stats,
+      },
     };
 
     if (!quickAccessFromDb) {
@@ -143,6 +243,7 @@ async function getHomeContent(): Promise<HomeContent> {
         quickAccessFromDb = {
           title: rawQuickAccess?.title || '',
           description: rawQuickAccess?.description || '',
+          columns: normalizeQuickAccessColumns(rawQuickAccess?.columns),
           items: fallbackItems,
         };
         await upsertQuickAccessContent(quickAccessFromDb);
@@ -176,14 +277,21 @@ async function getHomeContent(): Promise<HomeContent> {
     console.log('?? [Home Page] Quick Access items:', normalizedWithCollections.quickAccess.items?.length || 0);
     console.log('?? [Home Page] Testimonials:', normalizedWithCollections.testimonials.reviews?.length || 0);
 
-    // Fetch images for quick access items (if any image IDs are provided)
+    // Fetch images for quick access items and banner (if any image IDs are provided)
+    const bannerImageId = (normalizedWithCollections.scrollingBanner?.imageId || '').trim();
+    const heroBackgroundImageId = (normalizedWithCollections.hero?.background?.imageId || '').trim();
     const itemImageIds = normalizedWithCollections.quickAccess.items
       .map((item: any) => item.imageId)
-      .filter((id: string) => id);
+      .filter((id: string) => !!id);
+    const allImageIds = Array.from(new Set([
+      ...itemImageIds,
+      ...(bannerImageId ? [bannerImageId] : []),
+      ...(heroBackgroundImageId ? [heroBackgroundImageId] : []),
+    ]));
 
-    if (itemImageIds.length > 0) {
+    if (allImageIds.length > 0) {
       try {
-        const images = await getImagesByIds(itemImageIds);
+        const images = await getImagesByIds(allImageIds);
         const imageMap = new Map(images.map(img => [img.id, img]));
 
         // Attach images to quick access items
@@ -191,9 +299,22 @@ async function getHomeContent(): Promise<HomeContent> {
           ...item,
           image: imageMap.get(item.imageId),
         }));
+        const bannerImage = bannerImageId ? imageMap.get(bannerImageId) : undefined;
+        const heroBackgroundImage = heroBackgroundImageId ? imageMap.get(heroBackgroundImageId) : undefined;
 
         return {
           ...normalizedWithCollections,
+          hero: {
+            ...normalizedWithCollections.hero,
+            background: {
+              ...normalizedWithCollections.hero.background,
+              image: heroBackgroundImage,
+            },
+          },
+          scrollingBanner: {
+            ...normalizedWithCollections.scrollingBanner,
+            image: bannerImage,
+          },
           quickAccess: {
             ...normalizedWithCollections.quickAccess,
             items: itemsWithImages,
@@ -225,6 +346,7 @@ async function getQuickAccessContent(): Promise<HomeContent['quickAccess'] | nul
     return {
       title: quickAccessDoc?.title || '',
       description: quickAccessDoc?.description || '',
+      columns: normalizeQuickAccessColumns(quickAccessDoc?.columns),
       items: Array.isArray(quickAccessDoc?.items)
         ? quickAccessDoc.items.filter((item: any) => item && typeof item === 'object')
         : [],
@@ -247,6 +369,7 @@ async function upsertQuickAccessContent(payload: HomeContent['quickAccess']) {
           slug: 'quick-access',
           title: payload.title,
           description: payload.description,
+          columns: normalizeQuickAccessColumns(payload.columns),
           items: payload.items,
           updatedAt: new Date(),
         },
@@ -331,6 +454,7 @@ async function getTestimonialsContent(): Promise<HomeContent['testimonials'] | n
           testimonial: doc.testimonial || '',
           rating: Number(doc.rating) || 5,
           avatar: doc.avatar || '',
+          gender: doc.gender === 'female' ? 'female' : doc.gender === 'male' ? 'male' : undefined,
         }));
         const aggregated = {
           title: '',
@@ -357,6 +481,7 @@ async function getTestimonialsContent(): Promise<HomeContent['testimonials'] | n
         testimonial: doc.testimonial || '',
         rating: Number(doc.rating) || 5,
         avatar: doc.avatar || '',
+        gender: doc.gender === 'female' ? 'female' : doc.gender === 'male' ? 'male' : undefined,
       }));
 
       const seen = new Set<string>();
@@ -423,5 +548,5 @@ async function upsertTestimonialsContent(payload: HomeContent['testimonials']) {
 }
 export default async function Home() {
   const homeContent = await getHomeContent();
-  return <HomePageClient initialHomeContent={homeContent} />;
+  return <HomePageClient initialHomeContent={homeContent} hideHeroSection />;
 }

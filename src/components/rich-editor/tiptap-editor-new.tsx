@@ -2,11 +2,11 @@
 
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
-import Underline from '@tiptap/extension-underline';
+import UnderlineExtension from '@tiptap/extension-underline';
 import Link from '@tiptap/extension-link';
 import Image from '@tiptap/extension-image';
 import Highlight from '@tiptap/extension-highlight';
-import { Bold, Italic, List, ListOrdered, Heading1, Heading2, Heading3, Code, Link as LinkIcon, Image as ImageIcon, Highlighter } from 'lucide-react';
+import { Bold, Italic, Underline as UnderlineIcon, List, ListOrdered, Heading1, Heading2, Heading3, Code, Link as LinkIcon, Image as ImageIcon, Highlighter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import './tiptap-editor.css';
 
@@ -19,7 +19,7 @@ export function TipTapEditor({ initialContent = {}, onChange }: TipTapEditorProp
   const editor = useEditor({
     extensions: [
       StarterKit,
-      Underline,
+      UnderlineExtension,
       Link.configure({ openOnClick: false }),
       Image,
       Highlight.configure({ multicolor: true }),
@@ -56,7 +56,7 @@ export function TipTapEditor({ initialContent = {}, onChange }: TipTapEditorProp
           variant={editor.isActive('underline') ? 'default' : 'outline'}
           onClick={() => editor.chain().focus().toggleUnderline().run()}
         >
-          <Underline className="h-4 w-4" />
+          <UnderlineIcon className="h-4 w-4" />
         </Button>
 
         <div className="border-l mx-1" />

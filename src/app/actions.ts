@@ -8,13 +8,26 @@ type ReviewInput = {
     role: string;
     testimonial: string;
     rating: number;
+    gender: 'male' | 'female';
 };
+
+function normalizeGender(value: unknown): 'male' | 'female' {
+    return value === 'female' ? 'female' : 'male';
+}
+
+function getAvatarForGender(name: string, gender: 'male' | 'female') {
+    const safeSeed = encodeURIComponent((name || 'user').replace(/\s/g, '') || 'user');
+    const style = gender === 'female' ? 'lorelei' : 'adventurer';
+    return `https://api.dicebear.com/8.x/${style}/svg?seed=${safeSeed}`;
+}
 
 export async function handleNewReview(reviewData: ReviewInput) {
     try {
+        const gender = normalizeGender(reviewData.gender);
         const newReview = {
             ...reviewData,
-            avatar: `https://api.dicebear.com/8.x/adventurer/svg?seed=${reviewData.name.replace(/\s/g, '')}`
+            gender,
+            avatar: getAvatarForGender(reviewData.name, gender),
         };
 
         const client = await clientPromise;

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,6 +17,7 @@ export default function CreateCoursePage() {
   const [formData, setFormData] = useState({
     title: '',
     slug: '',
+    contentType: 'course' as 'course' | 'test',
     shortDescription: '',
     fullDescription: '',
     coverImage: '',
@@ -31,7 +32,15 @@ export default function CreateCoursePage() {
     instructorName: '',
     instructorImage: '',
     enrollRedirectUrl: '',
+    tags: '',
   });
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const type = params.get('type') === 'test' ? 'test' : 'course';
+    setFormData((prev) => ({ ...prev, contentType: type }));
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -70,10 +79,15 @@ export default function CreateCoursePage() {
         .split('\n')
         .map(f => f.trim())
         .filter(f => f.length > 0);
+      const tags = (formData.tags || '')
+        .split('\n')
+        .map((tag) => tag.trim())
+        .filter((tag) => tag.length > 0);
 
       const courseData = {
         title: formData.title?.trim() || '',
         slug: formData.slug?.trim() || formData.title?.toLowerCase().replace(/\s+/g, '-') || '',
+        contentType: formData.contentType === 'test' ? 'test' : 'course',
         shortDescription: formData.shortDescription?.trim() || '',
         fullDescription: formData.fullDescription?.trim() || '',
         coverImage: formData.coverImage?.trim() || '',
@@ -88,6 +102,7 @@ export default function CreateCoursePage() {
         instructorName: formData.instructorName?.trim() || '',
         instructorImage: formData.instructorImage?.trim() || '',
         enrollRedirectUrl: formData.enrollRedirectUrl?.trim() || '',
+        tags,
         shareCount: 0,
         enrollClickCount: 0,
         viewsCount: 0,
@@ -117,8 +132,12 @@ export default function CreateCoursePage() {
     <div className="min-h-screen bg-gray-50 py-12 px-4">
       <div className="max-w-4xl mx-auto space-y-8">
         <div>
-          <h1 className="text-4xl font-bold">Create New Course</h1>
-          <p className="text-gray-600 mt-2">Add a new course to your platform</p>
+          <h1 className="text-4xl font-bold">{formData.contentType === 'test' ? 'Create New Test' : 'Create New Course'}</h1>
+          <p className="text-gray-600 mt-2">
+            {formData.contentType === 'test'
+              ? 'Add a new practice test to your platform'
+              : 'Add a new course to your platform'}
+          </p>
         </div>
 
         {error && (
@@ -134,6 +153,18 @@ export default function CreateCoursePage() {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
+                <label className="block text-sm font-medium mb-2">Content Type</label>
+                <select
+                  name="contentType"
+                  value={formData.contentType}
+                  onChange={handleChange}
+                  className="w-full border rounded-md px-3 py-2"
+                >
+                  <option value="course">Course</option>
+                  <option value="test">Test</option>
+                </select>
+              </div>
+              <div>
                 <label className="block text-sm font-medium mb-2">Title *</label>
                 <Input
                   name="title"
@@ -143,7 +174,9 @@ export default function CreateCoursePage() {
                   required
                 />
               </div>
+            </div>
 
+            <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium mb-2">Slug</label>
                 <Input
@@ -308,6 +341,17 @@ export default function CreateCoursePage() {
                 className="min-h-24"
               />
             </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">Topic Tags (one per line)</label>
+              <Textarea
+                name="tags"
+                value={formData.tags}
+                onChange={handleChange}
+                placeholder="e.g. Bihar Education&#10;Web Development"
+                className="min-h-20"
+              />
+            </div>
           </div>
 
           {/* Monetization Card */}
@@ -338,7 +382,7 @@ export default function CreateCoursePage() {
           {/* Actions */}
           <div className="flex gap-2 pt-6">
             <Button type="submit" disabled={submitting} className="text-base py-6">
-              {submitting ? 'Creating...' : 'Create Course'}
+              {submitting ? 'Creating...' : formData.contentType === 'test' ? 'Create Test' : 'Create Course'}
             </Button>
             <Button
               type="button"

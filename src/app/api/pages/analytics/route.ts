@@ -43,9 +43,65 @@ type HourlyDoc = {
 
 // Use the same DB everywhere; derive from env/URI, fallback to "myapp".
 const dbName = deriveDbName();
+const MONGO_DOT_ESC = '\uFF0E';
+const MONGO_DOLLAR_ESC = '\uFF04';
 
 function emptyContent() {
   return { pageViews: {}, linkClicks: {}, dailyTotals: [] as any[], hourlyTotals: [] as any[] };
+}
+
+function encodeAnalyticsKey(key: string) {
+  return key.replace(/\./g, MONGO_DOT_ESC).replace(/\$/g, MONGO_DOLLAR_ESC);
+}
+
+function decodeAnalyticsKey(key: string) {
+  return key.replace(/\uFF0E/g, '.').replace(/\uFF04/g, '$');
+}
+
+function toSafeNumber(value: unknown) {
+  const parsed = typeof value === 'number' ? value : Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+// Legacy analytics data may contain nested objects caused by dotted keys.
+// Flatten to a simple record and decode escaped key characters.
+function flattenNumericMap(
+  input: unknown,
+  prefix = '',
+  out: Record<string, number> = {}
+) {
+  if (input === null || input === undefined) return out;
+
+  if (typeof input === 'number' || typeof input === 'string') {
+    if (prefix) {
+      out[prefix] = (out[prefix] || 0) + toSafeNumber(input);
+    }
+    return out;
+  }
+
+  if (typeof input !== 'object' || Array.isArray(input)) {
+    return out;
+  }
+
+  for (const [rawKey, value] of Object.entries(input as Record<string, unknown>)) {
+    const key = decodeAnalyticsKey(rawKey);
+    const nextKey = prefix ? `${prefix}.${key}` : key;
+
+    if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
+      flattenNumericMap(value, nextKey, out);
+      continue;
+    }
+
+    out[nextKey] = (out[nextKey] || 0) + toSafeNumber(value);
+  }
+
+  return out;
+}
+
+function encodeRecordKeys(record: Record<string, number>) {
+  return Object.fromEntries(
+    Object.entries(record).map(([key, value]) => [encodeAnalyticsKey(key), value])
+  );
 }
 
 // Some older records stored content twice (content.content). Normalize that shape.
@@ -126,30 +182,30 @@ export async function GET(req: Request) {
 
     if (dailyDocs.length) {
       for (const doc of dailyDocs) {
-        const pv = doc.pageViews || {};
-        const lc = doc.linkClicks || {};
+        const pv = flattenNumericMap(doc.pageViews || {});
+        const lc = flattenNumericMap(doc.linkClicks || {});
         for (const [k, v] of Object.entries(pv)) {
-          pageViewsAgg[k] = (pageViewsAgg[k] || 0) + (v || 0);
+          pageViewsAgg[k] = (pageViewsAgg[k] || 0) + toSafeNumber(v);
         }
         for (const [k, v] of Object.entries(lc)) {
-          linkClicksAgg[k] = (linkClicksAgg[k] || 0) + (v || 0);
+          linkClicksAgg[k] = (linkClicksAgg[k] || 0) + toSafeNumber(v);
         }
         dailyTotals.push({
           date: doc.date,
-          pageViews: doc.totalPageViews || Object.values(pv).reduce((a, b) => a + (b || 0), 0),
-          linkClicks: doc.totalLinkClicks || Object.values(lc).reduce((a, b) => a + (b || 0), 0),
+          pageViews: doc.totalPageViews || Object.values(pv).reduce((a, b) => a + toSafeNumber(b), 0),
+          linkClicks: doc.totalLinkClicks || Object.values(lc).reduce((a, b) => a + toSafeNumber(b), 0),
         });
       }
     } else {
       // Fallback to legacy single doc
       const doc = (await db.collection<AnalyticsDoc>('pages').findOne({ slug: 'analytics' })) || null;
       const normalized = normalizeContent(doc?.content);
-      pageViewsAgg = normalized.pageViews;
-      linkClicksAgg = normalized.linkClicks;
+      pageViewsAgg = flattenNumericMap(normalized.pageViews);
+      linkClicksAgg = flattenNumericMap(normalized.linkClicks);
 
       // Provide a synthetic daily point so the chart isn't empty
-      const totalPv = Object.values(pageViewsAgg).reduce((a, b) => a + (b || 0), 0);
-      const totalLc = Object.values(linkClicksAgg).reduce((a, b) => a + (b || 0), 0);
+      const totalPv = Object.values(pageViewsAgg).reduce((a, b) => a + toSafeNumber(b), 0);
+      const totalLc = Object.values(linkClicksAgg).reduce((a, b) => a + toSafeNumber(b), 0);
       dailyTotals.push({
         date: todayKey,
         pageViews: totalPv,
@@ -203,7 +259,8 @@ export async function POST(req: Request) {
 
     // Increment-only fast paths
     if (payload?.type === 'pageview' && typeof payload.pathname === 'string') {
-      const field = `content.pageViews.${payload.pathname}`;
+      const key = encodeAnalyticsKey(payload.pathname);
+      const field = `content.pageViews.${key}`;
       await analyticsColl.updateOne(
         { slug: 'analytics' },
         { $inc: { [field]: 1 } },
@@ -214,7 +271,7 @@ export async function POST(req: Request) {
         { date: todayKey },
         {
           $inc: {
-            [`pageViews.${payload.pathname}`]: 1,
+            [`pageViews.${key}`]: 1,
             totalPageViews: 1,
           },
         },
@@ -225,7 +282,7 @@ export async function POST(req: Request) {
         { hour: hourKey },
         {
           $inc: {
-            [`pageViews.${payload.pathname}`]: 1,
+            [`pageViews.${key}`]: 1,
             totalPageViews: 1,
           },
           $setOnInsert: hourMeta,
@@ -237,7 +294,8 @@ export async function POST(req: Request) {
     }
 
     if (payload?.type === 'link' && typeof payload.linkName === 'string') {
-      const field = `content.linkClicks.${payload.linkName}`;
+      const key = encodeAnalyticsKey(payload.linkName);
+      const field = `content.linkClicks.${key}`;
       await analyticsColl.updateOne(
         { slug: 'analytics' },
         { $inc: { [field]: 1 } },
@@ -248,7 +306,7 @@ export async function POST(req: Request) {
         { date: todayKey },
         {
           $inc: {
-            [`linkClicks.${payload.linkName}`]: 1,
+            [`linkClicks.${key}`]: 1,
             totalLinkClicks: 1,
           },
         },
@@ -259,7 +317,7 @@ export async function POST(req: Request) {
         { hour: hourKey },
         {
           $inc: {
-            [`linkClicks.${payload.linkName}`]: 1,
+            [`linkClicks.${key}`]: 1,
             totalLinkClicks: 1,
           },
           $setOnInsert: hourMeta,
@@ -272,9 +330,11 @@ export async function POST(req: Request) {
 
     // Full overwrite (used by admin/editor)
     const content = normalizeContent(payload?.content || payload);
+    const pageViews = encodeRecordKeys(flattenNumericMap(content.pageViews));
+    const linkClicks = encodeRecordKeys(flattenNumericMap(content.linkClicks));
     await analyticsColl.updateOne(
       { slug: 'analytics' },
-      { $set: { slug: 'analytics', content } },
+      { $set: { slug: 'analytics', content: { pageViews, linkClicks } } },
       { upsert: true }
     );
     return Response.json({ success: true });

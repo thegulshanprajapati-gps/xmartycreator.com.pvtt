@@ -132,6 +132,12 @@ export default function AdminAboutPage() {
     const handleHeroImageSelect = (id: string) => {
       setAboutContent((prev) => ({ ...prev, hero: { ...prev.hero, imageId: id } }));
     };
+    const handleHeroImageRemove = () => {
+      setAboutContent((prev) => ({ ...prev, hero: { ...prev.hero, imageId: '' } }));
+    };
+    const handleFounderImageRemove = () => {
+      setAboutContent((prev) => ({ ...prev, founder: { ...prev.founder, imageId: '' } }));
+    };
 
     useEffect(() => {
       const fetchContent = async () => {
@@ -170,6 +176,7 @@ export default function AdminAboutPage() {
     }, []);
 
     const selectedHeroImage = galleryImages.find((img) => img.id === aboutContent.hero.imageId);
+    const selectedFounderImage = galleryImages.find((img) => img.id === aboutContent.founder.imageId);
 
     useEffect(() => {
         if (state?.message) {
@@ -358,8 +365,11 @@ export default function AdminAboutPage() {
                         <Button type="button" variant="outline" onClick={() => setShowImagePicker(true)}>
                           {aboutContent.hero.imageId ? 'Change Image' : 'Choose Image'}
                         </Button>
+                        {aboutContent.hero.imageId && <span className="text-sm text-muted-foreground">ID: {aboutContent.hero.imageId}</span>}
                         {aboutContent.hero.imageId && (
-                          <span className="text-sm text-muted-foreground">ID: {aboutContent.hero.imageId}</span>
+                          <Button type="button" variant="destructive" onClick={handleHeroImageRemove}>
+                            Remove Image
+                          </Button>
                         )}
                       </div>
                       {selectedHeroImage && (
@@ -367,7 +377,7 @@ export default function AdminAboutPage() {
                           <img src={selectedHeroImage.imageUrl} alt={selectedHeroImage.title || selectedHeroImage.id} className="h-16 w-16 rounded object-cover" />
                           <div className="text-sm">
                             <div className="font-semibold">{selectedHeroImage.title || selectedHeroImage.id}</div>
-                            <div className="text-muted-foreground break-all">{selectedHeroImage.imageUrl}</div>
+                            <div className="text-muted-foreground">ID: {selectedHeroImage.id}</div>
                           </div>
                         </div>
                       )}
@@ -557,8 +567,28 @@ export default function AdminAboutPage() {
                                     ))}
                                   </SelectContent>
                                 </Select>
-                                {aboutContent.founder.imageId && (
-                                  <p className="text-xs text-muted-foreground">Selected: {aboutContent.founder.imageId}</p>
+                                <div className="flex items-center gap-3">
+                                  {aboutContent.founder.imageId && (
+                                    <p className="text-xs text-muted-foreground">Selected: {aboutContent.founder.imageId}</p>
+                                  )}
+                                  {aboutContent.founder.imageId && (
+                                    <Button type="button" variant="destructive" size="sm" onClick={handleFounderImageRemove}>
+                                      Remove Image
+                                    </Button>
+                                  )}
+                                </div>
+                                {selectedFounderImage && (
+                                  <div className="mt-2 flex items-center gap-3 rounded-lg border bg-muted/40 p-3">
+                                    <img
+                                      src={selectedFounderImage.imageUrl}
+                                      alt={selectedFounderImage.title || selectedFounderImage.id}
+                                      className="h-16 w-16 rounded object-cover"
+                                    />
+                                    <div className="text-sm">
+                                      <div className="font-semibold">{selectedFounderImage.title || selectedFounderImage.id}</div>
+                                      <div className="text-muted-foreground">ID: {selectedFounderImage.id}</div>
+                                    </div>
+                                  </div>
                                 )}
                                 {galleryImages.length === 0 && (
                                   <p className="text-sm text-amber-600">No images available. Please upload images to the gallery first.</p>

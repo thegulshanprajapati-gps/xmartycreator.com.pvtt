@@ -1,26 +1,30 @@
-﻿'use client';
+'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
-import { Send, X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import ChatHeader from '@/components/help-widget/ChatHeader';
+import ChatMessages, { type ChatMessage } from '@/components/help-widget/ChatMessages';
+import ChatInput from '@/components/help-widget/ChatInput';
+import QuickActionChips from '@/components/help-widget/QuickActionChips';
+import { cn } from '@/lib/utils';
 
-interface ChatMessage {
-  id: string;
-  type: 'user' | 'assistant';
-  content: string;
-  timestamp: Date;
-}
-
-// Single, site-wide persona (no page-based switching)
 const PERSONA = {
   name: 'Vasant AI',
   greeting: 'Namaste! I am Vasant AI. How can I guide you today?',
+  subtitle: 'Student support assistant',
 };
 
-export function HelpWidget() {
-  const [isOpen, setIsOpen] = useState(false);
+const QUICK_ACTIONS = ['Summarize this topic', 'Create a study plan', 'Explain in simple steps'];
+
+interface HelpWidgetProps {
+  variant?: 'floating' | 'embedded';
+  className?: string;
+}
+
+export function HelpWidget({ variant = 'floating', className }: HelpWidgetProps) {
+  const isEmbedded = variant === 'embedded';
+  const [isOpen, setIsOpen] = useState(() => isEmbedded);
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: '1',
@@ -32,24 +36,23 @@ export function HelpWidget() {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [hovering, setHovering] = useState(false);
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+  const launcherRef = useRef<HTMLButtonElement>(null);
+  const overlayRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    if (isEmbedded) {
+      setIsOpen(true);
+    }
+  }, [isEmbedded]);
 
-  const handleSendMessage = async () => {
-    if (!input.trim()) return;
+  const handleSendMessage = async (overrideMessage?: string) => {
+    const text = (overrideMessage ?? input).trim();
+    if (!text || isLoading) return;
 
     const userMessage: ChatMessage = {
       id: Date.now().toString(),
       type: 'user',
-      content: input,
+      content: text,
       timestamp: new Date(),
     };
 
@@ -63,7 +66,7 @@ export function HelpWidget() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          message: input,
+          message: text,
           pageUrl: typeof window !== 'undefined' ? window.location.href : '',
           pageTitle: typeof document !== 'undefined' ? document.title : '',
         }),
@@ -105,182 +108,86 @@ export function HelpWidget() {
     }
   };
 
-  // close when clicking outside
-  const overlayRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (isOpen && overlayRef.current && !overlayRef.current.contains(e.target as Node)) {
-        setIsOpen(false);
-      }
+    if (isEmbedded || !isOpen) return;
+
+    const handler = (event: PointerEvent) => {
+      const target = event.target as Node;
+      if (overlayRef.current?.contains(target)) return;
+      if (launcherRef.current?.contains(target)) return;
+      setIsOpen(false);
     };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [isOpen]);
+
+    document.addEventListener('pointerdown', handler);
+    return () => document.removeEventListener('pointerdown', handler);
+  }, [isEmbedded, isOpen]);
+
+  const showPanel = isEmbedded || isOpen;
 
   return (
     <>
-      {/* Floating Button */}
-      <div
-        className="fixed bottom-12 right-4 z-30 pointer-events-none md:right-6"
-        onMouseEnter={() => setHovering(true)}
-        onMouseLeave={() => setHovering(false)}
-      >
-        <motion.div
-          animate={{ rotate: isOpen ? 4 : 0, scale: hovering ? 1.08 : 1 }}
-          transition={{ type: 'spring', stiffness: 260, damping: 18 }}
-          className="pointer-events-auto"
-        >
-          <button
-            onClick={() => setIsOpen(!isOpen)}
-            className="relative flex items-center justify-center w-16 h-16 rounded-2xl bg-white/70 text-white shadow-[0_18px_65px_-28px_rgba(32,55,90,0.65)] border border-white/60 backdrop-blur-xl transition-all duration-200 hover:shadow-[0_22px_70px_-24px_rgba(32,55,90,0.75)] overflow-hidden"
+      <AnimatePresence>
+        {!isEmbedded && !isOpen && (
+          <motion.button
+            ref={launcherRef}
+            initial={{ opacity: 0, y: 12, scale: 0.94 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 8, scale: 0.94 }}
+            transition={{ duration: 0.22, ease: 'easeOut' }}
+            type="button"
+            onClick={() => setIsOpen(true)}
+            className="fixed bottom-5 right-4 z-40 grid h-14 w-14 place-items-center overflow-hidden rounded-2xl border border-cyan-200/45 bg-[linear-gradient(150deg,rgba(14,116,144,0.96),rgba(13,148,136,0.96))] text-white shadow-[0_20px_45px_-24px_rgba(13,148,136,0.9)] ring-1 ring-white/35 transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-[0_24px_52px_-24px_rgba(13,148,136,0.9)] active:scale-95 md:bottom-6 md:right-6"
             aria-label="Open chat"
           >
-            <motion.span
-              className="absolute inset-[-18%] bg-gradient-to-br from-indigo-500 via-fuchsia-500 to-orange-400"
-              animate={{ rotate: isOpen ? 20 : 0 }}
-              transition={{ duration: 0.4 }}
+            <span className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.28),transparent_45%)]" />
+            <Image
+              src="/logo/1000010559.png"
+              alt="Vasant AI icon"
+              width={26}
+              height={26}
+              className="relative rounded-lg"
             />
-            <div className="absolute inset-[2px] rounded-[18px] bg-white/85 backdrop-blur-xl" />
-            <div className="relative flex flex-col items-center gap-1 text-xs font-semibold text-slate-900">
-              <div className="relative">
-                <div className="absolute inset-[-6px] rounded-2xl bg-gradient-to-br from-indigo-500/30 via-fuchsia-500/20 to-orange-400/30 blur" />
-                <Image src="/logo/1000010559.png" alt="Vasant AI icon" width={28} height={28} className="rounded-xl shadow-sm" />
-                <span className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full bg-emerald-500 shadow-[0_0_0_4px_rgba(16,185,129,0.25)]" />
-              </div>
-              <span className="leading-tight">Vasant AI</span>
-            </div>
-          </button>
-        </motion.div>
-        <motion.div
-          initial={{ opacity: 0, y: 6 }}
-          animate={{ opacity: hovering ? 1 : 0, y: hovering ? 0 : 6 }}
-          transition={{ duration: 0.18 }}
-          className="mt-2 px-3 py-2 rounded-lg bg-[#0f172a]/90 text-slate-50 text-xs shadow-lg border border-white/10 backdrop-blur pointer-events-none w-max"
-        >
-          {PERSONA.name}
-        </motion.div>
-      </div>
+            <span className="absolute right-1.5 top-1.5 h-2.5 w-2.5 rounded-full bg-emerald-300 shadow-[0_0_0_3px_rgba(16,185,129,0.28)]" />
+          </motion.button>
+        )}
+      </AnimatePresence>
 
-      {/* Chat Widget */}
-      {isOpen && (
-        <motion.div
-          initial={{ opacity: 0, y: 20, scale: 0.95 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 20, scale: 0.95 }}
-          transition={{ duration: 0.2 }}
-          ref={overlayRef}
-          className="fixed bottom-20 right-4 md:bottom-32 md:right-6 z-40 w-[380px] max-w-[94vw] max-h-[78vh]"
-        >
-          <div className="relative rounded-3xl p-[1px] bg-gradient-to-br from-indigo-500/50 via-fuchsia-500/50 to-orange-400/50 shadow-[0_30px_90px_-65px_rgba(99,102,241,0.9)]">
-            <div className="rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white/95 dark:bg-[#05070f]/92 backdrop-blur-2xl text-slate-900 dark:text-slate-50 flex flex-col overflow-hidden min-h-0 max-h-[78vh]">
-          {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-white/20 dark:border-white/10 bg-gradient-to-r from-indigo-500/90 via-fuchsia-500/90 to-orange-400/90 text-white">
-            <div className="flex items-center gap-3">
-              <div className="relative w-10 h-10 rounded-2xl bg-white/90 flex items-center justify-center shadow-lg">
-                <Image src="/logo/1000010559.png" alt="Vasant AI" width={28} height={28} className="rounded-lg" />
-                <span className="absolute -right-1 -bottom-1 h-2.5 w-2.5 rounded-full bg-emerald-400 shadow-[0_0_0_4px_rgba(255,255,255,0.35)]" />
-              </div>
-              <div>
-                <div className="font-semibold leading-tight">Vasant AI</div>
-                <div className="text-xs opacity-90">Instant answers - Smarter help</div>
-              </div>
-            </div>
-            <div className="flex items-center gap-2 text-xs font-medium">
-              <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-white/15">
-                <span className="h-2 w-2 rounded-full bg-emerald-300 animate-pulse" />
-                <span>Live</span>
-              </div>
-              <Button size="icon" variant="ghost" className="h-8 w-8 text-white hover:bg-white/20" onClick={() => setIsOpen(false)}>
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-
-          {/* Messages */}
-          <div className="flex-1 min-h-[220px] overflow-y-auto p-4 space-y-3 bg-gradient-to-b from-transparent via-slate-50 to-transparent dark:via-white/5">
-            {messages.map((message) => (
-              <motion.div
-                key={message.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
-              >
-                <div
-                  className={`max-w-xs px-4 py-2 rounded-lg text-sm ${
-                    message.type === 'user'
-                      ? 'bg-primary text-primary-foreground rounded-br-none shadow-sm'
-                      : 'bg-slate-100 text-slate-800 border border-slate-200/80 rounded-bl-none shadow-sm dark:bg-white/15 dark:text-slate-50 dark:border-white/10 backdrop-blur'
-                  }`}
-                >
-                  {message.content}
-                </div>
-              </motion.div>
-            ))}
-            {apiError && (
-              <div className="text-xs text-amber-300 px-3 py-2 bg-amber-500/10 border border-amber-500/30 rounded-lg w-fit">
-                {apiError} (check GROQ_API_KEY in .env)
-              </div>
+      <AnimatePresence>
+        {showPanel && (
+          <motion.div
+            initial={{ opacity: 0, y: 14, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 14, scale: 0.98 }}
+            transition={{ duration: 0.24, ease: 'easeOut' }}
+            ref={overlayRef}
+            className={cn(
+              'font-["Inter","Poppins","Segoe_UI","system-ui",sans-serif] max-h-[82vh]',
+              isEmbedded
+                ? 'relative w-full max-w-[440px]'
+                : 'fixed bottom-4 left-3 right-3 z-40 md:bottom-6 md:left-auto md:right-6 md:w-[420px]',
+              className
             )}
-            {isLoading && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="flex gap-2 px-4 py-3 bg-slate-100 rounded-lg rounded-bl-none w-fit border border-slate-200/80 dark:bg-white/15 dark:border-white/10 backdrop-blur"
-              >
-                <motion.div
-                  animate={{ y: [0, -6, 0] }}
-                  transition={{ duration: 0.6, repeat: Infinity, delay: 0 }}
-                  className="w-2.5 h-2.5 rounded-full bg-primary"
+          >
+            <div className="relative min-h-0 overflow-hidden rounded-[24px] border border-cyan-300/30 bg-[linear-gradient(160deg,rgba(5,25,34,0.95),rgba(6,39,53,0.94))] text-[hsl(var(--vasant-text))] shadow-[0_32px_80px_-48px_rgba(14,116,144,0.95)] backdrop-blur-2xl dark:border-cyan-200/20 dark:bg-[linear-gradient(160deg,rgba(6,30,40,0.93),rgba(7,34,47,0.93))]">
+              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(45,212,191,0.2),transparent_40%),radial-gradient(circle_at_bottom_left,rgba(56,189,248,0.16),transparent_50%)]" />
+              <div className="relative flex min-h-0 max-h-[82vh] flex-col">
+                <ChatHeader
+                  name={PERSONA.name}
+                  subtitle={PERSONA.subtitle}
+                  onClose={isEmbedded ? undefined : () => setIsOpen(false)}
                 />
-                <motion.div
-                  animate={{ y: [0, -6, 0] }}
-                  transition={{ duration: 0.6, repeat: Infinity, delay: 0.1 }}
-                  className="w-2.5 h-2.5 rounded-full bg-primary"
-                />
-                <motion.div
-                  animate={{ y: [0, -6, 0] }}
-                  transition={{ duration: 0.6, repeat: Infinity, delay: 0.2 }}
-                  className="w-2.5 h-2.5 rounded-full bg-primary"
-                />
-              </motion.div>
-            )}
-            <div ref={messagesEndRef} />
-          </div>
-
-          {/* Input */}
-          <div className="border-t border-slate-200/80 dark:border-white/10 p-3 bg-white dark:bg-[#05070f]">
-            <div className="flex items-center gap-2">
-              <input
-                type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !isLoading) {
-                    handleSendMessage();
-                  }
-                }}
-                placeholder="Ask anything..."
-                className="flex-1 px-3 py-2 rounded-xl border border-slate-200/80 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 shadow-inner text-slate-900 placeholder:text-slate-400 dark:border-white/10 dark:bg-white/5 dark:text-slate-50 dark:placeholder:text-slate-400"
-                disabled={isLoading}
-              />
-              <Button
-                size="icon"
-                onClick={handleSendMessage}
-                disabled={isLoading || !input.trim()}
-                className="rounded-xl bg-gradient-to-r from-indigo-500 via-fuchsia-500 to-orange-400 text-white shadow-lg hover:scale-[1.02] transition"
-              >
-                <Send className="w-4 h-4" />
-              </Button>
+                <ChatMessages messages={messages} isTyping={isLoading} apiError={apiError} />
+                <QuickActionChips actions={QUICK_ACTIONS} onAction={(action) => handleSendMessage(action)} />
+                <ChatInput value={input} onChange={setInput} onSend={() => handleSendMessage()} disabled={isLoading} />
+              </div>
             </div>
-            <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-slate-600 dark:text-slate-300">
-              <span className="px-2 py-1 rounded-full bg-slate-100 border border-slate-200/80 dark:bg-white/5 dark:border-white/10">Try: "Summarize this page"</span>
-              <span className="px-2 py-1 rounded-full bg-slate-100 border border-slate-200/80 dark:bg-white/5 dark:border-white/10">"Give me next steps"</span>
-            </div>
-          </div>
-        </div>
-          </div>
-        </motion.div>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
+}
+
+export function EmbeddedHelpWidget({ className }: { className?: string }) {
+  return <HelpWidget variant="embedded" className={className} />;
 }

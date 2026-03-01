@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import mongoose from 'mongoose';
 import Course from '@/lib/models/course';
+import { recordStudentActivity } from '@/lib/student-management';
+import { getAuthenticatedStudentUser } from '@/lib/student-session';
 
 async function connectDB() {
   if (mongoose.connection.readyState === 0 || mongoose.connection.readyState === 3) {
@@ -40,6 +42,31 @@ export async function POST(
 
     if (!course) {
       return NextResponse.json({ error: 'Course not found' }, { status: 404 });
+    }
+
+    try {
+      const student = await getAuthenticatedStudentUser();
+      await recordStudentActivity({
+        user: student
+          ? {
+              id: student.id,
+              email: student.email,
+              name: student.name,
+              image: student.image,
+            }
+          : undefined,
+        activityType: 'course_share',
+        courseId: String(course._id || id),
+        courseSlug: typeof course.slug === 'string' ? course.slug : '',
+        courseTitle: typeof course.title === 'string' ? course.title : '',
+        metadata: {
+          source: 'course-detail',
+          method: request.method,
+          pathname: request.nextUrl.pathname,
+        },
+      });
+    } catch (trackingError) {
+      console.error('Failed to record student share activity:', trackingError);
     }
 
     return NextResponse.json({

@@ -59,24 +59,6 @@ const nextConfig: NextConfig = {
         ],
       },
       {
-        source: '/blog/:slug',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=86400, stale-while-revalidate=604800',
-          },
-        ],
-      },
-      {
-        source: '/',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=3600, stale-while-revalidate=86400',
-          },
-        ],
-      },
-      {
         source: '/static/:path*',
         headers: [
           {
@@ -86,9 +68,6 @@ const nextConfig: NextConfig = {
         ],
       },
     ];
-  },
-  experimental: {
-    // Removed unsupported isrMemoryCacheSize
   },
 };
 

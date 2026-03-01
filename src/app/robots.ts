@@ -1,7 +1,7 @@
 import { MetadataRoute } from 'next';
 
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = process.env.NEXT_PUBLIC_URL || 'https://xmartycreator.com';
+  const baseUrl = (process.env.NEXT_PUBLIC_URL || 'https://xmartycreator.com').replace(/\/+$/, '');
 
   return {
     rules: [
@@ -26,6 +26,6 @@ export default function robots(): MetadataRoute.Robots {
         disallow: '/',
       },
     ],
-    sitemap: `${baseUrl}/sitemap.xml`,
+    sitemap: [`${baseUrl}/sitemap.xml`],
   };
 }

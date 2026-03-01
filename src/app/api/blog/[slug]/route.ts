@@ -7,6 +7,7 @@ import { slugify } from '@/lib/slugify';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { cacheGet, cacheSet, cacheDel } from '@/lib/redis-cache';
 import { toPlainObject, serializeDocument } from '@/lib/mongoose-helpers';
+import { revalidatePath, revalidateTag } from 'next/cache';
 
 // Ensure content has valid TipTap structure
 function validateAndFixContent(content: any) {
@@ -18,6 +19,31 @@ function validateAndFixContent(content: any) {
   }
   // If it's empty or malformed, return default
   return { type: 'doc', content: [] };
+}
+
+function buildExcerpt(inputExcerpt: any, htmlContent: string) {
+  const explicit = typeof inputExcerpt === 'string' ? inputExcerpt.trim() : '';
+  if (explicit) return explicit;
+
+  const plainText = htmlContent
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  if (!plainText) return '';
+  return plainText.length > 220 ? `${plainText.slice(0, 217)}...` : plainText;
+}
+
+const MAX_HTML_CONTENT_CHARS = 2_500_000;
+const MAX_INLINE_COVER_IMAGE_CHARS = 1_250_000;
+
+function revalidateBlogPages(slugs: string[]) {
+  revalidateTag('blog-content');
+  revalidateTag('blog-related');
+  revalidatePath('/blog');
+  slugs
+    .filter(Boolean)
+    .forEach((currentSlug) => revalidatePath(`/blog/${currentSlug}`));
 }
 
 /**
@@ -164,12 +190,32 @@ export async function PUT(
     const finalContent = validateAndFixContent(content || contentJSON || {});
     const finalHtmlContent = htmlContent || contentHTML;
 
-    if (!title || !finalHtmlContent || !author || !excerpt) {
+    if (typeof finalHtmlContent === 'string' && finalHtmlContent.length > MAX_HTML_CONTENT_CHARS) {
+      return NextResponse.json(
+        { error: 'Content is too large. Please reduce article size.' },
+        { status: 413 }
+      );
+    }
+
+    if (
+      typeof coverImage === 'string'
+      && coverImage.startsWith('data:image/')
+      && coverImage.length > MAX_INLINE_COVER_IMAGE_CHARS
+    ) {
+      return NextResponse.json(
+        { error: 'Cover image is too large for inline upload. Use an image URL or smaller image.' },
+        { status: 413 }
+      );
+    }
+
+    const normalizedExcerpt = buildExcerpt(excerpt, finalHtmlContent);
+
+    if (!title || !finalHtmlContent || !author || !normalizedExcerpt) {
       const missing = [];
       if (!title) missing.push('title');
       if (!finalHtmlContent) missing.push('htmlContent');
       if (!author) missing.push('author');
-      if (!excerpt) missing.push('excerpt');
+      if (!normalizedExcerpt) missing.push('excerpt');
       return NextResponse.json(
         { error: `Missing required fields: ${missing.join(', ')}` }, 
         { status: 400 }
@@ -235,14 +281,14 @@ export async function PUT(
     blog.slug = newSlug;
     blog.content = finalContent;
     blog.htmlContent = finalHtmlContent;
-    blog.excerpt = excerpt;
+    blog.excerpt = normalizedExcerpt;
     blog.author = author;
     blog.authorImage = authorImage || '';
     blog.coverImage = coverImageData;
     blog.tags = tags || [];
     blog.readTime = readTime;
     blog.metaTitle = metaTitle || title;
-    blog.metaDescription = metaDescription || excerpt;
+    blog.metaDescription = metaDescription || normalizedExcerpt;
     blog.metaKeywords = metaKeywords || [];
     blog.status = status || 'draft';
     blog.updatedAt = new Date();
@@ -271,7 +317,21 @@ export async function PUT(
       `blogs:list:published:content-on`,
       `blogs:list:all:content-off`,
       `blogs:list:all:content-on`,
+      `blogs:list:${blog.status}:content-off:limit-100`,
+      `blogs:list:${blog.status}:content-on:limit-100`,
+      `blogs:list:${blog.status}:content-off:limit-200`,
+      `blogs:list:${blog.status}:content-on:limit-200`,
+      'blogs:list:published:content-off:limit-100',
+      'blogs:list:published:content-on:limit-100',
+      'blogs:list:published:content-off:limit-200',
+      'blogs:list:published:content-on:limit-200',
+      'blogs:list:all:content-off:limit-100',
+      'blogs:list:all:content-on:limit-100',
+      'blogs:list:all:content-off:limit-200',
+      'blogs:list:all:content-on:limit-200',
     ]);
+
+    revalidateBlogPages([slug, newSlug]);
     
     // SAFE CONVERSION: toPlainObject handles both Mongoose docs and plain objects
     const savedBlog = toPlainObject<any>(blog);
@@ -336,7 +396,21 @@ export async function DELETE(
       `blogs:list:all:content-on`,
       `blogs:list:draft:content-off`,
       `blogs:list:draft:content-on`,
+      'blogs:list:published:content-off:limit-100',
+      'blogs:list:published:content-on:limit-100',
+      'blogs:list:published:content-off:limit-200',
+      'blogs:list:published:content-on:limit-200',
+      'blogs:list:all:content-off:limit-100',
+      'blogs:list:all:content-on:limit-100',
+      'blogs:list:all:content-off:limit-200',
+      'blogs:list:all:content-on:limit-200',
+      'blogs:list:draft:content-off:limit-100',
+      'blogs:list:draft:content-on:limit-100',
+      'blogs:list:draft:content-off:limit-200',
+      'blogs:list:draft:content-on:limit-200',
     ]);
+
+    revalidateBlogPages([slug]);
 
     return NextResponse.json({ message: 'Blog deleted', slug });
   } catch (error) {
@@ -344,4 +418,3 @@ export async function DELETE(
     return NextResponse.json({ error: 'Failed to delete blog', details: error instanceof Error ? error.message : 'Unknown error' }, { status: 500 });
   }
 }
-

@@ -10,6 +10,7 @@ import { useActionState, useEffect, useState } from 'react';
 import { updateCoursesContent } from '../actions';
 import { useToast } from '@/hooks/use-toast';
 import { PlusCircle, Trash2 } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
 import {
   Select,
   SelectContent,
@@ -41,10 +42,11 @@ type CoursesContent = {
         description: string;
     };
     courses: Course[];
+    developmentMode: boolean;
 };
 
 export default function AdminCoursesPage() {
-    const initialContent: CoursesContent = { hero: { title: '', description: '' }, courses: [] };
+    const initialContent: CoursesContent = { hero: { title: '', description: '' }, courses: [], developmentMode: false };
     const [state, formAction, isPending] = useActionState(updateCoursesContent, { message: '', data: initialContent });
     const { toast } = useToast();
     const [coursesContent, setCoursesContent] = useState<CoursesContent>(initialContent);
@@ -57,7 +59,14 @@ export default function AdminCoursesPage() {
           const res = await fetch('/api/pages/courses');
           if (res.ok) {
             const data = await res.json();
-            setCoursesContent(data);
+            setCoursesContent({
+              hero: {
+                title: data?.hero?.title || '',
+                description: data?.hero?.description || '',
+              },
+              courses: Array.isArray(data?.courses) ? data.courses : [],
+              developmentMode: Boolean(data?.developmentMode),
+            });
           }
         } catch (error) {
           console.error('Error fetching courses content:', error);
@@ -94,7 +103,15 @@ export default function AdminCoursesPage() {
             });
         }
         if(state?.data) {
-            setCoursesContent(state.data as CoursesContent);
+            const next = state.data as Partial<CoursesContent>;
+            setCoursesContent({
+              hero: {
+                title: next?.hero?.title || '',
+                description: next?.hero?.description || '',
+              },
+              courses: Array.isArray(next?.courses) ? next.courses : [],
+              developmentMode: Boolean(next?.developmentMode),
+            });
         }
     }, [state, toast]);
 
@@ -136,6 +153,7 @@ export default function AdminCoursesPage() {
         const formData = new FormData();
         formData.append('hero-title', coursesContent.hero.title);
         formData.append('hero-description', coursesContent.hero.description);
+        formData.append('courses-development-mode', coursesContent.developmentMode ? 'true' : 'false');
         coursesContent.courses.forEach((course, index) => {
             formData.append(`course-title-${index}`, course.title);
             formData.append(`course-description-${index}`, course.description);
@@ -162,6 +180,22 @@ export default function AdminCoursesPage() {
                 <CardTitle>Courses Hero Section</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+                <div className="rounded-lg border p-4">
+                    <div className="flex items-center justify-between gap-4">
+                        <div className="space-y-1">
+                            <p className="text-sm font-medium">Course Detail Development Mode</p>
+                            <p className="text-xs text-muted-foreground">
+                                ON: course click opens dummy development page. OFF: normal course detail opens.
+                            </p>
+                        </div>
+                        <Switch
+                          checked={coursesContent.developmentMode}
+                          onCheckedChange={(checked) =>
+                            setCoursesContent((prev) => ({ ...prev, developmentMode: checked }))
+                          }
+                        />
+                    </div>
+                </div>
                 <div className="space-y-2">
                     <Label htmlFor="hero-title">Title</Label>
                     <Input 

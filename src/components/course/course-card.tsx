@@ -13,6 +13,7 @@ import {
   Award,
   ArrowRight,
 } from 'lucide-react';
+import { buildCoursePreviewUrl } from '@/lib/subdomain-links';
 
 interface CourseCardProps {
   _id: string;
@@ -70,6 +71,7 @@ export default function CourseCard({
     intermediate: 'bg-yellow-500/20 text-yellow-700 dark:text-yellow-400',
     advanced: 'bg-red-500/20 text-red-700 dark:text-red-400',
   };
+  const coursePreviewHref = buildCoursePreviewUrl(slug);
 
   return (
     <motion.div
@@ -117,7 +119,7 @@ export default function CourseCard({
         )}
 
         {/* Title */}
-        <Link href={`/courses/${slug}`}>
+        <Link href={coursePreviewHref} prefetch={false}>
           <h3 className="line-clamp-2 text-lg font-bold hover:text-primary transition-colors">
             {title}
           </h3>
@@ -184,7 +186,7 @@ export default function CourseCard({
 
           {/* Enroll Button */}
           <Button asChild className="w-full gap-2">
-            <Link href={`/courses/${slug}`}>
+            <Link href={coursePreviewHref} prefetch={false}>
               Explore Course
               <ArrowRight className="h-4 w-4" />
             </Link>

@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Switch } from '@/components/ui/switch';
 import { useActionState, useEffect, useState } from 'react';
 import { updateHomeContent } from './actions';
 import { useToast } from '@/hooks/use-toast';
@@ -32,6 +33,13 @@ type Update = {
   category?: string;
 };
 
+type GalleryImage = {
+  id: string;
+  title?: string;
+  filename?: string;
+  imageUrl?: string;
+};
+
 type HomeContent = {
   hero: {
     title: string;
@@ -40,10 +48,23 @@ type HomeContent = {
       primary: { text: string; link: string };
       secondary: { text: string; link: string };
     };
+    background: {
+      useImage: boolean;
+      imageId: string;
+    };
+  };
+  scrollingBanner: {
+    enabled: boolean;
+    text: string;
+    linkText: string;
+    linkHref: string;
+    imageId: string;
+    animation: 'slide' | 'pulse' | 'bounce';
   };
   quickAccess: {
     title: string;
     description: string;
+    columns: 3 | 4;
     items: { title: string; description: string; imageId: string; link: string }[];
   };
   whyChooseUs: {
@@ -60,7 +81,14 @@ type HomeContent = {
       testimonial: string;
       rating: number;
       avatar: string;
+      gender?: 'male' | 'female';
     }[];
+  };
+  achievements: {
+    badge: string;
+    title: string;
+    description: string;
+    stats: { value: number; suffix: string; label: string }[];
   };
 };
 
@@ -68,10 +96,80 @@ interface AdminDashboardClientProps {
     initialHomeContent: HomeContent;
 }
 
+const defaultScrollingBanner: HomeContent['scrollingBanner'] = {
+  enabled: false,
+  text: '',
+  linkText: 'Learn more',
+  linkHref: '#',
+  imageId: '',
+  animation: 'slide',
+};
+
+const defaultHeroBackground: HomeContent['hero']['background'] = {
+  useImage: false,
+  imageId: '',
+};
+
+const normalizeQuickAccessColumns = (value: unknown): 3 | 4 => {
+  const parsed = Number(value);
+  return parsed === 4 ? 4 : 3;
+};
+
+const normalizeHomeContent = (content: HomeContent): HomeContent => {
+  const rawHero = (content as any)?.hero || {};
+  const rawHeroBackground = rawHero?.background || {};
+  const rawBanner = (content as any)?.scrollingBanner || {};
+  const rawQuickAccess = (content as any)?.quickAccess || {};
+  const animation = rawBanner?.animation === 'pulse' || rawBanner?.animation === 'bounce'
+    ? rawBanner.animation
+    : 'slide';
+
+  return {
+    ...content,
+    hero: {
+      title: rawHero?.title || '',
+      description: rawHero?.description || '',
+      buttons: {
+        primary: {
+          text: rawHero?.buttons?.primary?.text || '',
+          link: rawHero?.buttons?.primary?.link || '',
+        },
+        secondary: {
+          text: rawHero?.buttons?.secondary?.text || '',
+          link: rawHero?.buttons?.secondary?.link || '',
+        },
+      },
+      background: {
+        ...defaultHeroBackground,
+        ...rawHeroBackground,
+        useImage: rawHeroBackground?.useImage === true
+          || rawHeroBackground?.useImage === 'true'
+          || rawHeroBackground?.useImage === 'on',
+        imageId: (rawHeroBackground?.imageId || '').trim(),
+      },
+    },
+    scrollingBanner: {
+      ...defaultScrollingBanner,
+      ...rawBanner,
+      enabled: rawBanner?.enabled === true || rawBanner?.enabled === 'true' || rawBanner?.enabled === 'on',
+      animation,
+    },
+    quickAccess: {
+      title: rawQuickAccess?.title || '',
+      description: rawQuickAccess?.description || '',
+      columns: normalizeQuickAccessColumns(rawQuickAccess?.columns),
+      items: Array.isArray(rawQuickAccess?.items)
+        ? rawQuickAccess.items.filter((item: any) => item && typeof item === 'object')
+        : [],
+    },
+  };
+};
+
 export default function AdminDashboardClient({ initialHomeContent }: AdminDashboardClientProps) {
   const [state, formAction, isPending] = useActionState(updateHomeContent, { message: '', data: initialHomeContent });
   const { toast } = useToast();
-  const [homeContent, setHomeContent] = useState<HomeContent>(initialHomeContent);
+  const [homeContent, setHomeContent] = useState<HomeContent>(normalizeHomeContent(initialHomeContent));
+  const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([]);
   const [updates, setUpdates] = useState<{ title: string; description: string; updates: Update[] }>({
     title: 'Latest Updates & News',
     description: 'Stay informed with our latest announcements',
@@ -87,7 +185,7 @@ export default function AdminDashboardClient({ initialHomeContent }: AdminDashbo
       });
     }
     if (state?.data) {
-        setHomeContent(state.data as HomeContent);
+        setHomeContent(normalizeHomeContent(state.data as HomeContent));
     }
   }, [state, toast]);
 
@@ -108,6 +206,31 @@ export default function AdminDashboardClient({ initialHomeContent }: AdminDashbo
     };
 
     fetchUpdates();
+  }, []);
+
+  useEffect(() => {
+    const fetchGallery = async () => {
+      try {
+        const res = await fetch('/api/pages/gallery');
+        if (res.ok) {
+          const data = await res.json();
+          const rawImages = Array.isArray(data?.placeholderImages) ? data.placeholderImages : [];
+          const safeImages = rawImages
+            .filter((img: any) => img?.id && typeof img.id === 'string' && img.id.trim())
+            .map((img: any) => ({
+              id: img.id,
+              title: img.title || '',
+              filename: img.filename || '',
+              imageUrl: img.imageUrl || '',
+            }));
+          setGalleryImages(safeImages);
+        }
+      } catch (error) {
+        console.error('❌ [Admin] Error fetching gallery images:', error);
+      }
+    };
+
+    fetchGallery();
   }, []);
 
     const handleAddQuickAccessItem = () => {
@@ -140,7 +263,8 @@ export default function AdminDashboardClient({ initialHomeContent }: AdminDashbo
                     role: '', 
                     testimonial: '', 
                     rating: 5, 
-                    avatar: '' 
+                    avatar: '',
+                    gender: 'male',
                 }]
             }
         }));
@@ -153,6 +277,26 @@ export default function AdminDashboardClient({ initialHomeContent }: AdminDashbo
                 ...prev.testimonials,
                 reviews: (prev.testimonials?.reviews || []).filter((_, index) => index !== indexToRemove)
             }
+        }));
+    };
+
+    const handleAddAchievementStat = () => {
+        setHomeContent(prev => ({
+            ...prev,
+            achievements: {
+                ...prev.achievements,
+                stats: [...(prev.achievements?.stats || []), { value: 0, suffix: '+', label: '' }],
+            },
+        }));
+    };
+
+    const handleRemoveAchievementStat = (indexToRemove: number) => {
+        setHomeContent(prev => ({
+            ...prev,
+            achievements: {
+                ...prev.achievements,
+                stats: (prev.achievements?.stats || []).filter((_, index) => index !== indexToRemove),
+            },
         }));
     };
     
@@ -233,9 +377,11 @@ export default function AdminDashboardClient({ initialHomeContent }: AdminDashbo
             <Button type="submit" disabled={isPending}>{isPending ? 'Saving...' : 'Save Changes'}</Button>
         </div>
         <Tabs defaultValue="hero" className="mt-4">
-            <TabsList className="grid w-full grid-cols-5">
+            <TabsList className="grid w-full grid-cols-7">
                 <TabsTrigger value="hero">Hero</TabsTrigger>
+                <TabsTrigger value="scrolling-banner">Banner</TabsTrigger>
                 <TabsTrigger value="quick-access">Quick Access</TabsTrigger>
+                <TabsTrigger value="achievements">Impact</TabsTrigger>
                 <TabsTrigger value="why-choose-us">Why Choose Us</TabsTrigger>
                 <TabsTrigger value="testimonials">Testimonials</TabsTrigger>
                 <TabsTrigger value="updates">Updates</TabsTrigger>
@@ -248,33 +394,260 @@ export default function AdminDashboardClient({ initialHomeContent }: AdminDashbo
                 </CardHeader>
                 <CardContent className="space-y-8">
                     <TabsContent value="hero" forceMount className="mt-0 data-[state=inactive]:hidden">
+                        <div className="space-y-6 pt-4">
+                            <div className="space-y-4 rounded-lg border bg-background/40 p-4">
+                                <h3 className="text-sm font-semibold text-foreground">Hero Content</h3>
+                                <div className="space-y-2">
+                                    <Label htmlFor="hero-title">Title</Label>
+                                    <Input id="hero-title" name="hero-title" value={homeContent.hero.title} onChange={e => setHomeContent({...homeContent, hero: {...homeContent.hero, title: e.target.value}})} />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="hero-description">Description</Label>
+                                    <Textarea id="hero-description" name="hero-description" value={homeContent.hero.description}  onChange={e => setHomeContent({...homeContent, hero: {...homeContent.hero, description: e.target.value}})}/>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="hero-primary-btn-text">Primary Button Text</Label>
+                                        <Input id="hero-primary-btn-text" name="hero-primary-btn-text" value={homeContent.hero.buttons.primary.text} onChange={e => setHomeContent({...homeContent, hero: {...homeContent.hero, buttons: {...homeContent.hero.buttons, primary: {...homeContent.hero.buttons.primary, text: e.target.value}}}})} />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="hero-primary-btn-link">Primary Button Link</Label>
+                                        <Input id="hero-primary-btn-link" name="hero-primary-btn-link" value={homeContent.hero.buttons.primary.link} onChange={e => setHomeContent({...homeContent, hero: {...homeContent.hero, buttons: {...homeContent.hero.buttons, primary: {...homeContent.hero.buttons.primary, link: e.target.value}}}})} />
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="hero-secondary-btn-text">Secondary Button Text</Label>
+                                        <Input id="hero-secondary-btn-text" name="hero-secondary-btn-text" value={homeContent.hero.buttons.secondary.text} onChange={e => setHomeContent({...homeContent, hero: {...homeContent.hero, buttons: {...homeContent.hero.buttons, secondary: {...homeContent.hero.buttons.secondary, text: e.target.value}}}})} />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="hero-secondary-btn-link">Secondary Button Link</Label>
+                                        <Input id="hero-secondary-btn-link" name="hero-secondary-btn-link" value={homeContent.hero.buttons.secondary.link} onChange={e => setHomeContent({...homeContent, hero: {...homeContent.hero, buttons: {...homeContent.hero.buttons, secondary: {...homeContent.hero.buttons.secondary, link: e.target.value}}}})} />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="space-y-4 rounded-lg border bg-background/40 p-4">
+                                <div className="space-y-1">
+                                    <h3 className="text-sm font-semibold text-foreground">Hero Background</h3>
+                                    <p className="text-xs text-muted-foreground">
+                                        Split mode: either visual elements or a selected background image.
+                                    </p>
+                                </div>
+
+                                <div className="flex items-center space-x-2">
+                                    <Switch
+                                      id="hero-bg-use-image"
+                                      name="hero-bg-use-image"
+                                      checked={homeContent.hero.background.useImage}
+                                      onCheckedChange={(checked) =>
+                                        setHomeContent({
+                                          ...homeContent,
+                                          hero: {
+                                            ...homeContent.hero,
+                                            background: {
+                                              ...homeContent.hero.background,
+                                              useImage: checked,
+                                            },
+                                          },
+                                        })
+                                      }
+                                    />
+                                    <Label htmlFor="hero-bg-use-image">Use Background Image</Label>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="hero-bg-imageId">Background Image</Label>
+                                    <select
+                                      id="hero-bg-imageId"
+                                      name="hero-bg-imageId"
+                                      value={homeContent.hero.background.imageId}
+                                      onChange={(e) =>
+                                        setHomeContent({
+                                          ...homeContent,
+                                          hero: {
+                                            ...homeContent.hero,
+                                            background: {
+                                              ...homeContent.hero.background,
+                                              imageId: e.target.value,
+                                            },
+                                          },
+                                        })
+                                      }
+                                      className="w-full rounded-md border border-input bg-background px-3 py-2"
+                                    >
+                                      <option value="">No image selected</option>
+                                      {galleryImages.map((image) => (
+                                        <option key={image.id} value={image.id}>
+                                          {image.title || image.filename || image.id}
+                                        </option>
+                                      ))}
+                                    </select>
+                                    {(() => {
+                                      const selectedHeroBg = galleryImages.find(
+                                        (img) => img.id === homeContent.hero.background.imageId
+                                      );
+                                      return selectedHeroBg?.imageUrl ? (
+                                        <div className="space-y-2">
+                                          <p className="text-xs text-muted-foreground">
+                                            Selected: {selectedHeroBg.title || selectedHeroBg.filename || 'Hero background'}
+                                          </p>
+                                          <img
+                                            src={selectedHeroBg.imageUrl}
+                                            alt={selectedHeroBg.title || selectedHeroBg.filename || 'Selected hero background'}
+                                            className="h-24 w-full rounded-md border object-cover"
+                                          />
+                                        </div>
+                                      ) : null;
+                                    })()}
+                                </div>
+                            </div>
+                        </div>
+                    </TabsContent>
+
+                    <TabsContent value="scrolling-banner" forceMount className="mt-0 data-[state=inactive]:hidden">
                         <div className="space-y-4 pt-4">
+                            <div className="flex items-center space-x-2">
+                                <Switch
+                                  id="scrolling-banner-enabled"
+                                  name="scrolling-banner-enabled"
+                                  checked={homeContent.scrollingBanner.enabled}
+                                  onCheckedChange={(checked) =>
+                                    setHomeContent({
+                                      ...homeContent,
+                                      scrollingBanner: {
+                                        ...homeContent.scrollingBanner,
+                                        enabled: checked,
+                                      },
+                                    })
+                                  }
+                                />
+                                <Label htmlFor="scrolling-banner-enabled">Enable Scrolling Banner</Label>
+                            </div>
+
                             <div className="space-y-2">
-                                <Label htmlFor="hero-title">Title</Label>
-                                <Input id="hero-title" name="hero-title" value={homeContent.hero.title} onChange={e => setHomeContent({...homeContent, hero: {...homeContent.hero, title: e.target.value}})} />
+                                <Label htmlFor="scrolling-banner-text">Banner Text</Label>
+                                <Textarea
+                                  id="scrolling-banner-text"
+                                  name="scrolling-banner-text"
+                                  value={homeContent.scrollingBanner.text}
+                                  onChange={e =>
+                                    setHomeContent({
+                                      ...homeContent,
+                                      scrollingBanner: {
+                                        ...homeContent.scrollingBanner,
+                                        text: e.target.value,
+                                      },
+                                    })
+                                  }
+                                  placeholder="Type the scrolling banner message"
+                                />
                             </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="hero-description">Description</Label>
-                                <Textarea id="hero-description" name="hero-description" value={homeContent.hero.description}  onChange={e => setHomeContent({...homeContent, hero: {...homeContent.hero, description: e.target.value}})}/>
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <Label htmlFor="hero-primary-btn-text">Primary Button Text</Label>
-                                    <Input id="hero-primary-btn-text" name="hero-primary-btn-text" value={homeContent.hero.buttons.primary.text} onChange={e => setHomeContent({...homeContent, hero: {...homeContent.hero, buttons: {...homeContent.hero.buttons, primary: {...homeContent.hero.buttons.primary, text: e.target.value}}}})} />
+                                    <Label htmlFor="scrolling-banner-linkText">Link Text</Label>
+                                    <Input
+                                      id="scrolling-banner-linkText"
+                                      name="scrolling-banner-linkText"
+                                      value={homeContent.scrollingBanner.linkText}
+                                      onChange={e =>
+                                        setHomeContent({
+                                          ...homeContent,
+                                          scrollingBanner: {
+                                            ...homeContent.scrollingBanner,
+                                            linkText: e.target.value,
+                                          },
+                                        })
+                                      }
+                                      placeholder="Learn more"
+                                    />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="hero-primary-btn-link">Primary Button Link</Label>
-                                    <Input id="hero-primary-btn-link" name="hero-primary-btn-link" value={homeContent.hero.buttons.primary.link} onChange={e => setHomeContent({...homeContent, hero: {...homeContent.hero, buttons: {...homeContent.hero.buttons, primary: {...homeContent.hero.buttons.primary, link: e.target.value}}}})} />
+                                    <Label htmlFor="scrolling-banner-linkHref">Link URL</Label>
+                                    <Input
+                                      id="scrolling-banner-linkHref"
+                                      name="scrolling-banner-linkHref"
+                                      value={homeContent.scrollingBanner.linkHref}
+                                      onChange={e =>
+                                        setHomeContent({
+                                          ...homeContent,
+                                          scrollingBanner: {
+                                            ...homeContent.scrollingBanner,
+                                            linkHref: e.target.value,
+                                          },
+                                        })
+                                      }
+                                      placeholder="/courses"
+                                    />
                                 </div>
                             </div>
-                            <div className="grid grid-cols-2 gap-4">
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <Label htmlFor="hero-secondary-btn-text">Secondary Button Text</Label>
-                                    <Input id="hero-secondary-btn-text" name="hero-secondary-btn-text" value={homeContent.hero.buttons.secondary.text} onChange={e => setHomeContent({...homeContent, hero: {...homeContent.hero, buttons: {...homeContent.hero.buttons, secondary: {...homeContent.hero.buttons.secondary, text: e.target.value}}}})} />
+                                    <Label htmlFor="scrolling-banner-imageId">Banner Image</Label>
+                                    <select
+                                      id="scrolling-banner-imageId"
+                                      name="scrolling-banner-imageId"
+                                      value={homeContent.scrollingBanner.imageId}
+                                      onChange={e =>
+                                        setHomeContent({
+                                          ...homeContent,
+                                          scrollingBanner: {
+                                            ...homeContent.scrollingBanner,
+                                            imageId: e.target.value,
+                                          },
+                                        })
+                                      }
+                                      className="w-full px-3 py-2 border border-input bg-background rounded-md"
+                                    >
+                                      <option value="">No image selected</option>
+                                      {galleryImages.map((image) => (
+                                        <option key={image.id} value={image.id}>
+                                          {image.title || image.filename || image.id}
+                                        </option>
+                                      ))}
+                                    </select>
+                                    {(() => {
+                                      const selectedImage = galleryImages.find(
+                                        (img) => img.id === homeContent.scrollingBanner.imageId
+                                      );
+                                      return selectedImage?.imageUrl ? (
+                                        <div className="space-y-2">
+                                          <p className="text-xs text-muted-foreground">
+                                            Selected: {selectedImage.title || selectedImage.filename || 'Banner image'}
+                                          </p>
+                                          <img
+                                            src={selectedImage.imageUrl}
+                                            alt={selectedImage.title || selectedImage.filename || 'Selected banner image'}
+                                            className="h-24 w-full rounded-md border object-cover"
+                                          />
+                                        </div>
+                                      ) : null;
+                                    })()}
                                 </div>
+
                                 <div className="space-y-2">
-                                    <Label htmlFor="hero-secondary-btn-link">Secondary Button Link</Label>
-                                    <Input id="hero-secondary-btn-link" name="hero-secondary-btn-link" value={homeContent.hero.buttons.secondary.link} onChange={e => setHomeContent({...homeContent, hero: {...homeContent.hero, buttons: {...homeContent.hero.buttons, secondary: {...homeContent.hero.buttons.secondary, link: e.target.value}}}})} />
+                                    <Label htmlFor="scrolling-banner-animation">Animation Style</Label>
+                                    <select
+                                      id="scrolling-banner-animation"
+                                      name="scrolling-banner-animation"
+                                      value={homeContent.scrollingBanner.animation}
+                                      onChange={e =>
+                                        setHomeContent({
+                                          ...homeContent,
+                                          scrollingBanner: {
+                                            ...homeContent.scrollingBanner,
+                                            animation: e.target.value as HomeContent['scrollingBanner']['animation'],
+                                          },
+                                        })
+                                      }
+                                      className="w-full px-3 py-2 border border-input bg-background rounded-md"
+                                    >
+                                      <option value="slide">Slide</option>
+                                      <option value="pulse">Pulse</option>
+                                      <option value="bounce">Bounce</option>
+                                    </select>
                                 </div>
                             </div>
                         </div>
@@ -289,6 +662,30 @@ export default function AdminDashboardClient({ initialHomeContent }: AdminDashbo
                             <div className="space-y-2">
                                 <Label htmlFor="quick-access-description">Section Description</Label>
                                 <Textarea id="quick-access-description" name="quick-access-description" value={homeContent.quickAccess.description} onChange={e => setHomeContent({...homeContent, quickAccess: {...homeContent.quickAccess, description: e.target.value}})} />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="quick-access-columns">Desktop Columns</Label>
+                                <select
+                                  id="quick-access-columns"
+                                  name="quick-access-columns"
+                                  value={homeContent.quickAccess.columns}
+                                  onChange={(e) =>
+                                    setHomeContent({
+                                      ...homeContent,
+                                      quickAccess: {
+                                        ...homeContent.quickAccess,
+                                        columns: Number(e.target.value) === 4 ? 4 : 3,
+                                      },
+                                    })
+                                  }
+                                  className="w-full rounded-md border border-input bg-background px-3 py-2"
+                                >
+                                  <option value={3}>3 Columns (Recommended)</option>
+                                  <option value={4}>4 Columns</option>
+                                </select>
+                                <p className="text-xs text-muted-foreground">
+                                  3 and 4 columns have different card UI on home page.
+                                </p>
                             </div>
                              <div className="flex justify-end mb-4">
                                 <Button type="button" variant="outline" onClick={handleAddQuickAccessItem}>
@@ -344,6 +741,110 @@ export default function AdminDashboardClient({ initialHomeContent }: AdminDashbo
                             </div>
                         </div>
                     </TabsContent>
+
+                    <TabsContent value="achievements" forceMount className="mt-0 data-[state=inactive]:hidden">
+                        <div className="space-y-4 pt-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="achievements-badge">Section Badge</Label>
+                                <Input
+                                  id="achievements-badge"
+                                  name="achievements-badge"
+                                  value={homeContent.achievements?.badge || ''}
+                                  onChange={e => setHomeContent({
+                                    ...homeContent,
+                                    achievements: { ...homeContent.achievements, badge: e.target.value }
+                                  })}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="achievements-title">Section Title</Label>
+                                <Input
+                                  id="achievements-title"
+                                  name="achievements-title"
+                                  value={homeContent.achievements?.title || ''}
+                                  onChange={e => setHomeContent({
+                                    ...homeContent,
+                                    achievements: { ...homeContent.achievements, title: e.target.value }
+                                  })}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="achievements-description">Section Description</Label>
+                                <Textarea
+                                  id="achievements-description"
+                                  name="achievements-description"
+                                  value={homeContent.achievements?.description || ''}
+                                  onChange={e => setHomeContent({
+                                    ...homeContent,
+                                    achievements: { ...homeContent.achievements, description: e.target.value }
+                                  })}
+                                />
+                            </div>
+                            <div className="flex justify-end mb-2">
+                                <Button type="button" variant="outline" onClick={handleAddAchievementStat}>
+                                    <PlusCircle className="mr-2 h-4 w-4" />
+                                    Add Stat Card
+                                </Button>
+                            </div>
+                            <div className="max-h-[420px] overflow-y-auto space-y-4 pr-4">
+                                {(homeContent.achievements?.stats || []).map((stat, index) => (
+                                  <Card key={index} className="p-4 relative">
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                      <div className="space-y-2">
+                                        <Label htmlFor={`achievements-value-${index}`}>Value</Label>
+                                        <Input
+                                          type="number"
+                                          id={`achievements-value-${index}`}
+                                          name={`achievements-value-${index}`}
+                                          value={stat.value}
+                                          onChange={e => handleArrayChange('achievements', 'stats', index, 'value', Number(e.target.value))}
+                                        />
+                                      </div>
+                                      <div className="space-y-2">
+                                        <Label htmlFor={`achievements-suffix-${index}`}>Suffix</Label>
+                                        <Input
+                                          id={`achievements-suffix-${index}`}
+                                          name={`achievements-suffix-${index}`}
+                                          value={stat.suffix}
+                                          onChange={e => handleArrayChange('achievements', 'stats', index, 'suffix', e.target.value)}
+                                        />
+                                      </div>
+                                      <div className="space-y-2">
+                                        <Label htmlFor={`achievements-label-${index}`}>Label</Label>
+                                        <Input
+                                          id={`achievements-label-${index}`}
+                                          name={`achievements-label-${index}`}
+                                          value={stat.label}
+                                          onChange={e => handleArrayChange('achievements', 'stats', index, 'label', e.target.value)}
+                                        />
+                                      </div>
+                                    </div>
+                                    <AlertDialog>
+                                      <AlertDialogTrigger asChild>
+                                        <Button variant="ghost" size="icon" className="absolute top-2 right-2 text-destructive hover:text-destructive">
+                                          <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                      </AlertDialogTrigger>
+                                      <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                          <AlertDialogTitle>Remove this stat?</AlertDialogTitle>
+                                          <AlertDialogDescription>
+                                            This card will be removed after you click Save Changes.
+                                          </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                          <AlertDialogAction onClick={() => handleRemoveAchievementStat(index)} className="bg-destructive hover:bg-destructive/90">
+                                            Remove
+                                          </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                      </AlertDialogContent>
+                                    </AlertDialog>
+                                  </Card>
+                                ))}
+                            </div>
+                        </div>
+                    </TabsContent>
                     
                     <TabsContent value="why-choose-us" forceMount className="mt-0 data-[state=inactive]:hidden">
                         <div className="space-y-4 pt-4">
@@ -391,6 +892,7 @@ export default function AdminDashboardClient({ initialHomeContent }: AdminDashbo
                             <div className="max-h-[400px] overflow-y-auto space-y-4 pr-4">
                                 {(homeContent.testimonials?.reviews || []).map((review, index) => (
                                     <Card key={index} className="p-4 relative">
+                                        <input type="hidden" name={`review-gender-${index}`} value={review.gender || ''} />
                                         <div className="space-y-2">
                                             <Label htmlFor={`review-name-${index}`}>Reviewer Name</Label>
                                             <Input id={`review-name-${index}`} name={`review-name-${index}`} value={review.name} onChange={e => handleArrayChange('testimonials', 'reviews', index, 'name', e.target.value)} />

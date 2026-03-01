@@ -10,6 +10,7 @@ type Review = {
   testimonial: string;
   rating: number;
   avatar: string;
+  gender?: 'male' | 'female';
 };
 
 type Testimonials = {
@@ -28,6 +29,7 @@ function getReviewsFromFormData(formData: FormData): Review[] {
     const testimonial = (formData.get(`review-text-${index}`) as string) || '';
     const rating = Number(formData.get(`review-rating-${index}`)) || 5;
     const avatar = (formData.get(`review-avatar-${index}`) as string) || '';
+    const genderRaw = (formData.get(`review-gender-${index}`) as string) || '';
 
     const hasContent = name.trim() || testimonial.trim();
     if (hasContent) {
@@ -37,6 +39,7 @@ function getReviewsFromFormData(formData: FormData): Review[] {
         testimonial,
         rating,
         avatar,
+        gender: genderRaw === 'female' ? 'female' : genderRaw === 'male' ? 'male' : undefined,
       });
     }
     index++;
@@ -118,6 +121,5 @@ export async function updateTestimonials(
     };
   }
 }
-
 
 

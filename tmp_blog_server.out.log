@@ -1,0 +1,22 @@
+
+> nextn@0.1.0 start
+> next start -p 3008
+
+   ▲ Next.js 15.3.8
+   - Local:        http://localhost:3008
+   - Network:      http://10.85.28.211:3008
+
+ ✓ Starting...
+ ✓ Ready in 947ms
+🔄 [MongoDB] Initializing MongoDB connection...
+📍 [MongoDB] Connection URI: mongodb+srv://xmartycreator:****@cluster0.kclupy4.mongodb.net/xmartydb?appName=Cluster0&retryWrites=true&w=majority
+⚙️  [MongoDB] Connection timeout: 50000ms, Server selection timeout: 30000ms
+✅ [MongoDB] Connected Successfully!
+📦 [MongoDB] Pool size: min=5, max=20
+📖 [DB] Fetching content from MongoDB for slug: "blog"...
+?? [DB] Reading pages collection for slug: blog
+✅ [DB] Content found and cached for slug: "blog"
+✅ MongoDB Connected
+📖 [DB] Fetching content from MongoDB for slug: "blog"...
+?? [DB] Reading pages collection for slug: blog
+✅ [DB] Content found and cached for slug: "blog"

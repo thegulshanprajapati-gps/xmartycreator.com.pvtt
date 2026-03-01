@@ -11,7 +11,7 @@ import { Loader2, Save } from 'lucide-react';
 
 type CommunityContent = {
   hero: { title: string; description: string };
-  youtube: { videoId: string };
+  youtube: { channelId?: string; videoId: string };
   whatsapp: { title: string; description: string; link: string; buttonText: string };
   app: { title: string; description: string; link: string; buttonText: string };
   telegram: { title: string; description: string; link: string; buttonText: string };
@@ -19,7 +19,7 @@ type CommunityContent = {
 
 const emptyContent: CommunityContent = {
   hero: { title: '', description: '' },
-  youtube: { videoId: '' },
+  youtube: { channelId: '', videoId: '' },
   whatsapp: { title: '', description: '', link: '', buttonText: 'Join' },
   app: { title: '', description: '', link: '', buttonText: 'Download' },
   telegram: { title: '', description: '', link: '', buttonText: 'Join' },
@@ -33,7 +33,7 @@ export default function AdminCommunityPage() {
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await fetch('/api/pages/community');
+        const res = await fetch('/api/pages/community', { cache: 'no-store' });
         if (res.ok) {
           const json = await res.json();
           setData((prev) => ({
@@ -73,10 +73,26 @@ export default function AdminCommunityPage() {
       const res = await fetch('/api/pages/community', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        cache: 'no-store',
         body: JSON.stringify(data),
       });
       if (!res.ok) throw new Error(await res.text());
-      toast({ title: 'Saved', description: 'Community page updated successfully.' });
+      const json = await res.json();
+      if (json?.content) {
+        setData((prev) => ({
+          ...prev,
+          ...json.content,
+          hero: { ...prev.hero, ...(json.content?.hero || {}) },
+          youtube: { ...prev.youtube, ...(json.content?.youtube || {}) },
+          whatsapp: { ...prev.whatsapp, ...(json.content?.whatsapp || {}) },
+          app: { ...prev.app, ...(json.content?.app || {}) },
+          telegram: { ...prev.telegram, ...(json.content?.telegram || {}) },
+        }));
+      }
+      toast({
+        title: 'Saved',
+        description: `Community page updated successfully (DB: ${json?._meta?.db || 'xmartydb'}).`,
+      });
     } catch (err) {
       console.error('Save error', err);
       toast({ title: 'Save failed', description: 'Please try again.', variant: 'destructive' });
@@ -123,15 +139,31 @@ export default function AdminCommunityPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>YouTube</CardTitle>
+              <CardTitle>YouTube (Auto Latest)</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-2">
-              <label className="text-sm font-medium">Video ID</label>
-              <Input
-                placeholder="e.g. dQw4w9WgXcQ"
-                value={data.youtube.videoId}
-                onChange={(e) => handleChange('youtube.videoId', e.target.value)}
-              />
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Channel ID</label>
+                <Input
+                  placeholder="e.g. UC_x5XG1OV2P6uZZ5FSM9Ttw"
+                  value={data.youtube.channelId || ''}
+                  onChange={(e) => handleChange('youtube.channelId', e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Sirf channel ID dalo. Latest uploaded video community page par auto show ho jayegi.
+                </p>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Fallback Video ID (optional)</label>
+                <Input
+                  placeholder="e.g. dQw4w9WgXcQ"
+                  value={data.youtube.videoId}
+                  onChange={(e) => handleChange('youtube.videoId', e.target.value)}
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Agar latest fetch fail ho, to yeh fallback video show hoga.
+              </p>
             </CardContent>
           </Card>
 

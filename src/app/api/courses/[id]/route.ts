@@ -3,6 +3,17 @@ import mongoose from 'mongoose';
 import Course from '@/lib/models/course';
 import { ensureNumber } from '@/lib/currency';
 
+const sanitizeTags = (value: unknown): string[] => {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((tag) => String(tag || '').trim())
+    .filter((tag) => tag.length > 0);
+};
+
+const sanitizeContentType = (value: unknown): 'course' | 'test' => {
+  return value === 'test' ? 'test' : 'course';
+};
+
 async function connectDB() {
   if (mongoose.connection.readyState === 0 || mongoose.connection.readyState === 3) {
     const mongoUri = process.env.MONGODB_URI || process.env.MONGO_URI;
@@ -74,6 +85,8 @@ export async function PUT(
     // Ensure all numeric fields are valid
     const updateData = {
       ...data,
+      contentType: sanitizeContentType(data?.contentType),
+      tags: sanitizeTags(data?.tags),
       price: Number(data.price) || 0,
       discount: Math.max(0, Math.min(100, Number(data.discount) || 0)),
       rating: Math.max(0, Math.min(5, Number(data.rating) || 0)),

@@ -3,6 +3,21 @@ import mongoose from 'mongoose';
 import Course from '@/lib/models/course';
 import { ensureNumber } from '@/lib/currency';
 
+const sanitizeTags = (value: unknown): string[] => {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((tag) => String(tag || '').trim())
+    .filter((tag) => tag.length > 0);
+};
+
+const sanitizeContentType = (value: unknown): 'course' | 'test' => {
+  return value === 'test' ? 'test' : 'course';
+};
+
+const escapeRegex = (text: string): string => {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+};
+
 export async function GET(request: Request) {
   try {
     // Connect to MongoDB if not already connected
@@ -22,6 +37,21 @@ export async function GET(request: Request) {
     
     const { searchParams } = new URL(request.url);
     const slug = searchParams.get('slug');
+    const type = searchParams.get('type');
+    const tag = searchParams.get('tag');
+    const query: Record<string, any> = {};
+
+    if (type === 'course' || type === 'test') {
+      query.contentType = type;
+    }
+
+    if (tag && tag.trim()) {
+      query.tags = {
+        $elemMatch: {
+          $regex: new RegExp(`^${escapeRegex(tag.trim())}$`, 'i'),
+        },
+      };
+    }
 
     if (slug) {
       const course = await Course.findOne({ slug }).lean();
@@ -36,7 +66,7 @@ export async function GET(request: Request) {
       return NextResponse.json(course);
     }
 
-    const courses = (await Course.find({}).sort({ createdAt: -1 }).lean()).map((c) => ({
+    const courses = (await Course.find(query).sort({ createdAt: -1 }).lean()).map((c) => ({
       ...c,
       price: ensureNumber(c.price, 'api:courses:list:price'),
       originalPrice: ensureNumber(c.originalPrice, 'api:courses:list:originalPrice'),
@@ -70,7 +100,12 @@ export async function POST(request: Request) {
     }
 
     const data = await request.json();
-    const course = new Course(data);
+    const payload = {
+      ...data,
+      contentType: sanitizeContentType(data?.contentType),
+      tags: sanitizeTags(data?.tags),
+    };
+    const course = new Course(payload);
     await course.save();
 
     return NextResponse.json(course, { status: 201 });

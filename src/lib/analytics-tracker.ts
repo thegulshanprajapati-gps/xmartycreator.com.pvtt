@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Lightweight page-view/link-click tracker that can run in both
  * Edge (middleware) and Node runtimes without importing server actions.
  * It forwards an increment request to the existing `/api/pages/analytics`
@@ -9,7 +9,7 @@ const resolveBaseUrl = (origin?: string) => {
     process.env.NEXT_PUBLIC_SITE_URL ||
     process.env.NEXT_PUBLIC_BASE_URL ||
     origin ||
-    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:9002')
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000')
   );
 };
 
@@ -46,3 +46,4 @@ export async function trackLinkClick(linkName: string, origin?: string) {
 }
 
 export { resolveBaseUrl };
+

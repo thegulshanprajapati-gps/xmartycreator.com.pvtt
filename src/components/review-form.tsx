@@ -17,12 +17,16 @@ const reviewSchema = z.object({
   role: z.string().min(2, { message: 'Role must be at least 2 characters.' }),
   testimonial: z.string().min(10, { message: 'Review must be at least 10 characters.' }),
   rating: z.number().min(1, { message: 'Please select a rating.' }).max(5),
+  gender: z
+    .string()
+    .refine((value) => value === 'male' || value === 'female', { message: 'Please select gender.' }),
 });
 
 type ReviewFormValues = z.infer<typeof reviewSchema>;
+type StudentReviewInput = Omit<Review, 'avatar'> & { gender: 'male' | 'female' };
 
 interface ReviewFormProps {
-  onFormSubmit: (review: Omit<Review, 'avatar'>) => void;
+  onFormSubmit: (review: StudentReviewInput) => void;
 }
 
 export function ReviewForm({ onFormSubmit }: ReviewFormProps) {
@@ -35,11 +39,15 @@ export function ReviewForm({ onFormSubmit }: ReviewFormProps) {
       role: '',
       testimonial: '',
       rating: 0,
+      gender: '',
     },
   });
 
   function onSubmit(data: ReviewFormValues) {
-    onFormSubmit(data);
+    onFormSubmit({
+      ...data,
+      gender: data.gender as 'male' | 'female',
+    });
     form.reset();
     setRating(0);
   }
@@ -76,6 +84,26 @@ export function ReviewForm({ onFormSubmit }: ReviewFormProps) {
                     )}
                     />
                 </div>
+                <FormField
+                    control={form.control}
+                    name="gender"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Gender</FormLabel>
+                        <FormControl>
+                          <select
+                            {...field}
+                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                          >
+                            <option value="">Select gender</option>
+                            <option value="male">Male</option>
+                            <option value="female">Female</option>
+                          </select>
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
                 <FormField
                     control={form.control}
                     name="testimonial"

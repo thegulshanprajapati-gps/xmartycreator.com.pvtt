@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { PT_Sans, Noto_Sans } from 'next/font/google';
+import { Plus_Jakarta_Sans, DM_Sans, Noto_Sans_Devanagari } from 'next/font/google';
 import './globals.css';
 import { Suspense, ReactNode } from 'react';
 import RootLayoutClient from './root-layout-client';
@@ -18,9 +18,16 @@ export const metadata: Metadata = {
     canonical: siteUrl,
   },
   icons: {
-    icon: '/favicon.ico',
+    icon: [
+      { url: '/favicon-96x96.png', sizes: '96x96', type: 'image/png' },
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+    ],
     shortcut: '/favicon.ico',
-    apple: '/favicon.ico',
+    apple: [{ url: '/apple-touch-icon.png', sizes: '180x180' }],
+  },
+  manifest: '/site.webmanifest',
+  appleWebApp: {
+    title: 'XmartyCreator',
   },
   openGraph: {
     title: 'Xmarty Creator',
@@ -29,17 +36,22 @@ export const metadata: Metadata = {
   },
 };
 
-const ptSans = PT_Sans({
+const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ['latin', 'latin-ext'],
-  weight: ['400', '700'],
-  variable: '--font-pt-sans',
+  variable: '--font-plus-jakarta-sans',
   display: 'swap',
 });
 
-const notoSans = Noto_Sans({
-  subsets: ['latin', 'latin-ext', 'devanagari'],
-  weight: ['400', '700'],
-  variable: '--font-noto-sans',
+const dmSans = DM_Sans({
+  subsets: ['latin', 'latin-ext'],
+  variable: '--font-dm-sans',
+  display: 'swap',
+});
+
+const notoSansDevanagari = Noto_Sans_Devanagari({
+  subsets: ['devanagari'],
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-noto-sans-devanagari',
   display: 'swap',
 });
 
@@ -78,11 +90,17 @@ export default async function RootLayout({
       itemListElement: [
         { '@type': 'SiteNavigationElement', position: 1, name: 'Home', url: `${siteUrl}/` },
         { '@type': 'SiteNavigationElement', position: 2, name: 'Courses', url: `${siteUrl}/courses` },
-        { '@type': 'SiteNavigationElement', position: 3, name: 'About', url: `${siteUrl}/about` },
-        { '@type': 'SiteNavigationElement', position: 4, name: 'Community', url: `${siteUrl}/community` },
-        { '@type': 'SiteNavigationElement', position: 5, name: 'Blog', url: `${siteUrl}/blog` },
-        { '@type': 'SiteNavigationElement', position: 6, name: 'Updates', url: `${siteUrl}/updates` },
-        { '@type': 'SiteNavigationElement', position: 7, name: 'Contact', url: `${siteUrl}/contact` },
+        { '@type': 'SiteNavigationElement', position: 3, name: 'BCECE LE', url: `${siteUrl}/bcece-le` },
+        { '@type': 'SiteNavigationElement', position: 4, name: 'About', url: `${siteUrl}/about` },
+        { '@type': 'SiteNavigationElement', position: 5, name: 'Community', url: `${siteUrl}/community` },
+        { '@type': 'SiteNavigationElement', position: 6, name: 'Blog', url: `${siteUrl}/blog` },
+        { '@type': 'SiteNavigationElement', position: 7, name: 'Topics', url: `${siteUrl}/topic` },
+        { '@type': 'SiteNavigationElement', position: 8, name: 'Updates', url: `${siteUrl}/updates` },
+        { '@type': 'SiteNavigationElement', position: 9, name: 'Contact', url: `${siteUrl}/contact` },
+        { '@type': 'SiteNavigationElement', position: 10, name: 'FAQ', url: `${siteUrl}/faq` },
+        { '@type': 'SiteNavigationElement', position: 11, name: 'Privacy Policy', url: `${siteUrl}/privacy-policy` },
+        { '@type': 'SiteNavigationElement', position: 12, name: 'Terms of Service', url: `${siteUrl}/terms-of-service` },
+        { '@type': 'SiteNavigationElement', position: 13, name: 'Login', url: `${siteUrl}/login` },
       ],
     },
   ];
@@ -90,9 +108,21 @@ export default async function RootLayout({
   return (
     <html lang="en" data-cursor={cursorStyle} suppressHydrationWarning>
       <head>
-        <link rel="icon" href="/favicon.ico" sizes="any" />
-        <link rel="shortcut icon" href="/favicon.ico" />
-        <link rel="apple-touch-icon" href="/favicon.ico" />
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-VEZS5RTT7G"></script>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', 'G-VEZS5RTT7G');
+            `,
+          }}
+        />
+        <link
+          rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+        />
         {cursorStyle === 'magic' && (
           <link
             rel="stylesheet"
@@ -105,7 +135,7 @@ export default async function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       </head>
-      <body className={`font-body antialiased ${ptSans.variable} ${notoSans.variable}`}>
+      <body className={`font-body antialiased ${plusJakartaSans.variable} ${dmSans.variable} ${notoSansDevanagari.variable}`}>
         <RootLayoutClient>{children}</RootLayoutClient>
       </body>
     </html>

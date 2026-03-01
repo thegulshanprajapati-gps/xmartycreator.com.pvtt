@@ -40,6 +40,11 @@ export default function MagicMouseProvider() {
     };
 
     const initMagicMouse = () => {
+      if (root.dataset.cursor !== 'magic') {
+        cleanupMagicMouse();
+        return;
+      }
+
       if (!supportsFinePointer || prefersReducedMotion || isSmallViewport) {
         cleanupMagicMouse();
         return;

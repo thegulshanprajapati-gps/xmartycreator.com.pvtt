@@ -6,6 +6,9 @@ export const metadata: Metadata = {
   title: 'Blog - Xmarty Creator',
   description: 'Latest articles and insights from Xmarty Creator. Learn about content creation, digital marketing, and creative strategies.',
   keywords: ['blog', 'articles', 'content creation', 'digital marketing', 'tutorials'],
+  alternates: {
+    canonical: `${BASE_URL}/blog`,
+  },
   openGraph: {
     title: 'Blog - Xmarty Creator',
     description: 'Latest articles and insights from Xmarty Creator.',
@@ -26,13 +29,14 @@ export const metadata: Metadata = {
     description: 'Latest articles and insights from Xmarty Creator.',
     images: [`${BASE_URL}/og-image.jpg`],
   },
-  canonical: `${BASE_URL}/blog`,
 };
 
 export default function BlogLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
-      {children}
+      <div className="blog-no-select select-none [&_input]:select-text [&_textarea]:select-text [&_[contenteditable='true']]:select-text">
+        {children}
+      </div>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{

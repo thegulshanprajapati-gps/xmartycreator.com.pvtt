@@ -12,10 +12,10 @@ import { type Review } from "@/app/home-page-client";
 import { handleNewReview } from "@/app/actions";
 import { useToast } from "@/hooks/use-toast";
 
-type ReviewFormData = Omit<Review, 'avatar'>;
+type ReviewFormData = Omit<Review, 'avatar'> & { gender: 'male' | 'female' };
 
 const QuickLink = ({ href, children }: { href: string; children: React.ReactNode }) => (
-    <Link href={href} className="group flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-primary">
+    <Link href={href} className="group flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-primary hover-lift-sm">
         <ArrowRight className="h-4 w-4 opacity-0 -translate-x-2 transition-all duration-300 group-hover:translate-x-0 group-hover:opacity-100" />
         {children}
     </Link>
@@ -78,9 +78,12 @@ export function Footer() {
                 <QuickLink href="/">Home</QuickLink>
                 <QuickLink href="/about">About</QuickLink>
                 <QuickLink href="/courses">Courses</QuickLink>
+                <QuickLink href="/bcece-le">BCECE LE</QuickLink>
                 <QuickLink href="/blog">Blog</QuickLink>
+                <QuickLink href="/topic">Topics</QuickLink>
                 <QuickLink href="/community">Community</QuickLink>
                 <QuickLink href="/contact">Contact</QuickLink>
+                <QuickLink href="/login">Login</QuickLink>
               </nav>
             </div>
             <div>
@@ -89,24 +92,27 @@ export function Footer() {
                 <QuickLink href="/faq">FAQ</QuickLink>
                 <QuickLink href="/privacy-policy">Privacy Policy</QuickLink>
                 <QuickLink href="/terms-of-service">Terms of Service</QuickLink>
+                <QuickLink href="/privacy-and-policy">Privacy and Policy</QuickLink>
+                <QuickLink href="/tos">TOS</QuickLink>
+                <QuickLink href="/sitemap.xml">Sitemap XML</QuickLink>
               </nav>
             </div>
             <div>
               <h3 className="font-headline text-lg font-semibold text-foreground mb-4">Follow Us</h3>
               <div className="flex items-center gap-4">
-                <Link href="#" className="hover:text-primary">
+                <Link href="#" className="hover:text-primary hover-lift-sm transition-transform">
                   <Facebook className="h-6 w-6" />
                   <span className="sr-only">Facebook</span>
                 </Link>
-                <Link href="#" className="hover:text-primary">
+                <Link href="#" className="hover:text-primary hover-lift-sm transition-transform">
                   <Twitter className="h-6 w-6" />
                   <span className="sr-only">Twitter</span>
                 </Link>
-                <Link href="#" className="hover:text-primary">
+                <Link href="#" className="hover:text-primary hover-lift-sm transition-transform">
                   <Instagram className="h-6 w-6" />
                   <span className="sr-only">Instagram</span>
                 </Link>
-                <Link href="#" className="hover:text-primary">
+                <Link href="#" className="hover:text-primary hover-lift-sm transition-transform">
                   <Linkedin className="h-6 w-6" />
                   <span className="sr-only">LinkedIn</span>
                 </Link>

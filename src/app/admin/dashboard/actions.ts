@@ -25,12 +25,14 @@ function getReviewsFromFormData(formData: FormData) {
     const reviews = [];
     let index = 0;
     while (formData.has(`review-name-${index}`)) {
+        const genderRaw = (formData.get(`review-gender-${index}`) as string) || '';
         reviews.push({
             name: formData.get(`review-name-${index}`) as string,
             role: formData.get(`review-role-${index}`) as string,
             testimonial: formData.get(`review-text-${index}`) as string,
             rating: Number(formData.get(`review-rating-${index}`)),
             avatar: formData.get(`review-avatar-${index}`) as string,
+            gender: genderRaw === 'female' ? 'female' : genderRaw === 'male' ? 'male' : undefined,
         });
         index++;
     }
@@ -129,6 +131,29 @@ function getUpdatesFromFormData(formData: FormData) {
     return updates;
 }
 
+function getAchievementStatsFromFormData(formData: FormData) {
+    const stats = [];
+    let index = 0;
+    while (
+      formData.has(`achievements-value-${index}`) ||
+      formData.has(`achievements-label-${index}`) ||
+      formData.has(`achievements-suffix-${index}`)
+    ) {
+        const value = Number(formData.get(`achievements-value-${index}`));
+        const label = (formData.get(`achievements-label-${index}`) as string) || '';
+        const suffix = (formData.get(`achievements-suffix-${index}`) as string) || '';
+        if (label.trim() || Number.isFinite(value)) {
+            stats.push({
+                value: Number.isFinite(value) ? value : 0,
+                label: label,
+                suffix: suffix,
+            });
+        }
+        index++;
+    }
+    return stats;
+}
+
 function getBlogPostsFromFormData(formData: FormData) {
     const posts = [];
     let index = 0;
@@ -150,6 +175,16 @@ function getBlogPostsFromFormData(formData: FormData) {
     return posts;
 }
 
+function normalizeBannerAnimation(value: FormDataEntryValue | null): 'slide' | 'pulse' | 'bounce' {
+    if (value === 'pulse' || value === 'bounce') return value;
+    return 'slide';
+}
+
+function normalizeQuickAccessColumns(value: FormDataEntryValue | null): 3 | 4 {
+    const parsed = Number(value);
+    return parsed === 4 ? 4 : 3;
+}
+
 
 export async function updateHomeContent(prevState: { message: string, data: any }, formData: FormData) {
     try {
@@ -157,6 +192,7 @@ export async function updateHomeContent(prevState: { message: string, data: any 
         const quickAccessData = {
             title: formData.get('quick-access-title') as string,
             description: formData.get('quick-access-description') as string,
+            columns: normalizeQuickAccessColumns(formData.get('quick-access-columns')),
             items: getQuickAccessItemsFromFormData(formData),
         };
 
@@ -174,6 +210,18 @@ export async function updateHomeContent(prevState: { message: string, data: any 
                         link: formData.get('hero-secondary-btn-link') as string,
                     },
                 },
+                background: {
+                    useImage: formData.get('hero-bg-use-image') === 'on',
+                    imageId: ((formData.get('hero-bg-imageId') as string) || '').trim(),
+                },
+            },
+            scrollingBanner: {
+                enabled: formData.get('scrolling-banner-enabled') === 'on',
+                text: (formData.get('scrolling-banner-text') as string) || '',
+                linkText: (formData.get('scrolling-banner-linkText') as string) || 'Learn more',
+                linkHref: (formData.get('scrolling-banner-linkHref') as string) || '#',
+                imageId: (formData.get('scrolling-banner-imageId') as string) || '',
+                animation: normalizeBannerAnimation(formData.get('scrolling-banner-animation')),
             },
             whyChooseUs: {
                 title: formData.get('why-title') as string,
@@ -184,6 +232,12 @@ export async function updateHomeContent(prevState: { message: string, data: any 
                 title: formData.get('testimonials-title') as string,
                 description: formData.get('testimonials-description') as string,
                 reviews: getReviewsFromFormData(formData),
+            },
+            achievements: {
+                badge: formData.get('achievements-badge') as string,
+                title: formData.get('achievements-title') as string,
+                description: formData.get('achievements-description') as string,
+                stats: getAchievementStatsFromFormData(formData),
             },
         };
         const testimonialsData = {
@@ -218,6 +272,7 @@ export async function updateHomeContent(prevState: { message: string, data: any 
                     slug: 'quick-access',
                     title: quickAccessData.title,
                     description: quickAccessData.description,
+                    columns: quickAccessData.columns,
                     items: quickAccessData.items,
                     updatedAt: new Date(),
                 },
@@ -343,6 +398,7 @@ export async function updateNotificationContent(prevState: { message: string, da
             message: formData.get('message') as string,
             linkText: formData.get('linkText') as string,
             linkHref: formData.get('linkHref') as string,
+            bannerImageId: (formData.get('bannerImageId') as string) || '',
         };
 
         const client = await clientPromise;
@@ -369,12 +425,14 @@ export async function updateNotificationContent(prevState: { message: string, da
 export async function updateCoursesContent(prevState: { message: string, data: any }, formData: FormData) {
     try {
         console.log('🔄 [Admin] Updating courses content...');
+        const developmentMode = (formData.get('courses-development-mode') as string) === 'true';
         const newContent = {
             hero: {
                 title: formData.get('hero-title') as string,
                 description: formData.get('hero-description') as string,
             },
             courses: getCoursesFromFormData(formData),
+            developmentMode,
         };
 
         const client = await clientPromise;
@@ -533,9 +591,14 @@ export async function updateSiteSettings(prevState: { message: string; data: any
     try {
         console.log('🔧 [Admin] Updating site settings...');
         const rawCursorStyle = formData.get('cursor-style') as string;
+        const rawLoginOnlyOnBceceLe = formData.get('login-only-bcece-le');
         const cursorStyle = isValidCursorStyle(rawCursorStyle)
             ? rawCursorStyle
             : DEFAULT_SITE_SETTINGS.cursorStyle;
+        const loginButtonOnlyOnBceceLe =
+            rawLoginOnlyOnBceceLe === 'true' ||
+            rawLoginOnlyOnBceceLe === '1' ||
+            rawLoginOnlyOnBceceLe === 'on';
 
         const client = await clientPromise;
         const dbName = process.env.MONGO_DB || process.env.MONGODB_DB || 'xmartydb';
@@ -547,6 +610,7 @@ export async function updateSiteSettings(prevState: { message: string; data: any
                 $set: {
                     slug: 'global',
                     cursorStyle,
+                    loginButtonOnlyOnBceceLe,
                     updatedAt: new Date(),
                 },
                 $unset: { content: '' },
@@ -559,7 +623,10 @@ export async function updateSiteSettings(prevState: { message: string; data: any
         revalidatePath('/admin/dashboard/appearance');
 
         console.log('✅ [Admin] Site settings updated successfully');
-        return { message: 'Site settings updated successfully!', data: { cursorStyle } };
+        return {
+            message: 'Site settings updated successfully!',
+            data: { cursorStyle, loginButtonOnlyOnBceceLe },
+        };
     } catch (error: any) {
         console.error('❌ [Admin] Failed to update site settings:', error);
         return { message: `Failed to update site settings: ${error.message}`, data: prevState.data };

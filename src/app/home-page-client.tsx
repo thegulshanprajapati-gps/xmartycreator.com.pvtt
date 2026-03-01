@@ -4,7 +4,6 @@
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import {
-  ArrowDownCircle,
   ArrowRight,
   Award,
   BookMarked,
@@ -18,20 +17,16 @@ import {
   MessageCircleQuestion,
   Milestone,
   NotebookPen,
-  Sparkles,
   Users,
   UsersRound,
   Video,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import Link from 'next/link';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 import {
   Card,
   CardContent,
   CardFooter,
-  CardHeader,
-  CardTitle,
 } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -41,10 +36,11 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from '@/components/ui/carousel';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { trackLinkClick } from '@/app/analytics/actions';
 import { Footer } from '@/components/layout/footer';
 import { motion, useMotionValue, useTransform, animate, useInView } from "framer-motion";
+import DynamicHeroSection from '@/components/hero/dynamic-hero';
 
 export type Review = {
     name: string;
@@ -52,6 +48,17 @@ export type Review = {
     testimonial: string;
     rating: number;
     avatar: string;
+    gender?: 'male' | 'female';
+};
+
+type BannerAnimation = 'slide' | 'pulse' | 'bounce';
+
+type ImagePlaceholder = {
+  id: string;
+  imageUrl: string;
+  description?: string;
+  title?: string;
+  imageHint?: string;
 };
 
 type HomeContent = {
@@ -62,10 +69,25 @@ type HomeContent = {
             primary: { text: string; link: string };
             secondary: { text: string; link: string };
         };
+        background: {
+            useImage: boolean;
+            imageId: string;
+            image?: ImagePlaceholder;
+        };
+    };
+    scrollingBanner: {
+        enabled: boolean;
+        text: string;
+        linkText: string;
+        linkHref: string;
+        imageId: string;
+        animation: BannerAnimation;
+        image?: ImagePlaceholder;
     };
     quickAccess: {
         title: string;
         description: string;
+        columns: 3 | 4;
         items: { title: string; description: string; imageId: string; link: string }[];
     };
     whyChooseUs: {
@@ -78,7 +100,13 @@ type HomeContent = {
         description: string;
         reviews: Review[];
     };
-}
+    achievements: {
+        badge: string;
+        title: string;
+        description: string;
+        stats: { value: number; suffix: string; label: string }[];
+    };
+};
 
 type QuickLink = HomeContent['quickAccess']['items'][number] & { icon: LucideIcon };
 
@@ -105,169 +133,38 @@ const quickAccessFallbackIcons: LucideIcon[] = [
   NotebookPen,
 ];
 
+const normalizeReviewGender = (value: unknown): 'male' | 'female' =>
+  value === 'female' ? 'female' : 'male';
+
+const getReviewAvatar = (name: string, gender: 'male' | 'female') => {
+  const safeSeed = encodeURIComponent((name || 'user').replace(/\s/g, '') || 'user');
+  const style = gender === 'female' ? 'lorelei' : 'adventurer';
+  return `https://api.dicebear.com/8.x/${style}/svg?seed=${safeSeed}`;
+};
+
 const resolveQuickAccessIcon = (title: string, index: number): LucideIcon => {
   const normalizedTitle = (title || '').toLowerCase();
   const match = quickAccessIconHints.find(({ keyword }) => normalizedTitle.includes(keyword));
   return match ? match.icon : quickAccessFallbackIcons[index % quickAccessFallbackIcons.length];
 };
 
+const normalizeBannerAnimation = (value: unknown): BannerAnimation =>
+  value === 'pulse' || value === 'bounce' ? value : 'slide';
+
+const getBannerAnimationClass = (animation: BannerAnimation) => {
+  if (animation === 'pulse') return 'animate-pulse';
+  if (animation === 'bounce') return 'animate-bounce';
+  return '';
+};
+
 interface HomePageClientProps {
   initialHomeContent: HomeContent;
-}
-
-const slideInFromLeft = {
-  hidden: { opacity: 0, x: -100 },
-  visible: { opacity: 1, x: 0, transition: { duration: 0.8, ease: 'easeOut' } }
-};
-
-const slideInFromRight = {
-  hidden: { opacity: 0, x: 100 },
-  visible: { opacity: 1, x: 0, transition: { duration: 0.8, ease: 'easeOut' } }
-};
-
-const heroCarouselSlides = [
-  {
-    title: 'Mentor-Led Community',
-    description: 'Get doubts solved fast with peer + mentor support.',
-    stat: '3k+ active',
-    badge: 'Community',
-    icon: Users,
-    accent: 'text-blue-600',
-    glow: 'bg-blue-500/15',
-    gradient: 'from-blue-500/15 via-transparent to-cyan-500/10',
-  },
-  {
-    title: 'Live Doubt Sessions',
-    description: 'Weekly live classes to unblock your learning.',
-    stat: '120+ hrs',
-    badge: 'Live',
-    icon: Video,
-    accent: 'text-emerald-600',
-    glow: 'bg-emerald-500/15',
-    gradient: 'from-emerald-500/15 via-transparent to-teal-500/10',
-  },
-  {
-    title: 'Career Roadmaps',
-    description: 'Step-by-step plans to reach your target role.',
-    stat: '50+ paths',
-    badge: 'Guides',
-    icon: Milestone,
-    accent: 'text-purple-600',
-    glow: 'bg-purple-500/15',
-    gradient: 'from-purple-500/15 via-transparent to-pink-500/10',
-  },
-  {
-    title: 'Project Templates',
-    description: 'Ready-to-use templates that save hours.',
-    stat: '40+ kits',
-    badge: 'Builder',
-    icon: Laptop,
-    accent: 'text-sky-600',
-    glow: 'bg-sky-500/15',
-    gradient: 'from-sky-500/15 via-transparent to-blue-500/10',
-  },
-];
-
-function HeroMiniCarousel({ compact = false }: { compact?: boolean }) {
-  const [activeIndex, setActiveIndex] = useState(0);
-
-  useEffect(() => {
-    const id = setInterval(() => {
-      setActiveIndex((prev) => (prev + 1) % heroCarouselSlides.length);
-    }, 3200);
-    return () => clearInterval(id);
-  }, []);
-
-  return (
-    <div className={`relative w-full ${compact ? '' : 'max-w-md'}`}>
-      <div className={`absolute ${compact ? '-right-6 -top-6 h-20 w-20' : '-right-10 -top-10 h-24 w-24'} rounded-full bg-blue-400/20 blur-3xl`} />
-      <div className={`absolute ${compact ? '-left-8 bottom-4 h-24 w-24' : '-left-12 bottom-6 h-28 w-28'} rounded-full bg-purple-400/20 blur-3xl`} />
-
-      <div className={`relative overflow-hidden rounded-3xl border border-slate-200/70 dark:border-white/10 bg-white/85 dark:bg-slate-900/60 shadow-[0_30px_90px_-70px_rgba(59,130,246,0.9)] backdrop-blur ${compact ? 'mx-auto max-w-[420px]' : ''}`}>
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-transparent to-purple-500/10" />
-
-        <motion.div
-          className="flex"
-          animate={{ x: `-${activeIndex * 100}%` }}
-          transition={{ type: 'spring', stiffness: 140, damping: 22 }}
-        >
-          {heroCarouselSlides.map((slide) => (
-            <div key={slide.title} className={`min-w-full ${compact ? 'p-5' : 'p-6 md:p-8'}`}>
-              <div className={`absolute inset-0 ${slide.gradient} pointer-events-none`} />
-              <div className="relative flex items-center justify-between">
-                <div className={`h-12 w-12 rounded-2xl ${slide.glow} border border-white/50 dark:border-white/10 flex items-center justify-center shadow-inner`}>
-                  <slide.icon className={`h-6 w-6 ${slide.accent}`} />
-                </div>
-                <span className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-300 bg-white/70 dark:bg-white/10 border border-slate-200/70 dark:border-white/10 rounded-full px-3 py-1">
-                  {slide.badge}
-                </span>
-              </div>
-
-              <div className="mt-6 space-y-3">
-                <h3 className={`font-bold text-slate-900 dark:text-white ${compact ? 'text-xl' : 'text-2xl'}`}>{slide.title}</h3>
-                <p className={`text-slate-600 dark:text-slate-300 ${compact ? 'text-xs' : 'text-sm'}`}>
-                  {slide.description}
-                </p>
-              </div>
-
-              <div className="mt-6 flex items-center justify-between">
-                <div className={`font-extrabold text-slate-900 dark:text-white ${compact ? 'text-2xl' : 'text-3xl'}`}>
-                  {slide.stat}
-                </div>
-                <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.25em] text-slate-500 dark:text-slate-400">
-                  <span className="h-2 w-2 rounded-full bg-emerald-400" />
-                  Active
-                </div>
-              </div>
-
-              <div className="mt-6 flex gap-2">
-                {heroCarouselSlides.map((_, dotIndex) => (
-                  <button
-                    key={`hero-dot-${dotIndex}`}
-                    type="button"
-                    aria-label={`Go to slide ${dotIndex + 1}`}
-                    onClick={() => setActiveIndex(dotIndex)}
-                    className={`h-2.5 w-8 rounded-full transition-all ${
-                      dotIndex === activeIndex
-                        ? 'bg-slate-900/80 dark:bg-white/70'
-                        : 'bg-slate-200/80 dark:bg-white/10'
-                    }`}
-                  />
-                ))}
-              </div>
-            </div>
-          ))}
-        </motion.div>
-      </div>
-
-      <div className={`mt-4 grid grid-cols-2 gap-3 ${compact ? 'mx-auto max-w-[420px]' : ''}`}>
-        {heroCarouselSlides.slice(0, 2).map((slide) => (
-          <div
-            key={`${slide.title}-mini`}
-            className="rounded-2xl border border-slate-200/70 dark:border-white/10 bg-white/80 dark:bg-slate-900/60 px-4 py-3 shadow-sm flex items-center gap-3"
-          >
-            <div className={`h-9 w-9 rounded-xl ${slide.glow} flex items-center justify-center`}>
-              <slide.icon className={`h-5 w-5 ${slide.accent}`} />
-            </div>
-            <div>
-              <div className="text-sm font-semibold text-slate-900 dark:text-white">{slide.badge}</div>
-              <div className="text-xs text-slate-500 dark:text-slate-400">{slide.stat}</div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
+  hideHeroSection?: boolean;
 }
 
 const fadeIn = {
   hidden: { opacity: 0, y: 20 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: 'easeOut' } }
-};
-
-const scaleIn = {
-  hidden: { opacity: 0, scale: 0.95 },
-  visible: { opacity: 1, scale: 1, transition: { duration: 0.6, ease: 'easeOut' } }
 };
 
 
@@ -299,10 +196,7 @@ const AnimatedCounter = ({ value, suffix = '' }: { value: number; suffix?: strin
   );
 };
 
-export default function HomePageClient({ initialHomeContent }: HomePageClientProps) {
-
-  const heroImage = PlaceHolderImages.find((img) => img.id === 'hero-1');
-
+export default function HomePageClient({ initialHomeContent, hideHeroSection = false }: HomePageClientProps) {
   const rawQuickAccessItems = Array.isArray(initialHomeContent?.quickAccess?.items)
     ? initialHomeContent!.quickAccess.items
     : [];
@@ -316,6 +210,61 @@ export default function HomePageClient({ initialHomeContent }: HomePageClientPro
       link: course.link || '',
       icon: resolveQuickAccessIcon(course.title || '', index),
     }));
+  const quickAccessColumns = Number(initialHomeContent?.quickAccess?.columns) === 4 ? 4 : 3;
+  const quickAccessGridClass = quickAccessColumns === 4
+    ? 'mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 md:gap-6'
+    : 'mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8';
+
+  const bannerAnimation = normalizeBannerAnimation(initialHomeContent?.scrollingBanner?.animation);
+  const bannerImage = initialHomeContent?.scrollingBanner?.image;
+  const bannerContent = {
+    enabled: initialHomeContent?.scrollingBanner?.enabled === true,
+    text: (initialHomeContent?.scrollingBanner?.text || '').trim(),
+    linkText: (initialHomeContent?.scrollingBanner?.linkText || 'Learn more').trim() || 'Learn more',
+    linkHref: (initialHomeContent?.scrollingBanner?.linkHref || '#').trim() || '#',
+    imageUrl: bannerImage?.imageUrl || '',
+    imageAlt: bannerImage?.title || bannerImage?.description || 'Banner image',
+    animation: bannerAnimation,
+  };
+  const showScrollingBanner = bannerContent.enabled && !!bannerContent.text;
+  const bannerAnimationClass = getBannerAnimationClass(bannerContent.animation);
+
+  const heroHeading =
+    (initialHomeContent?.hero?.title || '').replace(/<[^>]*>/g, '').trim() ||
+    'BCECE LE 2026 Admissions Open';
+  const heroSubheading =
+    (initialHomeContent?.hero?.description || '').replace(/<[^>]*>/g, '').trim() ||
+    'Limited Seats \u2022 Batch Starting Soon \u2022 Expert Faculty';
+  const heroPrimaryText = (initialHomeContent?.hero?.buttons?.primary?.text || '').trim() || 'Enroll Now';
+  const heroPrimaryLink = (initialHomeContent?.hero?.buttons?.primary?.link || '').trim() || '/courses';
+  const heroSecondaryText =
+    (initialHomeContent?.hero?.buttons?.secondary?.text || '').trim() || 'Download Syllabus';
+  const heroSecondaryLink = (initialHomeContent?.hero?.buttons?.secondary?.link || '').trim() || '#';
+  const heroBackgroundUseImage = initialHomeContent?.hero?.background?.useImage === true;
+  const heroBackgroundImageUrl = (initialHomeContent?.hero?.background?.image?.imageUrl || '').trim();
+  const heroBackgroundImageAlt =
+    initialHomeContent?.hero?.background?.image?.title
+    || initialHomeContent?.hero?.background?.image?.description
+    || 'Hero background';
+  const dynamicHeroFallback = useMemo(
+    () => ({
+      heading: heroHeading,
+      subheading: heroSubheading,
+      primaryButtonText: heroPrimaryText,
+      primaryButtonLink: heroPrimaryLink,
+      secondaryButtonText: heroSecondaryText,
+      secondaryButtonLink: heroSecondaryLink,
+      isActive: true,
+    }),
+    [
+      heroHeading,
+      heroSubheading,
+      heroPrimaryText,
+      heroPrimaryLink,
+      heroSecondaryText,
+      heroSecondaryLink,
+    ]
+  );
 
   // Debug logging
   useEffect(() => {
@@ -347,17 +296,18 @@ export default function HomePageClient({ initialHomeContent }: HomePageClientPro
     .filter((review): review is Review => !!review && typeof review === 'object')
     .map((r) => {
       const safeName = r.name || 'Anonymous';
-      const safeSeed = safeName.replace(/\s/g, '') || 'user';
+      const gender = normalizeReviewGender((r as any).gender);
       return {
         ...r,
         name: safeName,
         role: r.role || '',
         testimonial: r.testimonial || '',
         rating: Number.isFinite(r.rating) ? Math.max(1, Math.min(5, r.rating)) : 5,
-        avatar: r.avatar || `https://api.dicebear.com/8.x/adventurer/svg?seed=${safeSeed}`,
+        gender,
+        avatar: r.avatar || getReviewAvatar(safeName, gender),
       };
     });
-  const [testimonials, setTestimonials] = useState<Review[]>(initialReviews);
+  const [testimonials] = useState<Review[]>(initialReviews);
 
   useEffect(() => {
     console.log('?? [Home Page] Testimonials loaded', {
@@ -368,178 +318,240 @@ export default function HomePageClient({ initialHomeContent }: HomePageClientPro
     });
   }, [initialHomeContent, initialReviews.length]);
 
-  const handleScrollDown = () => {
-    window.scrollTo({
-      top: window.innerHeight,
-      behavior: 'smooth',
-    });
+  const defaultAchievements = {
+    badge: "Proven Track Record",
+    title: "Our Impact by the Numbers",
+    description: "Join thousands of learners who are transforming their careers and skills",
+    stats: [
+      { value: 50000, label: "Happy Students", suffix: "+" },
+      { value: 50, label: "Expert Courses", suffix: "+" },
+      { value: 1000, label: "Hours of Content", suffix: "+" },
+      { value: 20, label: "Awards Won", suffix: "+" },
+    ],
   };
-  
-  const achievements = [
-    { icon: Users, value: 50000, label: "Happy Students", suffix: "+" },
-    { icon: BookOpen, value: 50, label: "Expert Courses", suffix: "+" },
-    { icon: Video, value: 1000, label: "Hours of Content", suffix: "+" },
-    { icon: Award, value: 20, label: "Awards Won", suffix: "+" },
-  ];
+
+  const achievementsContent = {
+    badge: initialHomeContent?.achievements?.badge || defaultAchievements.badge,
+    title: initialHomeContent?.achievements?.title || defaultAchievements.title,
+    description: initialHomeContent?.achievements?.description || defaultAchievements.description,
+    stats: Array.isArray(initialHomeContent?.achievements?.stats)
+      ? initialHomeContent.achievements.stats
+      : defaultAchievements.stats,
+  };
+
+  const achievementIcons: LucideIcon[] = [Users, BookOpen, Video, Award];
+  const achievementDefaults = defaultAchievements.stats;
+  const achievements = (achievementsContent.stats.length > 0
+    ? achievementsContent.stats
+    : achievementDefaults
+  ).slice(0, 4).map((item, index) => ({
+    icon: achievementIcons[index % achievementIcons.length],
+    value: Number.isFinite(Number(item?.value)) ? Number(item.value) : achievementDefaults[index]?.value || 0,
+    label: (item?.label || achievementDefaults[index]?.label || "").trim(),
+    suffix: (item?.suffix || achievementDefaults[index]?.suffix || "").trim(),
+  }));
 
   return (
     <>
-      <div className="flex flex-col min-h-screen">
+      <div className="flex min-h-screen flex-col overflow-x-clip">
         {/* ===== HERO SECTION ===== */}
-        <section className="relative w-full min-h-[calc(100vh_-_64px)] md:min-h-[calc(100vh_-_80px)] flex items-center justify-center overflow-hidden">
-          {/* Gradient Background */}
-          <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 transition-colors" />
-          <div className="pointer-events-none absolute -left-24 top-16 h-64 w-64 rounded-full bg-blue-300/18 dark:bg-blue-500/18 blur-3xl" />
-          <div className="pointer-events-none absolute right-0 top-8 h-72 w-72 rounded-full bg-purple-300/16 dark:bg-purple-500/18 blur-3xl" />
-          <div className="pointer-events-none absolute left-1/3 bottom-6 h-60 w-60 rounded-full bg-cyan-300/16 dark:bg-cyan-500/18 blur-3xl" />
-          <div className="pointer-events-none absolute right-[-12%] top-24 h-[520px] w-[520px] bg-[radial-gradient(circle_at_center,rgba(124,58,237,0.30),rgba(15,23,42,0.02))] dark:bg-[radial-gradient(circle_at_center,rgba(124,58,237,0.35),rgba(15,23,42,0.05))] blur-3xl" />
-          <div className="pointer-events-none absolute left-[-20%] bottom-0 h-[380px] w-[380px] bg-[radial-gradient(circle_at_center,rgba(14,165,233,0.18),transparent)] dark:bg-[radial-gradient(circle_at_center,rgba(14,165,233,0.25),transparent)] blur-3xl" />
-          {/* Mobile floating sparks */}
-          <div className="absolute inset-0 md:hidden">
-            <motion.div
-              className="absolute left-6 top-16 h-3 w-3 rounded-full bg-blue-400/80"
-              animate={{ y: [-6, 6, -6], opacity: [0.6, 1, 0.6] }}
-              transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-            />
-            <motion.div
-              className="absolute right-10 top-24 h-2 w-2 rounded-full bg-purple-400/80"
-              animate={{ y: [4, -6, 4], opacity: [0.7, 1, 0.7] }}
-              transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut", delay: 0.4 }}
-            />
-            <motion.div
-              className="absolute left-1/3 bottom-10 h-2.5 w-2.5 rounded-full bg-cyan-400/80"
-              animate={{ y: [-5, 5, -5], opacity: [0.5, 0.9, 0.5] }}
-              transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut", delay: 0.2 }}
-            />
-          </div>
-          
-          {/* Animated Gradient Orbs */}
-          <div className="absolute inset-0 overflow-hidden">
-            <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-400/20 rounded-full blur-3xl opacity-50 animate-pulse" />
-            <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-400/20 rounded-full blur-3xl opacity-50 animate-pulse" style={{ animationDelay: '1s' }} />
-            <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-cyan-400/10 rounded-full blur-3xl opacity-30 animate-pulse" style={{ animationDelay: '2s' }} />
-          </div>
+        {hideHeroSection && (
+          <DynamicHeroSection
+            useDefaultFallback
+            fallbackContent={dynamicHeroFallback}
+          />
+        )}
+        {!hideHeroSection && (
+        <section className="relative mx-auto flex h-[calc(100vh-4rem)] min-h-[calc(100vh-4rem)] w-full max-w-full items-center justify-center overflow-hidden py-8 min-[320px]:h-[calc(100dvh-4rem)] min-[320px]:min-h-[calc(100dvh-4rem)] sm:py-10 lg:h-[calc(100vh-10rem)] lg:min-h-[calc(100vh-10rem)]">
+          <div className="absolute inset-0 bg-gradient-to-br from-[#051236] via-[#020617] to-[#000000]" />
 
-          {/* Mobile background image */}
-          <div className="absolute inset-0 md:hidden opacity-40">
-            {heroImage && (
+          {heroBackgroundUseImage && heroBackgroundImageUrl ? (
+            <>
               <Image
-                src={heroImage.imageUrl!}
-                alt={heroImage.description!}
-                data-ai-hint={heroImage.imageHint}
+                src={heroBackgroundImageUrl}
+                alt={heroBackgroundImageAlt}
                 fill
-                className="object-cover"
+                sizes="100vw"
                 priority
+                className="object-cover object-center"
               />
-            )}
-            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent"></div>
-          </div>
+              <div className="absolute inset-0 bg-[linear-gradient(120deg,rgba(3,7,18,0.84),rgba(7,10,30,0.62),rgba(10,8,25,0.88))]" />
+              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_40%,rgba(147,51,234,0.28),transparent_62%)]" />
+            </>
+          ) : (
+            <>
+              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(99,102,241,0.34),transparent_45%),radial-gradient(circle_at_80%_75%,rgba(236,72,153,0.24),transparent_48%)]" />
+              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_45%,rgba(56,189,248,0.12),transparent_70%)]" />
+            </>
+          )}
 
-          <div className="container mx-auto px-4 md:px-6 relative z-10 max-w-6xl">
-            <div className="grid items-center gap-10 md:grid-cols-2 md:gap-16 py-12 md:py-0">
-              {/* Left Content */}
-              <motion.div
-                className="flex flex-col justify-center space-y-6 text-center md:text-left md:items-start items-center"
-                initial="hidden"
-                animate="visible"
-                variants={slideInFromLeft}
-              >
-                {/* Badge */}
-                <motion.div 
-                  className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-500/12 via-purple-500/12 to-pink-500/12 border border-slate-200/60 dark:border-white/20 text-slate-800 dark:text-white rounded-full px-4 py-2 w-fit shadow-[0_10px_40px_-30px_rgba(59,130,246,0.8)] transition-colors"
-                  variants={fadeIn}
-                >
-                  <Sparkles className="h-4 w-4" />
-                  <span className="text-sm font-medium">
-                    Trusted by industry leaders
-                  </span>
-                </motion.div>
+          <div className="container relative z-10 mx-auto flex h-full min-h-full items-center justify-center px-4 sm:px-6">
+            <motion.div
+              className="w-full max-w-6xl rounded-[18px] border border-white/10 bg-white/[0.08] px-4 py-6 shadow-[0_35px_120px_-65px_rgba(168,85,247,0.9)] backdrop-blur-[12px] sm:px-6 sm:py-8 md:px-8 md:py-10"
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: [0, -8, 0] }}
+              transition={{
+                opacity: { duration: 0.6, ease: 'easeOut' },
+                y: { duration: 9, repeat: Infinity, ease: 'easeInOut' },
+              }}
+            >
+              <div className="grid items-center gap-8 md:grid-cols-2 md:gap-10">
+                <div className="order-2 text-center md:order-1 md:text-left">
+                  <div className="relative inline-block">
+                    <div className="pointer-events-none absolute inset-x-6 -inset-y-4 rounded-full bg-fuchsia-400/30 blur-2xl" />
+                    <h1 className="relative text-3xl font-extrabold tracking-tight text-white sm:text-5xl md:text-6xl">
+                      {heroHeading}
+                    </h1>
+                  </div>
 
-                {/* Title */}
-                <h1 
-                  className="font-headline text-5xl lg:text-7xl font-bold tracking-tight leading-tight bg-gradient-to-r from-foreground via-foreground to-foreground/70 bg-clip-text text-transparent"
-                  dangerouslySetInnerHTML={{ __html: initialHomeContent?.hero?.title || 'Learn & Grow' }}
-                />
+                  <p className="mx-auto mt-4 max-w-3xl text-sm font-medium text-slate-200/90 sm:text-base md:mx-0 md:mt-5 md:text-xl">
+                    {heroSubheading}
+                  </p>
 
-                {/* Description */}
-                <p className="max-w-[600px] text-lg text-muted-foreground leading-relaxed">
-                  {initialHomeContent?.hero?.description || 'Master new skills with our expert courses'}
-                </p>
+                  <div className="mt-8 flex w-full flex-col items-stretch justify-center gap-3 sm:mt-10 sm:w-auto sm:flex-row sm:items-center md:justify-start">
+                    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.98 }}>
+                      <Button
+                        asChild
+                        size="lg"
+                        className="h-12 w-full rounded-xl border border-white/20 bg-gradient-to-r from-violet-600 to-pink-500 px-8 text-base font-semibold text-white shadow-[0_16px_46px_-18px_rgba(236,72,153,0.95)] transition-all hover:from-violet-500 hover:to-pink-400 sm:w-auto"
+                        onClick={() => trackLinkClick('Hero-CTA')}
+                      >
+                        <Link href={heroPrimaryLink}>
+                          {heroPrimaryText}
+                          <ArrowRight className="ml-2 h-4 w-4" />
+                        </Link>
+                      </Button>
+                    </motion.div>
 
-                {/* CTA Buttons */}
-                <div className="flex flex-col gap-3 min-[400px]:flex-row pt-6 md:flex-row">
-                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                    <Button 
-                      asChild 
-                      size="lg" 
-                      className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-700 hover:to-pink-700 text-white shadow-lg hover:shadow-2xl border border-slate-200/70 dark:border-white/20"
-                      onClick={() => trackLinkClick('Hero-CTA')}
-                    >
-                      <Link href={initialHomeContent?.hero?.buttons?.primary?.link || '/courses'}>
-                        {initialHomeContent?.hero?.buttons?.primary?.text || 'Get Started'}
-                        <ArrowRight className="ml-2 h-5 w-5" />
-                      </Link>
-                    </Button>
-                  </motion.div>
-                  
-                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                    <Button 
-                      asChild 
-                      size="lg" 
+                    <Button
+                      asChild
+                      size="lg"
                       variant="outline"
-                      className="border-2 border-slate-200/70 dark:border-white/20 bg-white/85 dark:bg-white/5 text-slate-800 dark:text-white hover:bg-white/95 dark:hover:bg-white/10"
+                      className="h-12 w-full rounded-xl border border-white/60 bg-transparent px-8 text-base font-semibold text-white transition-colors hover:bg-white/10 hover:text-white sm:w-auto"
                       onClick={() => trackLinkClick('Hero-Secondary')}
                     >
-                      <Link href={initialHomeContent?.hero?.buttons?.secondary?.link || '#'}>
-                        <Users className="mr-2 h-5 w-5" />
-                        {initialHomeContent?.hero?.buttons?.secondary?.text || 'Join Community'}
-                      </Link>
+                      <Link href={heroSecondaryLink}>{heroSecondaryText}</Link>
                     </Button>
-                  </motion.div>
+                  </div>
                 </div>
 
-                {/* Mobile mini carousel */}
-                <motion.div
-                  className="w-full pt-8 md:hidden"
-                  initial={{ opacity: 0, y: 16 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, ease: 'easeOut', delay: 0.2 }}
-                >
-                  <HeroMiniCarousel compact />
-                </motion.div>
+                <div className="order-1 md:order-2">
+                  <div className="relative mx-auto w-full max-w-md">
+                    <div className="pointer-events-none absolute inset-0 rounded-[26px] bg-[radial-gradient(circle_at_50%_35%,rgba(167,139,250,0.35),rgba(59,130,246,0.05),transparent_75%)] blur-2xl" />
 
-              </motion.div>
+                    <motion.div
+                      className="relative rounded-[22px] border border-white/15 bg-white/[0.08] p-5 backdrop-blur-sm sm:p-6"
+                      animate={{ y: [0, -5, 0] }}
+                      transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
+                    >
+                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-200/80">
+                        Learning Highlights
+                      </p>
 
-              {/* Right Visual */}
-              <motion.div
-                className="relative hidden md:flex flex-col justify-center items-center h-full"
-                initial="hidden"
-                animate="visible"
-                variants={slideInFromRight}
-              >
-                <div className="relative w-full h-full flex items-center justify-center">
-                  {/* Ambient glow + accents to avoid empty space */}
-                  <div className="pointer-events-none absolute h-80 w-80 rounded-full bg-[radial-gradient(circle_at_center,rgba(99,102,241,0.28),rgba(15,23,42,0))] blur-2xl" />
-                  <div className="pointer-events-none absolute h-56 w-56 rounded-full border border-purple-400/25 blur-[1px]" />
-                  <span className="pointer-events-none absolute -right-6 -top-4 h-3 w-3 rounded-full bg-cyan-300/80 blur-[1px]" />
-                  <span className="pointer-events-none absolute right-10 bottom-8 h-2 w-2 rounded-full bg-pink-300/80 blur-[0.5px]" />
-                  <HeroMiniCarousel />
+                      <div className="mt-4 grid grid-cols-1 gap-3 min-[430px]:grid-cols-2">
+                        <div className="rounded-xl border border-white/15 bg-white/10 p-3 text-left">
+                          <GraduationCap className="h-5 w-5 text-violet-200" />
+                          <p className="mt-2 text-sm font-semibold text-white">Expert Faculty</p>
+                        </div>
+                        <div className="rounded-xl border border-white/15 bg-white/10 p-3 text-left">
+                          <BookOpen className="h-5 w-5 text-sky-200" />
+                          <p className="mt-2 text-sm font-semibold text-white">Smart Notes</p>
+                        </div>
+                        <div className="rounded-xl border border-white/15 bg-white/10 p-3 text-left">
+                          <Award className="h-5 w-5 text-amber-200" />
+                          <p className="mt-2 text-sm font-semibold text-white">Top Results</p>
+                        </div>
+                        <div className="rounded-xl border border-white/15 bg-white/10 p-3 text-left">
+                          <ClipboardList className="h-5 w-5 text-pink-200" />
+                          <p className="mt-2 text-sm font-semibold text-white">Practice Sets</p>
+                        </div>
+                      </div>
+                    </motion.div>
+
+                    <motion.div
+                      className="absolute -left-3 top-6 inline-flex items-center gap-2 rounded-full border border-white/20 bg-[#0f1b42]/85 px-3 py-1.5 text-xs font-semibold text-white shadow-lg"
+                      animate={{ y: [0, -10, 0] }}
+                      transition={{ duration: 3.2, repeat: Infinity, ease: 'easeInOut' }}
+                    >
+                      <GraduationCap className="h-4 w-4 text-violet-200" />
+                      Faculty
+                    </motion.div>
+
+                    <motion.div
+                      className="absolute -right-3 top-14 inline-flex items-center gap-2 rounded-full border border-white/20 bg-[#1b1438]/85 px-3 py-1.5 text-xs font-semibold text-white shadow-lg"
+                      animate={{ y: [0, 10, 0] }}
+                      transition={{ duration: 3.8, repeat: Infinity, ease: 'easeInOut', delay: 0.4 }}
+                    >
+                      <BookOpen className="h-4 w-4 text-sky-200" />
+                      Books
+                    </motion.div>
+
+                    <motion.div
+                      className="absolute -bottom-3 right-10 inline-flex items-center gap-2 rounded-full border border-white/20 bg-[#3a1534]/85 px-3 py-1.5 text-xs font-semibold text-white shadow-lg"
+                      animate={{ y: [0, -8, 0] }}
+                      transition={{ duration: 3.4, repeat: Infinity, ease: 'easeInOut', delay: 0.7 }}
+                    >
+                      <Award className="h-4 w-4 text-amber-200" />
+                      Prize
+                    </motion.div>
+                  </div>
                 </div>
-              </motion.div>
-            </div>
+              </div>
+            </motion.div>
           </div>
-
-          {/* Scroll indicator */}
-          <motion.button
-            onClick={handleScrollDown}
-            className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 text-foreground/60 hover:text-foreground transition-colors"
-            animate={{ y: [0, 8, 0] }}
-            transition={{ duration: 2, repeat: Infinity }}
-            aria-label="Scroll down"
-          >
-            <ArrowDownCircle className="h-8 w-8" />
-          </motion.button>
         </section>
+        )}
+
+        {showScrollingBanner && (
+          <section className="relative w-full overflow-hidden border-y border-cyan-200/70 bg-gradient-to-r from-sky-50 via-cyan-50 to-indigo-50 dark:border-indigo-300/20 dark:bg-gradient-to-r dark:from-[#070d24] dark:via-[#0a1438] dark:to-[#120c2b]">
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(14,116,144,0.18),transparent_55%)] dark:bg-[radial-gradient(circle_at_top_left,rgba(129,140,248,0.18),transparent_58%)]" />
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_bottom_right,rgba(59,130,246,0.14),transparent_55%)] dark:bg-[radial-gradient(circle_at_bottom_right,rgba(236,72,153,0.13),transparent_58%)]" />
+            <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-20 bg-gradient-to-r from-sky-50 dark:from-[#070d24] to-transparent" />
+            <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-20 bg-gradient-to-l from-indigo-50 dark:from-[#120c2b] to-transparent" />
+
+            <motion.div
+              className="relative flex w-max items-center py-3 md:py-3.5"
+              animate={{ x: ['0%', '-50%'] }}
+              transition={{ duration: 22, repeat: Infinity, ease: 'linear' }}
+            >
+              {[0, 1].map((copyIndex) => (
+                <div key={`banner-copy-${copyIndex}`} className="flex shrink-0 items-center gap-8 pr-8 md:gap-10 md:pr-10">
+                  {Array.from({ length: 3 }).map((_, itemIndex) => (
+                    <div
+                      key={`banner-item-${copyIndex}-${itemIndex}`}
+                      className="inline-flex items-center gap-3 whitespace-nowrap rounded-full border border-cyan-300/55 bg-white/90 px-3 py-1.5 text-slate-900 shadow-[0_10px_28px_-20px_rgba(15,23,42,0.32)] backdrop-blur-sm dark:border-white/20 dark:bg-white/10 dark:text-white dark:shadow-none"
+                    >
+                      {bannerContent.imageUrl && (
+                        <div className="relative h-7 w-7 shrink-0 overflow-hidden rounded-full border border-cyan-300/60 dark:border-white/45">
+                          <Image
+                            src={bannerContent.imageUrl}
+                            alt={bannerContent.imageAlt}
+                            fill
+                            sizes="28px"
+                            className="object-cover"
+                          />
+                        </div>
+                      )}
+
+                      <p className={`text-sm font-semibold text-slate-800 md:text-[15px] dark:text-white ${bannerAnimationClass}`}>
+                        {bannerContent.text}
+                      </p>
+
+                      <Link
+                        href={bannerContent.linkHref}
+                        className="inline-flex shrink-0 items-center gap-1 rounded-full bg-gradient-to-r from-violet-600 to-pink-500 px-3 py-1 text-xs font-semibold text-white shadow-[0_10px_30px_-18px_rgba(236,72,153,0.95)] transition-transform hover:scale-105"
+                        onClick={() => trackLinkClick('Scrolling-Banner')}
+                      >
+                        {bannerContent.linkText}
+                        <ArrowRight className="h-3.5 w-3.5" />
+                      </Link>
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </motion.div>
+          </section>
+        )}
 
         {/* ===== QUICK ACCESS SECTION ===== */}
         <motion.section 
@@ -550,33 +562,30 @@ export default function HomePageClient({ initialHomeContent }: HomePageClientPro
           variants={fadeIn}
         >
           <div className="absolute inset-0 bg-gradient-to-b from-slate-50 via-white to-slate-50 dark:from-slate-900/70 dark:via-slate-900/40 dark:to-slate-950" />
-          <div className="absolute -left-32 top-10 w-72 h-72 bg-cyan-200/40 blur-3xl rounded-full" />
-          <div className="absolute right-0 bottom-0 w-80 h-80 bg-blue-200/30 blur-3xl rounded-full" />
+          <div className="absolute -left-32 top-10 h-72 w-72 rounded-full bg-cyan-200/40 blur-3xl dark:bg-cyan-500/12" />
+          <div className="absolute right-0 bottom-0 h-80 w-80 rounded-full bg-blue-200/30 blur-3xl dark:bg-blue-500/10" />
           
           <div className="container mx-auto px-4 md:px-6 relative z-10">
             <motion.div 
-              className="text-center max-w-3xl mx-auto space-y-3"
+              className="type-rhythm text-center max-w-3xl mx-auto space-y-3"
               variants={fadeIn}
             >
-              <div className="inline-flex items-center gap-2 bg-cyan-500/10 border border-cyan-100 dark:border-cyan-900/50 rounded-full px-4 py-2 text-cyan-700 dark:text-cyan-200 text-sm font-medium">
-                Quick Access
-              </div>
-              
-              <h2 className="font-headline text-4xl lg:text-5xl font-bold tracking-tight text-slate-900 dark:text-white">
+              <h2 className="type-h2 inline-block text-slate-900 dark:text-white">
                 {initialHomeContent?.quickAccess?.title || 'Quick Access'}
               </h2>
               
               {initialHomeContent?.quickAccess?.description && (
-                <p className="text-lg text-slate-600 dark:text-slate-300 leading-relaxed">
+                <p className="type-body text-slate-600 dark:text-slate-300 leading-relaxed">
                   {initialHomeContent.quickAccess.description}
                 </p>
               )}
             </motion.div>
             
             {quickLinks.length > 0 ? (
-              <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+              <div className={quickAccessGridClass}>
                 {quickLinks.map((item, index) => {
                   const Icon = item.icon;
+                  const isFourColumn = quickAccessColumns === 4;
                   return (
                     <motion.div 
                       key={`${item.title}-${index}`}
@@ -592,16 +601,28 @@ export default function HomePageClient({ initialHomeContent }: HomePageClientPro
                         className="block h-full"
                         aria-label={`${item.title} quick access`}
                       >
-                        <div className="h-full rounded-2xl border border-cyan-50 dark:border-slate-800 bg-sky-50/90 dark:bg-slate-900/60 shadow-[0_15px_50px_-30px_rgba(0,0,0,0.5)] backdrop-blur-sm transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-xl">
-                          <div className="flex flex-col items-center text-center gap-4 px-8 py-10">
-                            <div className="h-12 w-12 rounded-xl bg-cyan-500/10 text-cyan-600 dark:text-cyan-200 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                              <Icon className="h-6 w-6" />
+                        <div
+                          className={
+                            isFourColumn
+                              ? 'h-full rounded-2xl border border-cyan-200/70 bg-gradient-to-br from-white via-sky-50/90 to-cyan-50/85 shadow-[0_20px_58px_-38px_rgba(15,23,42,0.35)] backdrop-blur-sm transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-[0_28px_72px_-36px_rgba(8,145,178,0.35)] dark:border-cyan-400/30 dark:bg-gradient-to-br dark:from-[#09183f] dark:via-[#061334] dark:to-[#040c24] dark:shadow-[0_24px_68px_-34px_rgba(2,6,23,0.9)] dark:group-hover:shadow-[0_22px_66px_-34px_rgba(34,211,238,0.35)]'
+                              : 'h-full rounded-2xl border border-cyan-50 bg-sky-50/90 shadow-[0_15px_50px_-30px_rgba(0,0,0,0.5)] backdrop-blur-sm transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-xl dark:border-slate-700/80 dark:bg-slate-900/90 dark:shadow-[0_24px_64px_-40px_rgba(2,6,23,0.92)]'
+                          }
+                        >
+                          <div className={isFourColumn ? 'flex flex-col gap-3 px-5 py-6' : 'flex flex-col items-center text-center gap-4 px-8 py-10'}>
+                            <div
+                              className={
+                                isFourColumn
+                                  ? 'h-11 w-11 rounded-xl bg-cyan-500/12 text-cyan-700 dark:bg-cyan-500/20 dark:text-cyan-100 flex items-center justify-center group-hover:scale-110 transition-transform duration-300'
+                                  : 'h-12 w-12 rounded-xl bg-cyan-500/10 text-cyan-600 dark:bg-cyan-500/15 dark:text-cyan-100 flex items-center justify-center group-hover:scale-110 transition-transform duration-300'
+                              }
+                            >
+                              <Icon className={isFourColumn ? 'h-5 w-5' : 'h-6 w-6'} />
                             </div>
-                            <div className="space-y-2">
-                              <h3 className="text-xl font-semibold text-slate-900 dark:text-white">
+                            <div className={isFourColumn ? 'space-y-1 text-left' : 'space-y-2'}>
+                              <h3 className={isFourColumn ? 'text-lg font-semibold text-slate-900 dark:text-slate-100' : 'text-xl font-semibold text-slate-900 dark:text-slate-100'}>
                                 {item.title}
                               </h3>
-                              <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                              <p className={isFourColumn ? 'text-sm text-slate-600 dark:text-slate-200/90 leading-relaxed' : 'text-sm text-slate-600 dark:text-slate-200/90 leading-relaxed'}>
                                 {item.description}
                               </p>
                             </div>
@@ -639,20 +660,20 @@ export default function HomePageClient({ initialHomeContent }: HomePageClientPro
           <div className="container mx-auto px-4 md:px-6 relative z-10">
             {/* Header */}
             <motion.div 
-              className="flex flex-col items-center justify-center space-y-4 text-center mb-14"
+              className="type-rhythm flex flex-col items-center justify-center space-y-4 text-center mb-14"
               variants={fadeIn}
             >
               <div className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium shadow-sm bg-emerald-50 text-emerald-700 border border-emerald-200/70 dark:bg-emerald-500/10 dark:border-emerald-400/40 dark:text-emerald-200">
                 <Award className="h-4 w-4" />
-                Proven Track Record
+                {achievementsContent.badge}
               </div>
               
-              <h2 className="font-headline text-4xl lg:text-5xl font-bold tracking-tight text-slate-900 dark:text-white">
-              Our Impact by the Numbers
+              <h2 className="type-h2 type-heading-accent inline-block text-slate-900 dark:text-white">
+                {achievementsContent.title}
               </h2>
               
-              <p className="max-w-[800px] text-lg text-slate-600 dark:text-slate-200/80 leading-relaxed">
-                Join thousands of learners who are transforming their careers and skills
+              <p className="type-body max-w-[800px] text-slate-600 dark:text-slate-200/80 leading-relaxed">
+                {achievementsContent.description}
               </p>
             </motion.div>
 
@@ -714,7 +735,7 @@ export default function HomePageClient({ initialHomeContent }: HomePageClientPro
             <div className="container mx-auto px-4 md:px-6 relative z-10">
               {/* Header */}
               <motion.div 
-                className="flex flex-col items-center justify-center space-y-4 text-center mb-16"
+                className="type-rhythm flex flex-col items-center justify-center space-y-4 text-center mb-16"
                 variants={fadeIn}
               >
                 <div className="inline-flex items-center gap-2 bg-amber-500/10 border border-amber-200/50 dark:border-amber-800/50 rounded-full px-4 py-2">
@@ -724,11 +745,11 @@ export default function HomePageClient({ initialHomeContent }: HomePageClientPro
                   </span>
                 </div>
 
-                <h2 className="font-headline text-4xl lg:text-5xl font-bold tracking-tight">
+                <h2 className="type-h2 type-heading-accent inline-block">
                   {initialHomeContent?.whyChooseUs?.title}
                 </h2>
                 
-                <p className="max-w-[800px] text-lg text-muted-foreground leading-relaxed">
+                <p className="type-body max-w-[800px] text-muted-foreground leading-relaxed">
                   {initialHomeContent?.whyChooseUs?.description}
                 </p>
               </motion.div>
@@ -798,7 +819,7 @@ export default function HomePageClient({ initialHomeContent }: HomePageClientPro
             <div className="container mx-auto px-4 md:px-6 relative z-10">
               {/* Header */}
               <motion.div 
-                className="flex flex-col items-center justify-center space-y-4 text-center mb-16"
+                className="type-rhythm flex flex-col items-center justify-center space-y-4 text-center mb-16"
                 variants={fadeIn}
               >
                 <div className="inline-flex items-center gap-2 bg-pink-500/10 border border-pink-200/50 dark:border-pink-800/50 rounded-full px-4 py-2">
@@ -808,11 +829,11 @@ export default function HomePageClient({ initialHomeContent }: HomePageClientPro
                   </span>
                 </div>
 
-                <h2 className="font-headline text-4xl lg:text-5xl font-bold tracking-tight">
+                <h2 className="type-h2 type-heading-accent inline-block">
                   {initialHomeContent?.testimonials?.title || 'What Students Say'}
                 </h2>
                 
-                <p className="max-w-[800px] text-lg text-muted-foreground leading-relaxed">
+                <p className="type-body max-w-[800px] text-muted-foreground leading-relaxed">
                   {initialHomeContent?.testimonials?.description || 'Real feedback from learners who leveled up with Xmarty Creator.'}
                 </p>
               </motion.div>
@@ -823,9 +844,9 @@ export default function HomePageClient({ initialHomeContent }: HomePageClientPro
                   align: "start",
                   loop: true,
                 }}
-                className="w-full"
+                className="w-full select-none"
               >
-              <CarouselContent className="py-3">
+              <CarouselContent className="py-3 select-none">
                 {testimonials.map((testimonial, index) => (
                   <CarouselItem key={index} className="md:basis-1/2 lg:basis-1/3">
                       <motion.div
@@ -834,7 +855,7 @@ export default function HomePageClient({ initialHomeContent }: HomePageClientPro
                         transition={{ delay: index * 0.05 }}
                         viewport={{ once: true }}
                       >
-                        <Card className="group relative overflow-hidden border border-slate-200/70 dark:border-white/10 bg-gradient-to-br from-white/95 via-slate-50 to-slate-100/80 dark:from-slate-900/70 dark:via-slate-900/40 dark:to-slate-800/60 shadow-[0_25px_80px_-60px_rgba(59,130,246,0.55)] transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl h-full">
+                        <Card className="group relative h-full select-none overflow-hidden border border-slate-200/70 bg-gradient-to-br from-white/95 via-slate-50 to-slate-100/80 shadow-[0_25px_80px_-60px_rgba(59,130,246,0.55)] hover-lift hover-sheen dark:border-white/10 dark:from-slate-900/70 dark:via-slate-900/40 dark:to-slate-800/60">
                           <div className="pointer-events-none absolute inset-0">
                             <div className="absolute -top-20 -right-20 h-40 w-40 rounded-full bg-purple-400/15 blur-3xl" />
                             <div className="absolute -bottom-20 -left-20 h-40 w-40 rounded-full bg-cyan-400/15 blur-3xl" />
@@ -920,14 +941,14 @@ export default function HomePageClient({ initialHomeContent }: HomePageClientPro
           <div className="container mx-auto px-4 md:px-6 relative z-10">
             <div className="rounded-3xl bg-gradient-to-r from-blue-600 to-purple-600 p-8 md:p-16 text-center border-2 border-blue-400/30 shadow-2xl">
               <motion.h2 
-                className="font-headline text-3xl lg:text-5xl font-bold text-white mb-6"
+                className="type-h2 !text-white mb-6"
                 variants={fadeIn}
               >
-                Ready to Transform Your Learning?
+                Ready to <span className="type-keyword type-glow">Transform</span> Your Learning?
               </motion.h2>
               
               <motion.p 
-                className="max-w-[600px] text-lg text-blue-50 mx-auto mb-8"
+                className="type-body max-w-[600px] !text-blue-50 mx-auto mb-8"
                 variants={fadeIn}
               >
                 Join our community of learners and start your journey to success today.
@@ -957,4 +978,3 @@ export default function HomePageClient({ initialHomeContent }: HomePageClientPro
     </>
   );
 }
-

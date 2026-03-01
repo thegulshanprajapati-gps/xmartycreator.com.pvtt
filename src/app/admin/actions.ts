@@ -82,6 +82,10 @@ export async function login(prevState: { error?: string; success?: boolean } | n
       return { error: 'Invalid username or password.' };
     }
 
+    // Keep auth state exclusive: admin login clears credential student marker.
+    if (session.student) {
+      delete session.student;
+    }
     session.isLoggedIn = true;
     session.username = admin.username;
     await session.save();

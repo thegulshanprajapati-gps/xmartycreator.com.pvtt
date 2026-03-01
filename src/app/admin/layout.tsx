@@ -20,6 +20,9 @@ import {
   MessageCircle,
   Shield,
   MousePointer2,
+  GraduationCap,
+  LogOut,
+  FilePlus2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -38,15 +41,23 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 
 
 const navItems = [
+    { href: '/admin', label: 'Admin Root', icon: Home },
     { href: '/admin/dashboard', label: 'Home Page', icon: Home },
     { href: '/admin/dashboard/about', label: 'About Page', icon: Info },
     { href: '/admin/dashboard/testimonials', label: 'Testimonials', icon: MessageSquare },
     { href: '/admin/dashboard/blog', label: 'Blog Page', icon: Newspaper },
+    { href: '/admin/dashboard/blog/new', label: 'New Blog Post', icon: FilePlus2 },
     { href: '/admin/dashboard/comments', label: 'Blog Comments', icon: MessageCircle },
-    { href: '/admin/courses', label: 'Courses', icon: BookOpen },
+    { href: '/admin/courses', label: 'Courses / Tests', icon: BookOpen },
+    { href: '/admin/tests', label: 'Tests', icon: BookOpen },
+    { href: '/admin/tests/new', label: 'New Test', icon: FilePlus2 },
+    { href: '/admin/courses/new', label: 'New Course', icon: FilePlus2 },
+    { href: '/admin/courses/bcece-le', label: 'BCECE LE Course', icon: BookOpen },
+    { href: '/admin/dashboard/courses', label: 'Courses Page', icon: BookOpen },
     { href: '/admin/dashboard/community', label: 'Community Page', icon: Users },
     { href: '/admin/dashboard/contact', label: 'Contact Page', icon: Mail },
     { href: '/admin/dashboard/updates', label: 'Updates', icon: Bell },
+    { href: '/admin/dashboard/students', label: 'Students', icon: GraduationCap },
     { href: '/admin/gallery', label: 'Image Gallery', icon: GalleryVertical },
     { href: '/admin/dashboard/notification', label: 'Notification', icon: LineChart },
     { href: '/admin/dashboard/appearance', label: 'Appearance', icon: MousePointer2 },
@@ -62,10 +73,12 @@ export default function AdminLayout({
 }) {
   const pathname = usePathname();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const isNavItemActive = (href: string) =>
+    pathname === href || (href !== '/admin' && pathname.startsWith(`${href}/`));
 
   return (
     <TooltipProvider>
-    <div className="flex min-h-screen w-full flex-col bg-muted/40">
+    <div className="flex min-h-screen w-full flex-col bg-muted/40 overflow-x-hidden">
       <aside className={cn(
           "fixed left-0 z-10 hidden h-full flex-col border-r bg-background sm:flex transition-all duration-300",
           isSidebarCollapsed ? "w-20" : "w-64"
@@ -73,7 +86,7 @@ export default function AdminLayout({
         <div className="flex-grow overflow-y-auto">
           <nav className="flex flex-col items-center gap-4 px-2 sm:py-5">
             {navItems.map(({ href, label, icon: Icon }) => {
-                 const isActive = pathname === href;
+                 const isActive = isNavItemActive(href);
                  return (
                     <Tooltip key={href} delayDuration={0}>
                          <TooltipTrigger asChild>
@@ -131,7 +144,7 @@ export default function AdminLayout({
         </div>
       </aside>
       <div className={cn(
-        "flex flex-col flex-1 sm:gap-4 pt-14 sm:pt-0 transition-all duration-300", 
+        "flex min-w-0 flex-col flex-1 sm:gap-4 pt-14 sm:pt-0 transition-all duration-300", 
         isSidebarCollapsed ? "sm:pl-20" : "sm:pl-64"
       )}>
         <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
@@ -152,7 +165,7 @@ export default function AdminLayout({
                             href={href}
                             className={cn(
                                 "flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground",
-                                pathname === href && "text-foreground"
+                                isNavItemActive(href) && "text-foreground"
                             )}
                         >
                             <Icon className="h-5 w-5" />
@@ -178,10 +191,16 @@ export default function AdminLayout({
             <PanelLeft className="h-4 w-4" />
             <span className="sr-only">Toggle Sidebar</span>
           </Button>
-          <div className="relative ml-auto flex-1 md:grow-0">
+          <div className="relative ml-auto flex items-center gap-2 md:grow-0">
+            <form action={logout}>
+              <Button type="submit" variant="outline" size="sm" className="gap-1.5">
+                <LogOut className="h-4 w-4" />
+                Logout
+              </Button>
+            </form>
           </div>
         </header>
-        <main className="grid flex-1 items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8">
+        <main className="grid min-w-0 grid-cols-1 flex-1 items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8">
             {children}
         </main>
       </div>

@@ -13,6 +13,7 @@ interface Course {
   _id: string;
   title: string;
   slug: string;
+  contentType: 'course' | 'test';
   shortDescription: string;
   fullDescription: string;
   coverImage: string;
@@ -27,6 +28,7 @@ interface Course {
   instructorName: string;
   instructorImage: string;
   enrollRedirectUrl: string;
+  tags: string[];
   shareCount: number;
   enrollClickCount: number;
   viewsCount: number;
@@ -46,6 +48,7 @@ export default function EditCoursePage() {
     _id: '',
     title: '',
     slug: '',
+    contentType: 'course',
     shortDescription: '',
     fullDescription: '',
     coverImage: '',
@@ -60,6 +63,7 @@ export default function EditCoursePage() {
     instructorName: '',
     instructorImage: '',
     enrollRedirectUrl: '',
+    tags: [],
     shareCount: 0,
     enrollClickCount: 0,
     viewsCount: 0,
@@ -74,7 +78,11 @@ export default function EditCoursePage() {
         }
 
         const data = await response.json();
-        setFormData(data);
+        setFormData({
+          ...data,
+          contentType: data?.contentType === 'test' ? 'test' : 'course',
+          tags: Array.isArray(data?.tags) ? data.tags : [],
+        });
       } catch (err) {
         const message = err instanceof Error ? err.message : 'An error occurred';
         setError(message);
@@ -103,6 +111,14 @@ export default function EditCoursePage() {
         ...prev,
         [name]: Math.max(0, parseInt(value) || 0),
       }));
+    } else if (name === 'features' || name === 'tags') {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+          .split('\n')
+          .map((line) => line.trim())
+          .filter((line) => line.length > 0),
+      }));
     } else {
       setFormData(prev => ({
         ...prev,
@@ -125,10 +141,17 @@ export default function EditCoursePage() {
       const features = typeof formData.features === 'string'
         ? formData.features.split('\n').map(f => f.trim()).filter(f => f.length > 0)
         : formData.features;
+      const tags = Array.isArray(formData.tags)
+        ? formData.tags.map((tag) => String(tag || '').trim()).filter((tag) => tag.length > 0)
+        : String(formData.tags || '')
+            .split('\n')
+            .map((tag) => tag.trim())
+            .filter((tag) => tag.length > 0);
 
       const courseData = {
         title: formData.title?.trim() || '',
         slug: formData.slug?.trim() || formData.title?.toLowerCase().replace(/\s+/g, '-') || '',
+        contentType: formData.contentType === 'test' ? 'test' : 'course',
         shortDescription: formData.shortDescription?.trim() || '',
         fullDescription: formData.fullDescription?.trim() || '',
         coverImage: formData.coverImage?.trim() || '',
@@ -143,6 +166,7 @@ export default function EditCoursePage() {
         instructorName: formData.instructorName?.trim() || '',
         instructorImage: formData.instructorImage?.trim() || '',
         enrollRedirectUrl: formData.enrollRedirectUrl?.trim() || '',
+        tags,
       };
 
       const response = await fetch(`/api/courses/${id}`, {
@@ -198,14 +222,17 @@ export default function EditCoursePage() {
   const featuresText = Array.isArray(formData.features)
     ? formData.features.join('\n')
     : formData.features || '';
+  const tagsText = Array.isArray(formData.tags)
+    ? formData.tags.join('\n')
+    : formData.tags || '';
 
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4">
       <div className="max-w-4xl mx-auto space-y-8">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-4xl font-bold">Edit Course</h1>
-            <p className="text-gray-600 mt-2">Update course details</p>
+            <h1 className="text-4xl font-bold">{formData.contentType === 'test' ? 'Edit Test' : 'Edit Course'}</h1>
+            <p className="text-gray-600 mt-2">Update {formData.contentType === 'test' ? 'test' : 'course'} details</p>
           </div>
         </div>
 
@@ -222,6 +249,18 @@ export default function EditCoursePage() {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
+                <label className="block text-sm font-medium mb-2">Content Type</label>
+                <select
+                  name="contentType"
+                  value={formData.contentType ?? 'course'}
+                  onChange={handleChange}
+                  className="w-full border rounded-md px-3 py-2"
+                >
+                  <option value="course">Course</option>
+                  <option value="test">Test</option>
+                </select>
+              </div>
+              <div>
                 <label className="block text-sm font-medium mb-2">Title *</label>
                 <Input
                   name="title"
@@ -230,7 +269,9 @@ export default function EditCoursePage() {
                   required
                 />
               </div>
+            </div>
 
+            <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium mb-2">Slug</label>
                 <Input
@@ -386,6 +427,17 @@ export default function EditCoursePage() {
                 value={featuresText || ''}
                 onChange={handleChange}
                 className="min-h-24"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">Topic Tags (one per line)</label>
+              <Textarea
+                name="tags"
+                value={tagsText || ''}
+                onChange={handleChange}
+                className="min-h-20"
+                placeholder="e.g. Bihar Education&#10;Web Development"
               />
             </div>
           </div>

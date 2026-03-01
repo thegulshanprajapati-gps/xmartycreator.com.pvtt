@@ -17,10 +17,23 @@ type HomeContent = {
       primary: { text: string; link: string };
       secondary: { text: string; link: string };
     };
+    background: {
+      useImage: boolean;
+      imageId: string;
+    };
+  };
+  scrollingBanner: {
+    enabled: boolean;
+    text: string;
+    linkText: string;
+    linkHref: string;
+    imageId: string;
+    animation: 'slide' | 'pulse' | 'bounce';
   };
   quickAccess: {
     title: string;
     description: string;
+    columns: 3 | 4;
     items: { title: string; description: string; imageId: string; link: string }[];
   };
   whyChooseUs: {
@@ -37,11 +50,23 @@ type HomeContent = {
       testimonial: string;
       rating: number;
       avatar: string;
+      gender?: 'male' | 'female';
     }[];
+  };
+  achievements: {
+    badge: string;
+    title: string;
+    description: string;
+    stats: { value: number; suffix: string; label: string }[];
   };
 };
 
 // Function to fetch content directly from MongoDB
+const normalizeQuickAccessColumns = (value: unknown): 3 | 4 => {
+  const parsed = Number(value);
+  return parsed === 4 ? 4 : 3;
+};
+
 async function getHomeContent(): Promise<HomeContent> {
   try {
     console.log('🔄 [Admin] Fetching home content from MongoDB...');
@@ -63,16 +88,49 @@ async function getHomeContent(): Promise<HomeContent> {
     
     // Default structure to ensure all required properties exist
     const defaultContent: HomeContent = {
-      hero: { title: '', description: '', buttons: { primary: { text: '', link: '' }, secondary: { text: '', link: '' }}},
-      quickAccess: { title: '', description: '', items: [] },
+      hero: {
+        title: '',
+        description: '',
+        buttons: {
+          primary: { text: '', link: '' },
+          secondary: { text: '', link: '' },
+        },
+        background: {
+          useImage: false,
+          imageId: '',
+        },
+      },
+      scrollingBanner: {
+        enabled: false,
+        text: '',
+        linkText: 'Learn more',
+        linkHref: '#',
+        imageId: '',
+        animation: 'slide',
+      },
+      quickAccess: { title: '', description: '', columns: 3, items: [] },
       whyChooseUs: { title: '', description: '', features: [] },
       testimonials: { title: '', description: '', reviews: [] },
+      achievements: {
+        badge: 'Proven Track Record',
+        title: 'Our Impact by the Numbers',
+        description: 'Join thousands of learners who are transforming their careers and skills',
+        stats: [
+          { value: 50000, suffix: '+', label: 'Happy Students' },
+          { value: 50, suffix: '+', label: 'Expert Courses' },
+          { value: 1000, suffix: '+', label: 'Hours of Content' },
+          { value: 20, suffix: '+', label: 'Awards Won' },
+        ],
+      },
     };
 
     if (page?.content) {
       console.log('✅ [Admin] Home content found');
       const rawQuickAccess = quickAccessDoc || page.content.quickAccess || page.content.featuredCourses || {};
       const rawTestimonials = testimonialsDoc || page.content.testimonials || page.content.content?.testimonials || {};
+      const rawScrollingBanner = page.content.scrollingBanner || page.content.banner || {};
+      const rawHero = page.content.hero || {};
+      const rawHeroBackground = rawHero?.background || {};
       const rawItems = Array.isArray(rawQuickAccess?.items)
         ? rawQuickAccess.items
         : Array.isArray(rawQuickAccess?.courses)
@@ -93,6 +151,7 @@ async function getHomeContent(): Promise<HomeContent> {
         testimonial: doc.testimonial || '',
         rating: Number(doc.rating) || 5,
         avatar: doc.avatar || '',
+        gender: doc.gender === 'female' ? 'female' : doc.gender === 'male' ? 'male' : undefined,
       }));
       const seen = new Set<string>();
       const mergedReviews: any[] = [];
@@ -144,10 +203,45 @@ async function getHomeContent(): Promise<HomeContent> {
 
       // Merge database content with defaults to ensure all properties exist
       const mergedContent: HomeContent = {
-        hero: page.content.hero || defaultContent.hero,
+        hero: {
+          ...defaultContent.hero,
+          ...rawHero,
+          buttons: {
+            ...defaultContent.hero.buttons,
+            ...(rawHero?.buttons || {}),
+            primary: {
+              ...defaultContent.hero.buttons.primary,
+              ...(rawHero?.buttons?.primary || {}),
+            },
+            secondary: {
+              ...defaultContent.hero.buttons.secondary,
+              ...(rawHero?.buttons?.secondary || {}),
+            },
+          },
+          background: {
+            ...defaultContent.hero.background,
+            ...rawHeroBackground,
+            useImage: rawHeroBackground?.useImage === true
+              || rawHeroBackground?.useImage === 'true'
+              || rawHeroBackground?.useImage === 'on',
+            imageId: (rawHeroBackground?.imageId || '').trim(),
+          },
+        },
+        scrollingBanner: {
+          ...defaultContent.scrollingBanner,
+          ...rawScrollingBanner,
+          enabled: rawScrollingBanner?.enabled === true
+            || rawScrollingBanner?.enabled === 'true'
+            || rawScrollingBanner?.enabled === 'on',
+          animation: rawScrollingBanner?.animation === 'pulse'
+            || rawScrollingBanner?.animation === 'bounce'
+            ? rawScrollingBanner.animation
+            : 'slide',
+        },
         quickAccess: {
           title: rawQuickAccess?.title || '',
           description: rawQuickAccess?.description || '',
+          columns: normalizeQuickAccessColumns(rawQuickAccess?.columns),
           items: safeItems.map((item: any) => ({
             ...item,
             link: item?.link || '',
@@ -163,6 +257,13 @@ async function getHomeContent(): Promise<HomeContent> {
           description: rawTestimonials?.description || '',
           reviews: mergedReviews,
         },
+        achievements: {
+          ...defaultContent.achievements,
+          ...(page.content.achievements || {}),
+          stats: Array.isArray(page.content.achievements?.stats)
+            ? page.content.achievements.stats
+            : defaultContent.achievements.stats,
+        },
       };
       return mergedContent;
     }
@@ -174,6 +275,7 @@ async function getHomeContent(): Promise<HomeContent> {
         quickAccess: {
           title: quickAccessDoc?.title || '',
           description: quickAccessDoc?.description || '',
+          columns: normalizeQuickAccessColumns(quickAccessDoc?.columns),
           items: Array.isArray(quickAccessDoc?.items)
             ? quickAccessDoc.items.filter((item: any) => item && typeof item === 'object')
             : [],
@@ -196,10 +298,40 @@ async function getHomeContent(): Promise<HomeContent> {
     console.error('❌ [Admin] Failed to fetch home content:', error);
     // Return a default structure if the fetch fails
     return {
-      hero: { title: '', description: '', buttons: { primary: { text: '', link: '' }, secondary: { text: '', link: '' }}},
-      quickAccess: { title: '', description: '', items: [] },
+      hero: {
+        title: '',
+        description: '',
+        buttons: {
+          primary: { text: '', link: '' },
+          secondary: { text: '', link: '' },
+        },
+        background: {
+          useImage: false,
+          imageId: '',
+        },
+      },
+      scrollingBanner: {
+        enabled: false,
+        text: '',
+        linkText: 'Learn more',
+        linkHref: '#',
+        imageId: '',
+        animation: 'slide',
+      },
+      quickAccess: { title: '', description: '', columns: 3, items: [] },
       whyChooseUs: { title: '', description: '', features: [] },
       testimonials: { title: '', description: '', reviews: [] },
+      achievements: {
+        badge: 'Proven Track Record',
+        title: 'Our Impact by the Numbers',
+        description: 'Join thousands of learners who are transforming their careers and skills',
+        stats: [
+          { value: 50000, suffix: '+', label: 'Happy Students' },
+          { value: 50, suffix: '+', label: 'Expert Courses' },
+          { value: 1000, suffix: '+', label: 'Hours of Content' },
+          { value: 20, suffix: '+', label: 'Awards Won' },
+        ],
+      },
     };
   }
 }

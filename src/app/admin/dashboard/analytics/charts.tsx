@@ -13,14 +13,14 @@ interface ChartProps {
 
 export function AnalyticsCharts({ pageVisitsData, linkClicksData, dailyTotals, hourlyTotals }: ChartProps) {
   return (
-    <div className="grid gap-8 lg:grid-cols-2">
+    <div className="grid min-w-0 gap-8 lg:grid-cols-2">
       {/* Page Visits Chart */}
-      <Card>
+      <Card className="min-w-0">
         <CardHeader>
           <CardTitle>Page Visits</CardTitle>
           <CardDescription>Number of visits per page.</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="min-w-0">
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={pageVisitsData}>
               <CartesianGrid strokeDasharray="3 3" />
@@ -35,12 +35,12 @@ export function AnalyticsCharts({ pageVisitsData, linkClicksData, dailyTotals, h
       </Card>
 
       {/* Link Clicks Chart */}
-      <Card>
+      <Card className="min-w-0">
         <CardHeader>
           <CardTitle>Link Clicks</CardTitle>
           <CardDescription>Number of clicks per key link.</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="min-w-0">
           <ResponsiveContainer width="100%" height={300}>
               <LineChart data={linkClicksData}>
                   <CartesianGrid strokeDasharray="3 3" />
@@ -55,12 +55,12 @@ export function AnalyticsCharts({ pageVisitsData, linkClicksData, dailyTotals, h
       </Card>
 
       {/* Hourly totals */}
-      <Card className="lg:col-span-2">
+      <Card className="min-w-0 lg:col-span-2">
         <CardHeader>
           <CardTitle>Hourly Trend</CardTitle>
           <CardDescription>Last 24 hours of activity (UTC)</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="min-w-0">
           <ResponsiveContainer width="100%" height={320}>
             <LineChart data={hourlyTotals}>
               <CartesianGrid strokeDasharray="3 3" />
@@ -76,12 +76,12 @@ export function AnalyticsCharts({ pageVisitsData, linkClicksData, dailyTotals, h
       </Card>
 
       {/* Daily totals */}
-      <Card className="lg:col-span-2">
+      <Card className="min-w-0 lg:col-span-2">
         <CardHeader>
           <CardTitle>Daily Trend</CardTitle>
           <CardDescription>Visits and link clicks over time (selected range)</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="min-w-0">
           <ResponsiveContainer width="100%" height={320}>
             <LineChart data={dailyTotals}>
               <CartesianGrid strokeDasharray="3 3" />

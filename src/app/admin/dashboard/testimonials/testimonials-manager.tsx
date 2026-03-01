@@ -35,6 +35,7 @@ type Review = {
   testimonial: string;
   rating: number;
   avatar: string;
+  gender?: 'male' | 'female';
 };
 
 type Testimonials = {
@@ -93,7 +94,8 @@ export default function TestimonialsManager({ initialTestimonials }: Testimonial
         role: '',
         testimonial: '',
         rating: 5,
-        avatar: ''
+        avatar: '',
+        gender: 'male',
       }]
     }));
   };
@@ -178,6 +180,7 @@ export default function TestimonialsManager({ initialTestimonials }: Testimonial
               ) : (
                 (testimonials.reviews || []).map((review, index) => (
                   <Card key={index} className="p-4 relative">
+                    <input type="hidden" name={`review-gender-${index}`} value={review.gender || ''} />
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button 

@@ -21,6 +21,10 @@ export function generateBlogMetadata(blog: BlogPost) {
     title,
     description,
     keywords: blog.metaKeywords || blog.tags,
+    robots: {
+      index: true,
+      follow: true,
+    },
     authors: [{ name: blog.author }],
     openGraph: {
       title,
@@ -48,7 +52,9 @@ export function generateBlogMetadata(blog: BlogPost) {
       images: blog.coverImage?.url ? [blog.coverImage.url] : undefined,
       creator: '@xmartycreator',
     },
-    canonical: blog.canonicalUrl || url,
+    alternates: {
+      canonical: blog.canonicalUrl || url,
+    },
   };
 }
 

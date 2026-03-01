@@ -9,14 +9,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { useActionState, useEffect, useState } from 'react';
 import { updateNotificationContent } from '../actions';
 import { useToast } from '@/hooks/use-toast';
-import { Switch } from '@/components/ui/switch';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 
 type NotificationContent = {
   enabled: boolean;
@@ -26,13 +18,26 @@ type NotificationContent = {
   bannerImageId?: string;
 };
 
+const normalizeNotificationContent = (value: any): NotificationContent => ({
+  enabled: value?.enabled === true || value?.enabled === 'true' || value?.enabled === 'on',
+  message: typeof value?.message === 'string' ? value.message : '',
+  linkText: typeof value?.linkText === 'string' ? value.linkText : '',
+  linkHref: typeof value?.linkHref === 'string' ? value.linkHref : '',
+  bannerImageId: typeof value?.bannerImageId === 'string' ? value.bannerImageId : '',
+});
+
 export default function AdminNotificationPage() {
-  const initialContent: NotificationContent = { enabled: false, message: '', linkText: '', linkHref: '', bannerImageId: '' };
+  const initialContent: NotificationContent = {
+    enabled: false,
+    message: '',
+    linkText: '',
+    linkHref: '',
+    bannerImageId: '',
+  };
   const [state, formAction, isPending] = useActionState(updateNotificationContent, { message: '', data: initialContent });
   const { toast } = useToast();
   const [content, setContent] = useState<NotificationContent>(initialContent);
   const [isEnabled, setIsEnabled] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
   const [galleryImages, setGalleryImages] = useState<any[]>([]);
 
   useEffect(() => {
@@ -41,13 +46,12 @@ export default function AdminNotificationPage() {
         const res = await fetch('/api/pages/notification');
         if (res.ok) {
           const data = await res.json();
-          setContent(data);
-          setIsEnabled(data.enabled);
+          const normalized = normalizeNotificationContent(data);
+          setContent(normalized);
+          setIsEnabled(normalized.enabled);
         }
       } catch (error) {
         console.error('Error fetching notification content:', error);
-      } finally {
-        setIsLoading(false);
       }
     };
 
@@ -79,8 +83,9 @@ export default function AdminNotificationPage() {
       });
     }
     if (state?.data) {
-        setContent(state.data as NotificationContent);
-        setIsEnabled(state.data.enabled);
+        const normalized = normalizeNotificationContent(state.data);
+        setContent(normalized);
+        setIsEnabled(normalized.enabled);
     }
   }, [state, toast]);
 
@@ -97,7 +102,14 @@ export default function AdminNotificationPage() {
             </CardHeader>
             <CardContent className="space-y-6 pt-6">
                 <div className="flex items-center space-x-2">
-                    <Switch id="enabled" name="enabled" checked={isEnabled} onCheckedChange={setIsEnabled} />
+                    <input
+                      id="enabled"
+                      name="enabled"
+                      type="checkbox"
+                      checked={isEnabled}
+                      onChange={(e) => setIsEnabled(e.target.checked)}
+                      className="h-4 w-4 rounded border border-input accent-primary"
+                    />
                     <Label htmlFor="enabled">Enable Notification Banner</Label>
                 </div>
                 
@@ -139,20 +151,22 @@ export default function AdminNotificationPage() {
 
                 <div className="space-y-2">
                     <Label htmlFor="bannerImageId">Banner Image</Label>
-                    <Select value={content.bannerImageId || ''} onValueChange={(value) => setContent({...content, bannerImageId: value})}>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Select banner image (optional)" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {galleryImages
-                              .filter(img => img.id && typeof img.id === 'string' && img.id.trim())
-                              .map((image) => (
-                                <SelectItem key={image.id} value={image.id}>
-                                    {image.title || image.filename || image.id}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
+                    <select
+                      id="bannerImageId"
+                      name="bannerImageId"
+                      value={content.bannerImageId || ''}
+                      onChange={(e) => setContent({ ...content, bannerImageId: e.target.value })}
+                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    >
+                      <option value="">No image selected</option>
+                      {galleryImages
+                        .filter((img) => img?.id && typeof img.id === 'string' && img.id.trim())
+                        .map((image) => (
+                          <option key={image.id} value={image.id}>
+                            {image.title || image.filename || image.id}
+                          </option>
+                        ))}
+                    </select>
                 </div>
             </CardContent>
         </Card>
