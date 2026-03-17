@@ -2,6 +2,7 @@ import bcrypt from 'bcryptjs';
 import { createHash, randomUUID } from 'crypto';
 import jwt from 'jsonwebtoken';
 import type { NextRequest, NextResponse } from 'next/server';
+import { resolveSharedCookieDomain } from '@/lib/auth/cookie-domain';
 
 const BCRYPT_ROUNDS = 12;
 const LOGIN_MAX_ATTEMPTS = 5;
@@ -103,12 +104,14 @@ export function signSessionToken(payload: AuthJwtPayload) {
 }
 
 export function setDeviceCookie(response: NextResponse, token: string) {
+  const deviceCookieDomain = resolveSharedCookieDomain();
   response.cookies.set(DEVICE_COOKIE_NAME, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'strict',
     path: '/',
     maxAge: DEVICE_COOKIE_MAX_AGE,
+    ...(deviceCookieDomain ? { domain: deviceCookieDomain } : {}),
   });
 }
 
@@ -169,4 +172,3 @@ export function registerLoginFailure(key: string) {
 export function clearLoginFailures(key: string) {
   loginAttempts.delete(key);
 }
-

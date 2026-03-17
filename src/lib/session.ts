@@ -2,27 +2,9 @@
 import { getIronSession } from 'iron-session';
 import { cookies } from 'next/headers';
 import { NextRequest } from 'next/server';
+import { resolveSharedCookieDomain } from '@/lib/auth/cookie-domain';
 
-function resolveSessionCookieDomain() {
-  const explicit = (process.env.SESSION_COOKIE_DOMAIN || '').trim();
-  if (explicit) return explicit;
-
-  const configuredBaseUrl = (process.env.NEXT_PUBLIC_URL || '').trim();
-  if (!configuredBaseUrl) return '';
-
-  try {
-    const hostname = new URL(configuredBaseUrl).hostname.toLowerCase();
-    if (hostname === 'xmartycreator.com' || hostname.endsWith('.xmartycreator.com')) {
-      return '.xmartycreator.com';
-    }
-  } catch {
-    return '';
-  }
-
-  return '';
-}
-
-const sessionCookieDomain = resolveSessionCookieDomain();
+const sessionCookieDomain = resolveSharedCookieDomain();
 
 export const sessionOptions = {
   password: process.env.SECRET_COOKIE_PASSWORD as string,
