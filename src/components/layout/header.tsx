@@ -73,12 +73,10 @@ export function Header() {
   const { data: studentSession, status: studentStatus } = useStudentSession();
   const { toast } = useToast();
   const isAdminRoute = pathname.startsWith('/admin') || pathname.startsWith('/xmartyadmin');
-  const isBceceLeRoute = pathname === '/bcece-le' || pathname.startsWith('/bcece-le/');
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [searchableItems, setSearchableItems] = useState<SearchableItem[]>(defaultSearchItems);
-  const [loginButtonOnlyOnBceceLe, setLoginButtonOnlyOnBceceLe] = useState(false);
   const [credentialStudent, setCredentialStudent] = useState<CredentialStudentSessionUser | null>(null);
   const [loadingCredentialStudent, setLoadingCredentialStudent] = useState(true);
 
@@ -121,47 +119,6 @@ export function Header() {
     };
 
     fetchCourses();
-  }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    const fetchSiteSettings = async () => {
-      try {
-        const cached = localStorage.getItem('xmarty:loginOnlyOnBceceLe');
-        if (!cancelled && (cached === 'true' || cached === 'false')) {
-          setLoginButtonOnlyOnBceceLe(cached === 'true');
-        }
-      } catch {
-        // ignore storage errors
-      }
-
-      try {
-        const response = await fetch('/api/site-settings', { cache: 'no-store' });
-        if (!response.ok) return;
-        const data = await response.json();
-        if (!cancelled && typeof data?.loginButtonOnlyOnBceceLe === 'boolean') {
-          setLoginButtonOnlyOnBceceLe(data.loginButtonOnlyOnBceceLe);
-        }
-      } catch (error) {
-        console.warn('Could not fetch site settings - using defaults:', error);
-      }
-    };
-
-    const handleSiteSettingsUpdate = (event: Event) => {
-      const detail = (event as CustomEvent)?.detail;
-      if (typeof detail?.loginButtonOnlyOnBceceLe === 'boolean') {
-        setLoginButtonOnlyOnBceceLe(detail.loginButtonOnlyOnBceceLe);
-      }
-    };
-
-    fetchSiteSettings();
-    window.addEventListener('site-settings-updated', handleSiteSettingsUpdate as EventListener);
-
-    return () => {
-      cancelled = true;
-      window.removeEventListener('site-settings-updated', handleSiteSettingsUpdate as EventListener);
-    };
   }, []);
 
   useEffect(() => {
@@ -294,7 +251,7 @@ export function Header() {
   const studentIsLoading =
     studentStatus === 'loading' || loadingCredentialStudent;
   const isStudentAuthenticated = Boolean(activeStudent?.email);
-  const canShowStudentLoginButton = !loginButtonOnlyOnBceceLe || isBceceLeRoute;
+  const canShowStudentLoginButton = true;
 
   return (
     <>

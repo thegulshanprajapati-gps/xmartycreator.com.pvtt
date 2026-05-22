@@ -38,7 +38,6 @@ const staticRoutes: Array<{
   { path: '/blog', changeFrequency: 'daily', priority: 0.9 },
   { path: '/courses', changeFrequency: 'daily', priority: 0.9 },
   { path: '/coursese', changeFrequency: 'monthly', priority: 0.4 },
-  { path: '/bcece-le', changeFrequency: 'weekly', priority: 0.8 },
   { path: '/community', changeFrequency: 'weekly', priority: 0.8 },
   { path: '/community/hub', changeFrequency: 'weekly', priority: 0.75 },
   { path: '/updates', changeFrequency: 'daily', priority: 0.8 },

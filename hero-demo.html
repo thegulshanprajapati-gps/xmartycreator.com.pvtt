@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premium EdTech Hero Section</title>
+    <style>
+        /* Embedding the CSS directly for the demo */
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Inter:wght@400;500&display=swap');
+
+        :root {
+            --bg-color: #000000;
+            --text-primary: #FFFFFF;
+            --text-secondary: rgba(255, 255, 255, 0.6);
+            --accent-color: #FF3B30;
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --font-heading: 'Outfit', sans-serif;
+            --font-body: 'Inter', sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            font-family: var(--font-body);
+            overflow-x: hidden;
+        }
+
+        /* Scroll Snap Container */
+        .snap-container {
+            height: 100vh;
+            overflow-y: auto;
+            scroll-snap-type: y mandatory;
+            scroll-behavior: smooth;
+        }
+
+        .hero-section {
+            height: 100vh;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            text-align: center;
+            scroll-snap-align: start;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Background Gradients for depth */
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            top: -10%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60%;
+            height: 40%;
+            background: radial-gradient(circle, rgba(255, 59, 48, 0.1) 0%, transparent 70%);
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 1;
+            max-width: 800px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .hero-badge {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            padding: 0.5rem 1rem;
+            border-radius: 100px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            color: var(--accent-color);
+            backdrop-filter: blur(4px);
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        .hero-title {
+            font-family: var(--font-heading);
+            font-size: clamp(2.5rem, 8vw, 4.5rem);
+            font-weight: 800;
+            line-height: 1.1;
+            letter-spacing: -0.02em;
+            margin-bottom: 0.5rem;
+            animation: fadeInUp 0.8s ease-out 0.2s both;
+        }
+
+        .hero-description {
+            font-size: clamp(1rem, 2vw, 1.25rem);
+            color: var(--text-secondary);
+            line-height: 1.6;
+            max-width: 500px;
+            animation: fadeInUp 0.8s ease-out 0.4s both;
+        }
+
+        .hero-cta-wrapper {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            animation: fadeInUp 0.8s ease-out 0.6s both;
+        }
+
+        .btn-primary {
+            background-color: var(--text-primary);
+            color: var(--bg-color);
+            border: none;
+            padding: 1.25rem 2.5rem;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            width: auto;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(255, 255, 255, 0.1);
+        }
+
+        /* Dashboard Card */
+        .dashboard-card {
+            margin-top: 3rem;
+            width: 100%;
+            max-width: 900px;
+            aspect-ratio: 16/9;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            animation: fadeInUp 1s ease-out 0.8s both;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .dot-group {
+            display: flex;
+            gap: 6px;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--glass-border);
+        }
+
+        .card-content {
+            flex: 1;
+            display: flex;
+            gap: 1.5rem;
+        }
+
+        .sidebar-skeleton {
+            width: 180px;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .main-skeleton {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .skeleton-line {
+            height: 12px;
+            background: linear-gradient(90deg, var(--glass-border) 25%, rgba(255, 255, 255, 0.1) 50%, var(--glass-border) 75%);
+            background-size: 200% 100%;
+            animation: skeletonPulse 2s infinite;
+            border-radius: 4px;
+        }
+
+        .skeleton-line.short { width: 40%; }
+        .skeleton-line.medium { width: 70%; }
+        .skeleton-box { height: 100px; background: var(--glass-border); border-radius: 12px; }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes skeletonPulse {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        @media (max-width: 768px) {
+            .hero-section { padding: 1.5rem; }
+            .hero-title { max-width: 100%; }
+            .hero-description { font-size: 1rem; max-width: 90%; }
+            .btn-primary { width: 100%; text-align: center; }
+            .dashboard-card { margin-top: 2rem; aspect-ratio: auto; height: 300px; padding: 1rem; }
+            .sidebar-skeleton { display: none; }
+            .hero-badge { display: none; }
+        }
+
+        @media (max-height: 700px) {
+            .dashboard-card { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="snap-container">
+        <section class="hero-section" id="hero">
+            <div class="hero-content">
+                <div class="hero-badge">Next Generation Learning</div>
+                
+                <h1 class="hero-title">
+                    Master the Future <br> of Technology.
+                </h1>
+                
+                <p class="hero-description">
+                    Experience a new way of learning with our ultra-slim, distraction-free platform. Built for the modern mind.
+                </p>
+                
+                <div class="hero-cta-wrapper">
+                    <a href="#" class="btn-primary">Get Started Now</a>
+                </div>
+
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <div class="dot-group">
+                            <div class="dot"></div>
+                            <div class="dot"></div>
+                            <div class="dot"></div>
+                        </div>
+                        <div class="skeleton-line short" style="margin: 0"></div>
+                    </div>
+                    
+                    <div class="card-content">
+                        <div class="sidebar-skeleton">
+                            <div class="skeleton-line"></div>
+                            <div class="skeleton-line medium"></div>
+                            <div class="skeleton-line"></div>
+                            <div class="skeleton-line short"></div>
+                        </div>
+                        
+                        <div class="main-skeleton">
+                            <div class="skeleton-box"></div>
+                            <div class="skeleton-line"></div>
+                            <div class="skeleton-line"></div>
+                            <div class="skeleton-line medium"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section class="hero-section" id="feature" style="background-color: #050505;">
+            <div class="hero-content">
+                <h2 class="hero-title" style="font-size: 3rem;">Stay Focused.</h2>
+                <p class="hero-description">The simplest UI is the most powerful tool for deep work.</p>
+            </div>
+        </section>
+    </div>
+</body>
+</html>

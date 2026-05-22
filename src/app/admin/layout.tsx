@@ -52,7 +52,6 @@ const navItems = [
     { href: '/admin/tests', label: 'Tests', icon: BookOpen },
     { href: '/admin/tests/new', label: 'New Test', icon: FilePlus2 },
     { href: '/admin/courses/new', label: 'New Course', icon: FilePlus2 },
-    { href: '/admin/courses/bcece-le', label: 'BCECE LE Course', icon: BookOpen },
     { href: '/admin/dashboard/courses', label: 'Courses Page', icon: BookOpen },
     { href: '/admin/dashboard/community', label: 'Community Page', icon: Users },
     { href: '/admin/dashboard/contact', label: 'Contact Page', icon: Mail },

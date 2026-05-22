@@ -5,13 +5,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
 import { updateSiteSettings } from '../actions';
 import { useToast } from '@/hooks/use-toast';
 
 type SiteSettings = {
   cursorStyle: string;
-  loginButtonOnlyOnBceceLe: boolean;
 };
 
 const CURSOR_OPTIONS = [
@@ -28,7 +26,6 @@ const CURSOR_OPTIONS = [
 export default function AdminAppearancePage() {
   const initialSettings: SiteSettings = {
     cursorStyle: 'sparkle',
-    loginButtonOnlyOnBceceLe: false,
   };
 
   const [state, formAction, isPending] = useActionState(updateSiteSettings, {
@@ -46,7 +43,6 @@ export default function AdminAppearancePage() {
       new CustomEvent('site-settings-updated', {
         detail: {
           cursorStyle: nextSettings.cursorStyle,
-          loginButtonOnlyOnBceceLe: nextSettings.loginButtonOnlyOnBceceLe,
         },
       })
     );
@@ -60,7 +56,6 @@ export default function AdminAppearancePage() {
           const data = await res.json();
           setSettings({
             cursorStyle: data?.cursorStyle || 'sparkle',
-            loginButtonOnlyOnBceceLe: Boolean(data?.loginButtonOnlyOnBceceLe),
           });
         }
       } catch (error) {
@@ -84,8 +79,7 @@ export default function AdminAppearancePage() {
 
     if (state?.data) {
       const cursorStyle = state.data.cursorStyle || 'sparkle';
-      const loginButtonOnlyOnBceceLe = Boolean(state.data.loginButtonOnlyOnBceceLe);
-      const nextSettings = { cursorStyle, loginButtonOnlyOnBceceLe };
+      const nextSettings = { cursorStyle };
 
       setSettings(nextSettings);
 
@@ -97,7 +91,6 @@ export default function AdminAppearancePage() {
 
         try {
           localStorage.setItem('xmarty:cursorStyle', cursorStyle);
-          localStorage.setItem('xmarty:loginOnlyOnBceceLe', loginButtonOnlyOnBceceLe ? 'true' : 'false');
         } catch {
           // ignore storage errors
         }
@@ -109,7 +102,6 @@ export default function AdminAppearancePage() {
 
   const handleSubmit = async (formData: FormData) => {
     formData.set('cursor-style', settings.cursorStyle);
-    formData.set('login-only-bcece-le', settings.loginButtonOnlyOnBceceLe ? 'true' : 'false');
     return formAction(formData);
   };
 
@@ -185,36 +177,6 @@ export default function AdminAppearancePage() {
             </p>
           </div>
 
-          <div className="space-y-3 rounded-xl border border-border/70 p-4">
-            <div className="flex items-start justify-between gap-4">
-              <div className="space-y-1">
-                <Label htmlFor="login-only-bcece-le">Show Login Only On BCECE LE Page</Label>
-                <p className="text-xs text-muted-foreground">
-                  When enabled, Student Login button will appear only on <code>/bcece-le</code>.
-                </p>
-              </div>
-              <Switch
-                id="login-only-bcece-le"
-                checked={settings.loginButtonOnlyOnBceceLe}
-                onCheckedChange={(checked) => {
-                  const nextSettings = {
-                    ...settings,
-                    loginButtonOnlyOnBceceLe: checked,
-                  };
-
-                  setSettings(nextSettings);
-
-                  try {
-                    localStorage.setItem('xmarty:loginOnlyOnBceceLe', checked ? 'true' : 'false');
-                  } catch {
-                    // ignore storage errors
-                  }
-
-                  dispatchSiteSettingsUpdated(nextSettings);
-                }}
-              />
-            </div>
-          </div>
         </CardContent>
       </Card>
     </form>

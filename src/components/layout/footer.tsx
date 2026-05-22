@@ -78,7 +78,6 @@ export function Footer() {
                 <QuickLink href="/">Home</QuickLink>
                 <QuickLink href="/about">About</QuickLink>
                 <QuickLink href="/courses">Courses</QuickLink>
-                <QuickLink href="/bcece-le">BCECE LE</QuickLink>
                 <QuickLink href="/blog">Blog</QuickLink>
                 <QuickLink href="/topic">Topics</QuickLink>
                 <QuickLink href="/community">Community</QuickLink>

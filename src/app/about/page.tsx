@@ -19,65 +19,95 @@ type ImagePlaceholder = {
   imageHint?: string;
 };
 
+type ButtonLink = {
+  text: string;
+  url: string;
+};
+
 type AboutContent = {
   hero: {
+    badge: string;
     title: string;
-    description: string;
+    subtitle: string;
     imageId: string;
     image?: ImagePlaceholder;
+    primaryButton: ButtonLink;
+    secondaryButton: ButtonLink;
   };
-  story: {
-    title: string;
-    paragraphs: string[];
-  };
-  values: {
-    title: string;
-    description: string;
-    items: Array<{ title: string; description: string }>;
-  };
+  stats: Array<{ icon: string; count: string; label: string }>;
+  journey: Array<{ icon: string; year: string; title: string; description: string }>;
   founder: {
-    title: string;
-    description: string;
+    imageId: string;
+    image?: ImagePlaceholder;
     name: string;
     role: string;
-    bio: string;
-    highlights: string[];
-    imageId: string;
-    image?: ImagePlaceholder;
+    username: string;
+    description: string;
+    quote: string;
     socials: {
-      linkedin: string;
-      twitter: string;
       instagram: string;
+      telegram: string;
       youtube: string;
     };
+  };
+  services: Array<{ icon: string; title: string; description: string }>;
+  cta: {
+    imageId: string;
+    image?: ImagePlaceholder;
+    title: string;
+    subtitle: string;
+    primaryButton: ButtonLink;
+    secondaryButton: ButtonLink;
   };
 };
 
 const DEFAULT_ABOUT_CONTENT: AboutContent = {
-  hero: { 
-    title: 'About Us', 
-    description: 'Discover our mission and what drives us', 
-    imageId: '' 
+  hero: {
+    badge: 'Trusted by learners',
+    title: 'Building premium MERN learning experiences for ambitious students.',
+    subtitle: 'Dynamic exam updates, community support and polished learning tools, powered by MongoDB and React.',
+    imageId: '',
+    primaryButton: { text: 'Explore Courses', url: '/courses' },
+    secondaryButton: { text: 'Contact Us', url: '/contact' },
   },
-  story: { 
-    title: 'Our Story', 
-    paragraphs: [] 
+  stats: [
+    { icon: 'users', count: '12k+', label: 'Students Helped' },
+    { icon: 'book-open', count: '1.8k', label: 'Resources Shared' },
+    { icon: 'trending-up', count: '97%', label: 'Career Updates' },
+    { icon: 'heart', count: '24/7', label: 'Community Support' },
+  ],
+  journey: [
+    { icon: 'sparkles', year: '2022', title: 'Launch', description: 'Started with a simple mission to simplify board updates.' },
+    { icon: 'rocket', year: '2023', title: 'Growth', description: 'Expanded our platform with community resources and live support.' },
+    { icon: 'shield-check', year: '2024', title: 'Scale', description: 'Optimized for modern MERN workflows and premium student experience.' },
+    { icon: 'award', year: '2025', title: 'Leadership', description: 'Established Xmarty Creator as a trusted academic partner.' },
+  ],
+  founder: {
+    imageId: '',
+    name: 'Ankit Raj',
+    role: 'Founder & CEO',
+    username: '@xmartycreator',
+    description: 'Crafting premium education tools with clean UI, modern workflows, and community-first learning.',
+    quote: 'We believe every student deserves access to polished resources, real support, and a modern learning journey.',
+    socials: {
+      instagram: '',
+      telegram: '',
+      youtube: '',
+    },
   },
-  values: { 
-    title: 'Core Values', 
-    description: '', 
-    items: [] 
-  },
-  founder: { 
-    title: 'Meet Our Founder', 
-    description: '', 
-    name: '', 
-    role: '', 
-    bio: '', 
-    highlights: [],
-    imageId: '', 
-    image: undefined, 
-    socials: { linkedin: '', twitter: '', instagram: '', youtube: '' } 
+  services: [
+    { icon: 'book-open', title: 'SBTE Updates', description: 'Instant board news, exam notes, and timely learning alerts.' },
+    { icon: 'globe', title: 'Study Resources', description: 'Curated notes and premium guides designed for effective revision.' },
+    { icon: 'trending-up', title: 'Career Updates', description: 'Support for exam success, job preparation and growth plans.' },
+    { icon: 'message-circle', title: 'Live Support', description: 'Real-time guidance for students, doubts and classroom readiness.' },
+    { icon: 'users', title: 'Community', description: 'A trusted peer network for collaboration, motivation and sharing.' },
+  ],
+  cta: {
+    imageId: '',
+    title: 'Let’s build your future together.',
+    subtitle: 'Launch your study journey with a premium platform made for modern learners.',
+    primaryButton: { text: 'Start Now', url: '/signup' },
+    secondaryButton: { text: 'Talk to Us', url: '/contact' },
   },
 };
 
@@ -90,9 +120,9 @@ async function getAboutContent(): Promise<AboutContent> {
     if (
       Object.keys(content).length > 0 &&
       content.hero &&
-      content.story &&
-      content.values &&
-      content.founder
+      content.founder &&
+      content.services &&
+      content.cta
     ) {
       console.log('✅ [About Page] About content loaded successfully');
       if (!contentFromDb) {
@@ -130,6 +160,20 @@ async function getAboutContent(): Promise<AboutContent> {
         }
       }
 
+      if ((content as any)?.cta?.imageId) {
+        const ctaImage = await getImageById((content as any).cta.imageId);
+        if (ctaImage) {
+          aboutContentWithImage = {
+            ...(aboutContentWithImage || (content as AboutContent)),
+            cta: {
+              ...((aboutContentWithImage || (content as AboutContent)).cta || DEFAULT_ABOUT_CONTENT.cta),
+              image: ctaImage,
+            },
+          } as AboutContent;
+          console.log('? [About Page] CTA image fetched from database');
+        }
+      }
+
       return aboutContentWithImage;
     }
     
@@ -159,20 +203,21 @@ async function getAboutContentFromDb(): Promise<AboutContent | null> {
         ...DEFAULT_ABOUT_CONTENT.hero,
         ...(aboutDoc as any).hero,
       },
-      story: {
-        ...DEFAULT_ABOUT_CONTENT.story,
-        ...(aboutDoc as any).story,
-        paragraphs: Array.isArray((aboutDoc as any).story?.paragraphs)
-          ? (aboutDoc as any).story.paragraphs
-          : [],
-      },
-      values: {
-        ...DEFAULT_ABOUT_CONTENT.values,
-        ...(aboutDoc as any).values,
-        items: Array.isArray((aboutDoc as any).values?.items)
-          ? (aboutDoc as any).values.items
-          : [],
-      },
+      stats: Array.isArray((aboutDoc as any).stats)
+        ? (aboutDoc as any).stats.map((item: any) => ({
+            icon: String(item?.icon || '') || '',
+            count: String(item?.count || ''),
+            label: String(item?.label || ''),
+          }))
+        : DEFAULT_ABOUT_CONTENT.stats,
+      journey: Array.isArray((aboutDoc as any).journey)
+        ? (aboutDoc as any).journey.map((item: any) => ({
+            icon: String(item?.icon || '') || '',
+            year: String(item?.year || ''),
+            title: String(item?.title || ''),
+            description: String(item?.description || ''),
+          }))
+        : DEFAULT_ABOUT_CONTENT.journey,
       founder: {
         ...DEFAULT_ABOUT_CONTENT.founder,
         ...(aboutDoc as any).founder,
@@ -180,9 +225,25 @@ async function getAboutContentFromDb(): Promise<AboutContent | null> {
           ...DEFAULT_ABOUT_CONTENT.founder.socials,
           ...((aboutDoc as any).founder?.socials || {}),
         },
-        highlights: Array.isArray((aboutDoc as any).founder?.highlights)
-          ? (aboutDoc as any).founder.highlights
-          : [],
+      },
+      services: Array.isArray((aboutDoc as any).services)
+        ? (aboutDoc as any).services.map((item: any) => ({
+            icon: String(item?.icon || '') || '',
+            title: String(item?.title || ''),
+            description: String(item?.description || ''),
+          }))
+        : DEFAULT_ABOUT_CONTENT.services,
+      cta: {
+        ...DEFAULT_ABOUT_CONTENT.cta,
+        ...((aboutDoc as any).cta || {}),
+        primaryButton: {
+          ...DEFAULT_ABOUT_CONTENT.cta.primaryButton,
+          ...((aboutDoc as any).cta?.primaryButton || {}),
+        },
+        secondaryButton: {
+          ...DEFAULT_ABOUT_CONTENT.cta.secondaryButton,
+          ...((aboutDoc as any).cta?.secondaryButton || {}),
+        },
       },
     };
 

@@ -17,6 +17,7 @@ import {
   MessageCircleQuestion,
   Milestone,
   NotebookPen,
+  Target,
   Users,
   UsersRound,
   Video,
@@ -41,6 +42,7 @@ import { trackLinkClick } from '@/app/analytics/actions';
 import { Footer } from '@/components/layout/footer';
 import { motion, useMotionValue, useTransform, animate, useInView } from "framer-motion";
 import DynamicHeroSection from '@/components/hero/dynamic-hero';
+import HeroSection from '@/components/HeroSection';
 
 export type Review = {
     name: string;
@@ -231,15 +233,15 @@ export default function HomePageClient({ initialHomeContent, hideHeroSection = f
 
   const heroHeading =
     (initialHomeContent?.hero?.title || '').replace(/<[^>]*>/g, '').trim() ||
-    'BCECE LE 2026 Admissions Open';
+    'Build a Smarter Future Together';
   const heroSubheading =
     (initialHomeContent?.hero?.description || '').replace(/<[^>]*>/g, '').trim() ||
-    'Limited Seats \u2022 Batch Starting Soon \u2022 Expert Faculty';
-  const heroPrimaryText = (initialHomeContent?.hero?.buttons?.primary?.text || '').trim() || 'Enroll Now';
-  const heroPrimaryLink = (initialHomeContent?.hero?.buttons?.primary?.link || '').trim() || '/courses';
+    'A premium edtech landing experience built for focused learners who want fast progress and clear outcomes.';
+  const heroPrimaryText = (initialHomeContent?.hero?.buttons?.primary?.text || '').trim() || 'Join Our Community';
+  const heroPrimaryLink = (initialHomeContent?.hero?.buttons?.primary?.link || '').trim() || '/community';
   const heroSecondaryText =
-    (initialHomeContent?.hero?.buttons?.secondary?.text || '').trim() || 'Download Syllabus';
-  const heroSecondaryLink = (initialHomeContent?.hero?.buttons?.secondary?.link || '').trim() || '#';
+    (initialHomeContent?.hero?.buttons?.secondary?.text || '').trim() || 'About Us';
+  const heroSecondaryLink = (initialHomeContent?.hero?.buttons?.secondary?.link || '').trim() || '/about';
   const heroBackgroundUseImage = initialHomeContent?.hero?.background?.useImage === true;
   const heroBackgroundImageUrl = (initialHomeContent?.hero?.background?.image?.imageUrl || '').trim();
   const heroBackgroundImageAlt =
@@ -362,152 +364,15 @@ export default function HomePageClient({ initialHomeContent, hideHeroSection = f
           />
         )}
         {!hideHeroSection && (
-        <section className="relative mx-auto flex h-[calc(100vh-4rem)] min-h-[calc(100vh-4rem)] w-full max-w-full items-center justify-center overflow-hidden py-8 min-[320px]:h-[calc(100dvh-4rem)] min-[320px]:min-h-[calc(100dvh-4rem)] sm:py-10 lg:h-[calc(100vh-10rem)] lg:min-h-[calc(100vh-10rem)]">
-          <div className="absolute inset-0 bg-gradient-to-br from-[#051236] via-[#020617] to-[#000000]" />
-
-          {heroBackgroundUseImage && heroBackgroundImageUrl ? (
-            <>
-              <Image
-                src={heroBackgroundImageUrl}
-                alt={heroBackgroundImageAlt}
-                fill
-                sizes="100vw"
-                priority
-                className="object-cover object-center"
-              />
-              <div className="absolute inset-0 bg-[linear-gradient(120deg,rgba(3,7,18,0.84),rgba(7,10,30,0.62),rgba(10,8,25,0.88))]" />
-              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_40%,rgba(147,51,234,0.28),transparent_62%)]" />
-            </>
-          ) : (
-            <>
-              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(99,102,241,0.34),transparent_45%),radial-gradient(circle_at_80%_75%,rgba(236,72,153,0.24),transparent_48%)]" />
-              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_45%,rgba(56,189,248,0.12),transparent_70%)]" />
-            </>
-          )}
-
-          <div className="container relative z-10 mx-auto flex h-full min-h-full items-center justify-center px-4 sm:px-6">
-            <motion.div
-              className="w-full max-w-6xl rounded-[18px] border border-white/10 bg-white/[0.08] px-4 py-6 shadow-[0_35px_120px_-65px_rgba(168,85,247,0.9)] backdrop-blur-[12px] sm:px-6 sm:py-8 md:px-8 md:py-10"
-              initial={{ opacity: 0, y: 14 }}
-              animate={{ opacity: 1, y: [0, -8, 0] }}
-              transition={{
-                opacity: { duration: 0.6, ease: 'easeOut' },
-                y: { duration: 9, repeat: Infinity, ease: 'easeInOut' },
-              }}
-            >
-              <div className="grid items-center gap-8 md:grid-cols-2 md:gap-10">
-                <div className="order-2 text-center md:order-1 md:text-left">
-                  <div className="relative inline-block">
-                    <div className="pointer-events-none absolute inset-x-6 -inset-y-4 rounded-full bg-fuchsia-400/30 blur-2xl" />
-                    <h1 className="relative text-3xl font-extrabold tracking-tight text-white sm:text-5xl md:text-6xl">
-                      {heroHeading}
-                    </h1>
-                  </div>
-
-                  <p className="mx-auto mt-4 max-w-3xl text-sm font-medium text-slate-200/90 sm:text-base md:mx-0 md:mt-5 md:text-xl">
-                    {heroSubheading}
-                  </p>
-
-                  <div className="mt-8 flex w-full flex-col items-stretch justify-center gap-3 sm:mt-10 sm:w-auto sm:flex-row sm:items-center md:justify-start">
-                    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.98 }}>
-                      <Button
-                        asChild
-                        size="lg"
-                        className="h-12 w-full rounded-xl border border-white/20 bg-gradient-to-r from-violet-600 to-pink-500 px-8 text-base font-semibold text-white shadow-[0_16px_46px_-18px_rgba(236,72,153,0.95)] transition-all hover:from-violet-500 hover:to-pink-400 sm:w-auto"
-                        onClick={() => trackLinkClick('Hero-CTA')}
-                      >
-                        <Link href={heroPrimaryLink}>
-                          {heroPrimaryText}
-                          <ArrowRight className="ml-2 h-4 w-4" />
-                        </Link>
-                      </Button>
-                    </motion.div>
-
-                    <Button
-                      asChild
-                      size="lg"
-                      variant="outline"
-                      className="h-12 w-full rounded-xl border border-white/60 bg-transparent px-8 text-base font-semibold text-white transition-colors hover:bg-white/10 hover:text-white sm:w-auto"
-                      onClick={() => trackLinkClick('Hero-Secondary')}
-                    >
-                      <Link href={heroSecondaryLink}>{heroSecondaryText}</Link>
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="order-1 md:order-2">
-                  <div className="relative mx-auto w-full max-w-md">
-                    <div className="pointer-events-none absolute inset-0 rounded-[26px] bg-[radial-gradient(circle_at_50%_35%,rgba(167,139,250,0.35),rgba(59,130,246,0.05),transparent_75%)] blur-2xl" />
-
-                    <motion.div
-                      className="relative rounded-[22px] border border-white/15 bg-white/[0.08] p-5 backdrop-blur-sm sm:p-6"
-                      animate={{ y: [0, -5, 0] }}
-                      transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
-                    >
-                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-200/80">
-                        Learning Highlights
-                      </p>
-
-                      <div className="mt-4 grid grid-cols-1 gap-3 min-[430px]:grid-cols-2">
-                        <div className="rounded-xl border border-white/15 bg-white/10 p-3 text-left">
-                          <GraduationCap className="h-5 w-5 text-violet-200" />
-                          <p className="mt-2 text-sm font-semibold text-white">Expert Faculty</p>
-                        </div>
-                        <div className="rounded-xl border border-white/15 bg-white/10 p-3 text-left">
-                          <BookOpen className="h-5 w-5 text-sky-200" />
-                          <p className="mt-2 text-sm font-semibold text-white">Smart Notes</p>
-                        </div>
-                        <div className="rounded-xl border border-white/15 bg-white/10 p-3 text-left">
-                          <Award className="h-5 w-5 text-amber-200" />
-                          <p className="mt-2 text-sm font-semibold text-white">Top Results</p>
-                        </div>
-                        <div className="rounded-xl border border-white/15 bg-white/10 p-3 text-left">
-                          <ClipboardList className="h-5 w-5 text-pink-200" />
-                          <p className="mt-2 text-sm font-semibold text-white">Practice Sets</p>
-                        </div>
-                      </div>
-                    </motion.div>
-
-                    <motion.div
-                      className="absolute -left-3 top-6 inline-flex items-center gap-2 rounded-full border border-white/20 bg-[#0f1b42]/85 px-3 py-1.5 text-xs font-semibold text-white shadow-lg"
-                      animate={{ y: [0, -10, 0] }}
-                      transition={{ duration: 3.2, repeat: Infinity, ease: 'easeInOut' }}
-                    >
-                      <GraduationCap className="h-4 w-4 text-violet-200" />
-                      Faculty
-                    </motion.div>
-
-                    <motion.div
-                      className="absolute -right-3 top-14 inline-flex items-center gap-2 rounded-full border border-white/20 bg-[#1b1438]/85 px-3 py-1.5 text-xs font-semibold text-white shadow-lg"
-                      animate={{ y: [0, 10, 0] }}
-                      transition={{ duration: 3.8, repeat: Infinity, ease: 'easeInOut', delay: 0.4 }}
-                    >
-                      <BookOpen className="h-4 w-4 text-sky-200" />
-                      Books
-                    </motion.div>
-
-                    <motion.div
-                      className="absolute -bottom-3 right-10 inline-flex items-center gap-2 rounded-full border border-white/20 bg-[#3a1534]/85 px-3 py-1.5 text-xs font-semibold text-white shadow-lg"
-                      animate={{ y: [0, -8, 0] }}
-                      transition={{ duration: 3.4, repeat: Infinity, ease: 'easeInOut', delay: 0.7 }}
-                    >
-                      <Award className="h-4 w-4 text-amber-200" />
-                      Prize
-                    </motion.div>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        </section>
+          <HeroSection />
         )}
 
         {showScrollingBanner && (
-          <section className="relative w-full overflow-hidden border-y border-cyan-200/70 bg-gradient-to-r from-sky-50 via-cyan-50 to-indigo-50 dark:border-indigo-300/20 dark:bg-gradient-to-r dark:from-[#070d24] dark:via-[#0a1438] dark:to-[#120c2b]">
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(14,116,144,0.18),transparent_55%)] dark:bg-[radial-gradient(circle_at_top_left,rgba(129,140,248,0.18),transparent_58%)]" />
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_bottom_right,rgba(59,130,246,0.14),transparent_55%)] dark:bg-[radial-gradient(circle_at_bottom_right,rgba(236,72,153,0.13),transparent_58%)]" />
-            <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-20 bg-gradient-to-r from-sky-50 dark:from-[#070d24] to-transparent" />
-            <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-20 bg-gradient-to-l from-indigo-50 dark:from-[#120c2b] to-transparent" />
+          <section className="relative w-full overflow-hidden border-y border-zinc-200 bg-white dark:border-white/10 dark:bg-black">
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,59,48,0.05),transparent_55%)]" />
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_bottom_right,rgba(255,59,48,0.03),transparent_55%)]" />
+            <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-20 bg-gradient-to-r from-white dark:from-black to-transparent" />
+            <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-20 bg-gradient-to-l from-white dark:from-black to-transparent" />
 
             <motion.div
               className="relative flex w-max items-center py-3 md:py-3.5"
@@ -519,10 +384,10 @@ export default function HomePageClient({ initialHomeContent, hideHeroSection = f
                   {Array.from({ length: 3 }).map((_, itemIndex) => (
                     <div
                       key={`banner-item-${copyIndex}-${itemIndex}`}
-                      className="inline-flex items-center gap-3 whitespace-nowrap rounded-full border border-cyan-300/55 bg-white/90 px-3 py-1.5 text-slate-900 shadow-[0_10px_28px_-20px_rgba(15,23,42,0.32)] backdrop-blur-sm dark:border-white/20 dark:bg-white/10 dark:text-white dark:shadow-none"
+                      className="inline-flex items-center gap-3 whitespace-nowrap rounded-full border border-zinc-200 bg-white/90 px-3 py-1.5 text-slate-900 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-zinc-900 dark:text-white"
                     >
                       {bannerContent.imageUrl && (
-                        <div className="relative h-7 w-7 shrink-0 overflow-hidden rounded-full border border-cyan-300/60 dark:border-white/45">
+                        <div className="relative h-7 w-7 shrink-0 overflow-hidden rounded-full border border-red-500/20">
                           <Image
                             src={bannerContent.imageUrl}
                             alt={bannerContent.imageAlt}
@@ -539,7 +404,7 @@ export default function HomePageClient({ initialHomeContent, hideHeroSection = f
 
                       <Link
                         href={bannerContent.linkHref}
-                        className="inline-flex shrink-0 items-center gap-1 rounded-full bg-gradient-to-r from-violet-600 to-pink-500 px-3 py-1 text-xs font-semibold text-white shadow-[0_10px_30px_-18px_rgba(236,72,153,0.95)] transition-transform hover:scale-105"
+                        className="inline-flex shrink-0 items-center gap-1 rounded-full bg-red-600 px-3 py-1 text-xs font-semibold text-white shadow-[0_10px_30px_-18px_rgba(255,59,48,0.5)] transition-transform hover:scale-105"
                         onClick={() => trackLinkClick('Scrolling-Banner')}
                       >
                         {bannerContent.linkText}
@@ -555,30 +420,32 @@ export default function HomePageClient({ initialHomeContent, hideHeroSection = f
 
         {/* ===== QUICK ACCESS SECTION ===== */}
         <motion.section 
-          className="w-full py-16 md:py-24 relative overflow-hidden"
+          className="w-full py-20 md:py-32 relative overflow-hidden"
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, amount: 0.2 }}
           variants={fadeIn}
         >
-          <div className="absolute inset-0 bg-gradient-to-b from-slate-50 via-white to-slate-50 dark:from-slate-900/70 dark:via-slate-900/40 dark:to-slate-950" />
-          <div className="absolute -left-32 top-10 h-72 w-72 rounded-full bg-cyan-200/40 blur-3xl dark:bg-cyan-500/12" />
-          <div className="absolute right-0 bottom-0 h-80 w-80 rounded-full bg-blue-200/30 blur-3xl dark:bg-blue-500/10" />
+          <div className="absolute inset-0 bg-white dark:bg-black" />
+          <div className="absolute -left-32 top-10 h-72 w-72 rounded-full bg-red-500/5 blur-3xl dark:bg-red-500/10" />
+          <div className="absolute right-0 bottom-0 h-80 w-80 rounded-full bg-red-500/5 blur-3xl dark:bg-red-500/5" />
           
           <div className="container mx-auto px-4 md:px-6 relative z-10">
             <motion.div 
-              className="type-rhythm text-center max-w-3xl mx-auto space-y-3"
+              className="flex flex-col items-center text-center max-w-3xl mx-auto mb-16"
               variants={fadeIn}
             >
-              <h2 className="type-h2 inline-block text-slate-900 dark:text-white">
-                {initialHomeContent?.quickAccess?.title || 'Quick Access'}
+              <div className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-bold uppercase tracking-[0.25em] bg-red-500/10 text-red-600 border border-red-500/20 mb-6">
+                <Target className="h-4 w-4" />
+                Your Success Roadmap
+              </div>
+              <h2 className="text-4xl md:text-5xl lg:text-6xl font-black text-zinc-900 dark:text-zinc-50 leading-tight mb-6">
+                {initialHomeContent?.quickAccess?.title || 'Our Mastery Ecosystem'}
               </h2>
               
-              {initialHomeContent?.quickAccess?.description && (
-                <p className="type-body text-slate-600 dark:text-slate-300 leading-relaxed">
-                  {initialHomeContent.quickAccess.description}
-                </p>
-              )}
+              <p className="text-lg md:text-xl text-zinc-600 dark:text-zinc-400 leading-relaxed max-w-2xl font-medium">
+                {initialHomeContent?.quickAccess?.description || 'Explore our specialized learning tracks designed to take you from beginner to professional.'}
+              </p>
             </motion.div>
             
             {quickLinks.length > 0 ? (
@@ -602,29 +469,33 @@ export default function HomePageClient({ initialHomeContent, hideHeroSection = f
                         aria-label={`${item.title} quick access`}
                       >
                         <div
-                          className={
-                            isFourColumn
-                              ? 'h-full rounded-2xl border border-cyan-200/70 bg-gradient-to-br from-white via-sky-50/90 to-cyan-50/85 shadow-[0_20px_58px_-38px_rgba(15,23,42,0.35)] backdrop-blur-sm transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-[0_28px_72px_-36px_rgba(8,145,178,0.35)] dark:border-cyan-400/30 dark:bg-gradient-to-br dark:from-[#09183f] dark:via-[#061334] dark:to-[#040c24] dark:shadow-[0_24px_68px_-34px_rgba(2,6,23,0.9)] dark:group-hover:shadow-[0_22px_66px_-34px_rgba(34,211,238,0.35)]'
-                              : 'h-full rounded-2xl border border-cyan-50 bg-sky-50/90 shadow-[0_15px_50px_-30px_rgba(0,0,0,0.5)] backdrop-blur-sm transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-xl dark:border-slate-700/80 dark:bg-slate-900/90 dark:shadow-[0_24px_64px_-40px_rgba(2,6,23,0.92)]'
-                          }
+                          className="h-full group/card relative rounded-[2.5rem] border border-zinc-200 bg-white p-10 shadow-xl transition-all duration-700 hover:-translate-y-3 hover:shadow-[0_40px_100px_-40px_rgba(220,38,38,0.2)] hover:border-red-500/40 dark:border-white/5 dark:bg-zinc-900 overflow-hidden"
                         >
-                          <div className={isFourColumn ? 'flex flex-col gap-3 px-5 py-6' : 'flex flex-col items-center text-center gap-4 px-8 py-10'}>
-                            <div
-                              className={
-                                isFourColumn
-                                  ? 'h-11 w-11 rounded-xl bg-cyan-500/12 text-cyan-700 dark:bg-cyan-500/20 dark:text-cyan-100 flex items-center justify-center group-hover:scale-110 transition-transform duration-300'
-                                  : 'h-12 w-12 rounded-xl bg-cyan-500/10 text-cyan-600 dark:bg-cyan-500/15 dark:text-cyan-100 flex items-center justify-center group-hover:scale-110 transition-transform duration-300'
-                              }
-                            >
-                              <Icon className={isFourColumn ? 'h-5 w-5' : 'h-6 w-6'} />
+                          {/* Animated Background Decor */}
+                          <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-red-500/5 blur-3xl transition-all duration-700 group-hover/card:bg-red-500/10 group-hover/card:scale-125 opacity-0 group-hover/card:opacity-100" />
+                          
+                          <div className="relative z-10 flex flex-col h-full">
+                            <div className="mb-8 flex items-center justify-between">
+                              <div className="flex h-16 w-16 items-center justify-center rounded-[1.5rem] bg-red-500/10 text-red-600 transition-all duration-700 group-hover/card:scale-110 group-hover/card:rotate-[10deg] group-hover/card:bg-red-600 group-hover/card:text-white dark:bg-red-500/20 dark:text-red-400">
+                                <Icon className="h-8 w-8" />
+                              </div>
+                              <span className="text-[10px] font-black uppercase tracking-[0.25em] text-zinc-400 dark:text-zinc-500 group-hover/card:text-red-500 transition-colors">
+                                Core Track
+                              </span>
                             </div>
-                            <div className={isFourColumn ? 'space-y-1 text-left' : 'space-y-2'}>
-                              <h3 className={isFourColumn ? 'text-lg font-semibold text-slate-900 dark:text-slate-100' : 'text-xl font-semibold text-slate-900 dark:text-slate-100'}>
+                            
+                            <div className="space-y-4">
+                              <h3 className="text-3xl font-extrabold text-zinc-900 dark:text-zinc-50 tracking-tight transition-colors group-hover/card:text-red-600 dark:group-hover/card:text-red-400">
                                 {item.title}
                               </h3>
-                              <p className={isFourColumn ? 'text-sm text-slate-600 dark:text-slate-200/90 leading-relaxed' : 'text-sm text-slate-600 dark:text-slate-200/90 leading-relaxed'}>
+                              <p className="text-lg text-zinc-600 dark:text-zinc-400 leading-relaxed line-clamp-3 font-medium">
                                 {item.description}
                               </p>
+                            </div>
+
+                            <div className="mt-auto pt-10 flex items-center gap-3 text-sm font-black uppercase tracking-widest text-red-600 dark:text-red-500 opacity-0 -translate-x-4 transition-all duration-500 group-hover/card:opacity-100 group-hover/card:translate-x-0">
+                              Choose This Path
+                              <ArrowRight className="h-5 w-5" />
                             </div>
                           </div>
                         </div>
@@ -645,91 +516,102 @@ export default function HomePageClient({ initialHomeContent, hideHeroSection = f
 
         {/* ===== ACHIEVEMENTS SECTION ===== */}
         <motion.section 
-          className="w-full py-20 md:py-28 relative overflow-hidden"
+          className="w-full py-20 md:py-32 relative overflow-hidden"
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, amount: 0.2 }}
           variants={fadeIn}
         >
           {/* Background + glows */}
-          <div className="absolute inset-0 bg-gradient-to-b from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950" />
-          <div className="pointer-events-none absolute -left-24 top-10 h-80 w-80 rounded-full bg-blue-400/20 dark:bg-blue-500/20 blur-3xl" />
-          <div className="pointer-events-none absolute right-0 top-1/3 h-80 w-80 rounded-full bg-purple-400/20 dark:bg-purple-500/25 blur-3xl" />
-          <div className="pointer-events-none absolute left-1/3 bottom-0 h-72 w-72 rounded-full bg-cyan-400/20 dark:bg-cyan-500/20 blur-3xl" />
+          <div className="absolute inset-0 bg-white dark:bg-black" />
+          <div className="pointer-events-none absolute -left-24 top-10 h-80 w-80 rounded-full bg-red-500/5 dark:bg-red-500/10 blur-3xl" />
+          <div className="pointer-events-none absolute right-0 top-1/3 h-80 w-80 rounded-full bg-red-500/5 dark:bg-red-500/5 blur-3xl" />
+          <div className="pointer-events-none absolute left-1/3 bottom-0 h-72 w-72 rounded-full bg-red-500/5 dark:bg-red-500/5 blur-3xl" />
 
           <div className="container mx-auto px-4 md:px-6 relative z-10">
             {/* Header */}
             <motion.div 
-              className="type-rhythm flex flex-col items-center justify-center space-y-4 text-center mb-14"
+              className="flex flex-col items-center text-center max-w-4xl mx-auto mb-20"
               variants={fadeIn}
             >
-              <div className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium shadow-sm bg-emerald-50 text-emerald-700 border border-emerald-200/70 dark:bg-emerald-500/10 dark:border-emerald-400/40 dark:text-emerald-200">
+              <div className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-black uppercase tracking-[0.25em] bg-red-500/10 text-red-600 border border-red-500/20 mb-6">
                 <Award className="h-4 w-4" />
-                {achievementsContent.badge}
+                Proven Excellence
               </div>
               
-              <h2 className="type-h2 type-heading-accent inline-block text-slate-900 dark:text-white">
+              <h2 className="text-4xl md:text-5xl lg:text-6xl font-black text-zinc-900 dark:text-zinc-50 leading-tight mb-6">
                 {achievementsContent.title}
               </h2>
               
-              <p className="type-body max-w-[800px] text-slate-600 dark:text-slate-200/80 leading-relaxed">
+              <p className="text-lg md:text-xl text-zinc-600 dark:text-zinc-400 leading-relaxed font-medium max-w-2xl">
                 {achievementsContent.description}
               </p>
             </motion.div>
 
             {/* Stats Grid */}
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
               {achievements.map((achievement, index) => (
                 <motion.div
                   key={index}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  transition={{ 
+                    duration: 0.5, 
+                    delay: index * 0.1,
+                    type: "spring",
+                    stiffness: 100
+                  }}
                   viewport={{ once: true }}
-                  whileHover={{ y: -6 }}
-                  className="group"
+                  className="relative group"
                 >
-                  <div className="relative overflow-hidden rounded-2xl border border-slate-200/80 dark:border-white/10 bg-gradient-to-br from-white via-slate-50 to-slate-100 dark:from-slate-900/70 dark:via-slate-900/40 dark:to-slate-800/60 shadow-[0_25px_80px_-60px_rgba(59,130,246,0.35)] px-6 py-8 backdrop-blur">
-                    <div className="absolute inset-x-0 -top-px h-px bg-gradient-to-r from-purple-400/70 via-blue-400/70 to-cyan-400/70" />
-                    <div className="flex items-center justify-center">
-                      <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-purple-500/25 to-blue-500/25 dark:from-purple-500/30 dark:to-blue-500/30 flex items-center justify-center text-blue-700 dark:text-blue-100 border border-slate-200/50 dark:border-white/10 shadow-inner shadow-blue-500/10">
-                        <achievement.icon className="h-6 w-6" />
+                  <div className="h-full relative overflow-hidden rounded-[2.5rem] border border-zinc-200 dark:border-white/5 bg-white dark:bg-zinc-900/50 backdrop-blur-xl p-8 transition-all duration-500 hover:border-red-500/30 hover:shadow-2xl hover:shadow-red-500/10">
+                    {/* Corner Accent */}
+                    <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-100 transition-opacity duration-500">
+                      <achievement.icon className="h-12 w-12 text-red-600 dark:text-red-500 transform rotate-12" />
+                    </div>
+
+                    <div className="relative z-10 space-y-6">
+                      <div className="h-14 w-14 rounded-2xl bg-red-600 text-white flex items-center justify-center shadow-lg shadow-red-600/20">
+                        <achievement.icon className="h-7 w-7" />
+                      </div>
+
+                      <div className="space-y-1">
+                        <p className="text-5xl md:text-6xl font-black text-red-600 dark:text-red-500 tracking-tighter">
+                          <AnimatedCounter value={achievement.value} suffix={achievement.suffix} />
+                        </p>
+                        <p className="text-sm font-bold uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400">
+                          {achievement.label}
+                        </p>
                       </div>
                     </div>
 
-                    <div className="mt-6 text-center space-y-2">
-                      <p className="text-4xl md:text-5xl font-extrabold bg-gradient-to-r from-rose-500 via-fuchsia-500 to-blue-500 bg-clip-text text-transparent dark:drop-shadow-[0_0_18px_rgba(236,72,153,0.45)]">
-                        <AnimatedCounter value={achievement.value} suffix={achievement.suffix} />
-                      </p>
-                      <p className="text-sm uppercase tracking-[0.12em] text-slate-600 dark:text-slate-300/80">
-                        {achievement.label}
-                      </p>
+                    {/* Background Pattern */}
+                    <div className="absolute bottom-0 right-0 opacity-[0.03] dark:opacity-[0.05] pointer-events-none">
+                      <achievement.icon className="h-32 w-32 -mb-8 -mr-8" />
                     </div>
-
-                    <div className="absolute inset-0 rounded-2xl border border-white/5 pointer-events-none" />
-                    <div className="absolute -bottom-12 left-1/2 h-24 w-24 -translate-x-1/2 bg-blue-400/10 dark:bg-blue-500/15 blur-2xl" />
                   </div>
                 </motion.div>
               ))}
             </div>
+
           </div>
         </motion.section>
 
         {/* ===== WHY CHOOSE US SECTION ===== */}
         {initialHomeContent?.whyChooseUs?.title && (
           <motion.section 
-            className="w-full py-20 md:py-28 relative overflow-hidden"
+            className="w-full py-20 md:py-32 relative overflow-hidden"
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, amount: 0.2 }}
             variants={fadeIn}
           >
             {/* Background */}
-            <div className="absolute inset-0 bg-gradient-to-b from-slate-50 to-white dark:from-slate-900/30 dark:to-background" />
+            <div className="absolute inset-0 bg-white dark:bg-black" />
             
             {/* Decorative elements */}
             <div className="absolute inset-0 overflow-hidden">
-              <div className="absolute top-1/2 right-0 w-96 h-96 bg-purple-400/10 rounded-full blur-3xl opacity-30" />
+              <div className="absolute top-1/2 right-0 w-96 h-96 bg-red-500/5 rounded-full blur-3xl opacity-30" />
             </div>
 
             <div className="container mx-auto px-4 md:px-6 relative z-10">
@@ -738,9 +620,9 @@ export default function HomePageClient({ initialHomeContent, hideHeroSection = f
                 className="type-rhythm flex flex-col items-center justify-center space-y-4 text-center mb-16"
                 variants={fadeIn}
               >
-                <div className="inline-flex items-center gap-2 bg-amber-500/10 border border-amber-200/50 dark:border-amber-800/50 rounded-full px-4 py-2">
-                  <CheckCircle2 className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-                  <span className="text-sm font-medium text-amber-600 dark:text-amber-400">
+                <div className="inline-flex items-center gap-2 bg-red-500/10 border border-red-200/50 dark:border-red-800/50 rounded-full px-4 py-2">
+                  <CheckCircle2 className="h-4 w-4 text-red-600 dark:text-red-400" />
+                  <span className="text-sm font-medium text-red-600 dark:text-red-400">
                     Why We Stand Out
                   </span>
                 </div>
@@ -768,23 +650,23 @@ export default function HomePageClient({ initialHomeContent, hideHeroSection = f
                   >
                     <div className="relative p-8 rounded-2xl bg-white dark:bg-slate-800/50 border-2 border-slate-200 dark:border-slate-700 hover:border-primary/30 transition-all duration-300 hover:shadow-lg">
                       {/* Background glow */}
-                      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl" />
+                      <div className="absolute inset-0 bg-gradient-to-br from-red-600/5 to-black opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl" />
                       
                       <div className="relative">
                         <div className="flex items-start gap-4">
-                          <div className="flex-shrink-0 p-3 bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/20 dark:to-purple-900/20 rounded-xl group-hover:scale-110 transition-transform duration-300">
+                          <div className="flex-shrink-0 p-3 bg-red-500/10 dark:bg-red-500/20 rounded-xl group-hover:scale-110 transition-transform duration-300">
                             {feature.icon && (
-                              <div className="text-primary">
+                              <div className="text-red-600 dark:text-red-400">
                                 {feature.icon}
                               </div>
                             )}
                           </div>
                           
                           <div className="flex-1">
-                            <h3 className="text-xl font-bold text-foreground mb-2">
+                            <h3 className="text-xl font-bold text-zinc-900 dark:text-zinc-50 mb-2">
                               {feature.title}
                             </h3>
-                            <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
+                            <p className="text-zinc-600 dark:text-zinc-400 leading-relaxed font-medium">
                               {feature.description}
                             </p>
                           </div>
@@ -801,19 +683,19 @@ export default function HomePageClient({ initialHomeContent, hideHeroSection = f
         {/* ===== TESTIMONIALS SECTION ===== */}
         {(initialHomeContent?.testimonials?.title || testimonials.length > 0) && (
           <motion.section 
-            className="w-full py-20 md:py-28 relative overflow-hidden"
+            className="w-full py-20 md:py-32 relative overflow-hidden"
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, amount: 0.2 }}
             variants={fadeIn}
           >
             {/* Background */}
-            <div className="absolute inset-0 bg-gradient-to-b from-background to-slate-50 dark:to-slate-900/30" />
+            <div className="absolute inset-0 bg-white dark:bg-black" />
             
             {/* Decorative elements */}
             <div className="absolute inset-0 overflow-hidden">
-              <div className="absolute -top-40 -left-40 w-80 h-80 bg-blue-400/10 rounded-full blur-3xl opacity-30" />
-              <div className="absolute -bottom-40 -right-40 w-80 h-80 bg-purple-400/10 rounded-full blur-3xl opacity-30" />
+              <div className="absolute -top-40 -left-40 w-80 h-80 bg-red-400/5 rounded-full blur-3xl opacity-30" />
+              <div className="absolute -bottom-40 -right-40 w-80 h-80 bg-red-400/5 rounded-full blur-3xl opacity-30" />
             </div>
 
             <div className="container mx-auto px-4 md:px-6 relative z-10">
@@ -822,9 +704,9 @@ export default function HomePageClient({ initialHomeContent, hideHeroSection = f
                 className="type-rhythm flex flex-col items-center justify-center space-y-4 text-center mb-16"
                 variants={fadeIn}
               >
-                <div className="inline-flex items-center gap-2 bg-pink-500/10 border border-pink-200/50 dark:border-pink-800/50 rounded-full px-4 py-2">
-                  <Users className="h-4 w-4 text-pink-600 dark:text-pink-400" />
-                  <span className="text-sm font-medium text-pink-600 dark:text-pink-400">
+                <div className="inline-flex items-center gap-2 bg-red-500/10 border border-red-200/50 dark:border-red-800/50 rounded-full px-4 py-2">
+                  <Users className="h-4 w-4 text-red-600 dark:text-red-400" />
+                  <span className="text-sm font-medium text-red-600 dark:text-red-400">
                     Real Success Stories
                   </span>
                 </div>
@@ -855,11 +737,10 @@ export default function HomePageClient({ initialHomeContent, hideHeroSection = f
                         transition={{ delay: index * 0.05 }}
                         viewport={{ once: true }}
                       >
-                        <Card className="group relative h-full select-none overflow-hidden border border-slate-200/70 bg-gradient-to-br from-white/95 via-slate-50 to-slate-100/80 shadow-[0_25px_80px_-60px_rgba(59,130,246,0.55)] hover-lift hover-sheen dark:border-white/10 dark:from-slate-900/70 dark:via-slate-900/40 dark:to-slate-800/60">
+                        <Card className="group relative h-full select-none overflow-hidden border border-zinc-200 bg-white shadow-xl dark:border-white/10 dark:bg-zinc-900">
                           <div className="pointer-events-none absolute inset-0">
-                            <div className="absolute -top-20 -right-20 h-40 w-40 rounded-full bg-purple-400/15 blur-3xl" />
-                            <div className="absolute -bottom-20 -left-20 h-40 w-40 rounded-full bg-cyan-400/15 blur-3xl" />
-                            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(99,102,241,0.10),transparent_55%)]" />
+                            <div className="absolute -top-20 -right-20 h-40 w-40 rounded-full bg-red-500/5 blur-3xl" />
+                            <div className="absolute -bottom-20 -left-20 h-40 w-40 rounded-full bg-red-500/5 blur-3xl" />
                           </div>
 
                           {/* Star rating */}
@@ -890,7 +771,7 @@ export default function HomePageClient({ initialHomeContent, hideHeroSection = f
                             >
                               &ldquo;
                             </span>
-                            <p className="text-base md:text-lg leading-relaxed text-slate-700 dark:text-slate-200 italic">
+                            <p className="text-base md:text-lg leading-relaxed text-zinc-800 dark:text-zinc-200 italic font-medium">
                               &ldquo;{testimonial.testimonial}&rdquo;
                             </p>
                           </CardContent>
@@ -907,8 +788,8 @@ export default function HomePageClient({ initialHomeContent, hideHeroSection = f
                                 <p className="text-sm text-muted-foreground">{testimonial.role}</p>
                               </div>
                             </div>
-                            <div className="flex items-center gap-2 rounded-full bg-white/80 dark:bg-white/5 px-3 py-1 text-xs font-semibold text-slate-700 dark:text-slate-200 border border-slate-200/70 dark:border-white/10">
-                              <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                            <div className="flex items-center gap-2 rounded-full bg-white/80 dark:bg-white/5 px-3 py-1 text-xs font-semibold text-slate-700 dark:text-slate-200 border border-zinc-200 dark:border-white/10">
+                              <span className="h-2 w-2 rounded-full bg-red-500" />
                               Verified
                             </div>
                           </CardFooter>
@@ -928,18 +809,18 @@ export default function HomePageClient({ initialHomeContent, hideHeroSection = f
 
         {/* ===== CTA SECTION ===== */}
         <motion.section 
-          className="w-full py-20 md:py-28 relative overflow-hidden"
+          className="w-full py-20 md:py-32 relative overflow-hidden"
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, amount: 0.2 }}
           variants={fadeIn}
         >
           {/* Background */}
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 opacity-5" />
-          <div className="absolute inset-0 bg-gradient-to-br from-background via-background to-slate-50 dark:to-slate-900/50" />
+          <div className="absolute inset-0 bg-gradient-to-r from-red-600 to-black opacity-5" />
+          <div className="absolute inset-0 bg-white dark:bg-black" />
 
           <div className="container mx-auto px-4 md:px-6 relative z-10">
-            <div className="rounded-3xl bg-gradient-to-r from-blue-600 to-purple-600 p-8 md:p-16 text-center border-2 border-blue-400/30 shadow-2xl">
+            <div className="rounded-3xl bg-gradient-to-br from-red-600 to-black p-8 md:p-16 text-center border-2 border-white/10 shadow-2xl">
               <motion.h2 
                 className="type-h2 !text-white mb-6"
                 variants={fadeIn}
@@ -948,7 +829,7 @@ export default function HomePageClient({ initialHomeContent, hideHeroSection = f
               </motion.h2>
               
               <motion.p 
-                className="type-body max-w-[600px] !text-blue-50 mx-auto mb-8"
+                className="type-body max-w-[600px] !text-zinc-200 mx-auto mb-8"
                 variants={fadeIn}
               >
                 Join our community of learners and start your journey to success today.
@@ -961,7 +842,7 @@ export default function HomePageClient({ initialHomeContent, hideHeroSection = f
                 <Button 
                   asChild 
                   size="lg"
-                  className="bg-white text-blue-600 hover:bg-blue-50 font-bold shadow-lg"
+                  className="bg-white text-red-600 hover:bg-zinc-100 font-bold shadow-lg"
                 >
                   <Link href="/courses">
                     Get Started Now

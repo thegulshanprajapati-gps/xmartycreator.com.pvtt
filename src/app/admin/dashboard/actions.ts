@@ -591,14 +591,9 @@ export async function updateSiteSettings(prevState: { message: string; data: any
     try {
         console.log('🔧 [Admin] Updating site settings...');
         const rawCursorStyle = formData.get('cursor-style') as string;
-        const rawLoginOnlyOnBceceLe = formData.get('login-only-bcece-le');
         const cursorStyle = isValidCursorStyle(rawCursorStyle)
             ? rawCursorStyle
             : DEFAULT_SITE_SETTINGS.cursorStyle;
-        const loginButtonOnlyOnBceceLe =
-            rawLoginOnlyOnBceceLe === 'true' ||
-            rawLoginOnlyOnBceceLe === '1' ||
-            rawLoginOnlyOnBceceLe === 'on';
 
         const client = await clientPromise;
         const dbName = process.env.MONGO_DB || process.env.MONGODB_DB || 'xmartydb';
@@ -610,7 +605,6 @@ export async function updateSiteSettings(prevState: { message: string; data: any
                 $set: {
                     slug: 'global',
                     cursorStyle,
-                    loginButtonOnlyOnBceceLe,
                     updatedAt: new Date(),
                 },
                 $unset: { content: '' },
@@ -625,7 +619,7 @@ export async function updateSiteSettings(prevState: { message: string; data: any
         console.log('✅ [Admin] Site settings updated successfully');
         return {
             message: 'Site settings updated successfully!',
-            data: { cursorStyle, loginButtonOnlyOnBceceLe },
+            data: { cursorStyle },
         };
     } catch (error: any) {
         console.error('❌ [Admin] Failed to update site settings:', error);

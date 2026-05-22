@@ -9,12 +9,12 @@ export type HeroContent = {
 };
 
 export const DEFAULT_HERO_FALLBACK_CONTENT: HeroContent = {
-  heading: 'BCECE LE 2026 Admissions Open',
-  subheading: 'Limited Seats | Batch Starting Soon | Expert Faculty',
-  primaryButtonText: 'Enroll Now',
-  primaryButtonLink: '/courses',
-  secondaryButtonText: 'Download Syllabus',
-  secondaryButtonLink: '#',
+  heading: 'Build a Smarter Future Together',
+  subheading: 'A premium edtech landing experience built for focused learners who want fast progress and clear outcomes.',
+  primaryButtonText: 'Join Our Community',
+  primaryButtonLink: '/community',
+  secondaryButtonText: 'About Us',
+  secondaryButtonLink: '/about',
   isActive: true,
 };
 

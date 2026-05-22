@@ -12,7 +12,6 @@ export type CursorStyle =
 
 export type SiteSettings = {
   cursorStyle: CursorStyle;
-  loginButtonOnlyOnBceceLe: boolean;
 };
 
 const CURSOR_STYLE_SET = new Set<CursorStyle>([
@@ -28,7 +27,6 @@ const CURSOR_STYLE_SET = new Set<CursorStyle>([
 
 export const DEFAULT_SITE_SETTINGS: SiteSettings = {
   cursorStyle: 'sparkle',
-  loginButtonOnlyOnBceceLe: false,
 };
 
 const parseBoolean = (value: unknown, fallback = false): boolean => {
@@ -69,17 +67,7 @@ export async function getSiteSettings(): Promise<SiteSettings> {
       ? (rawCursorStyle as CursorStyle)
       : DEFAULT_SITE_SETTINGS.cursorStyle;
 
-    const rawLoginButtonOnlyOnBceceLe =
-      (doc as any).loginButtonOnlyOnBceceLe ??
-      (doc as any)?.content?.loginButtonOnlyOnBceceLe ??
-      DEFAULT_SITE_SETTINGS.loginButtonOnlyOnBceceLe;
-
-    const loginButtonOnlyOnBceceLe = parseBoolean(
-      rawLoginButtonOnlyOnBceceLe,
-      DEFAULT_SITE_SETTINGS.loginButtonOnlyOnBceceLe
-    );
-
-    return { cursorStyle, loginButtonOnlyOnBceceLe };
+    return { cursorStyle };
   } catch (error) {
     console.error('❌ [Site Settings] Failed to fetch settings:', error);
     return DEFAULT_SITE_SETTINGS;

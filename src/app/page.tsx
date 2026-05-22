@@ -81,11 +81,11 @@ type HomeContent = {
 
 const DEFAULT_HOME_CONTENT: HomeContent = {
   hero: {
-    title: 'Learn & Grow',
-    description: 'Master new skills with our expert courses',
+    title: 'Master the Future of Technology',
+    description: 'Elite-level education for the digital frontier. One lesson at a time, focused and distraction-free.',
     buttons: {
-      primary: { text: 'Get Started', link: '/courses' },
-      secondary: { text: 'Join Community', link: '#' },
+      primary: { text: 'Join the Revolution', link: '/community' },
+      secondary: { text: 'Our Philosophy', link: '/about' },
     },
     background: {
       useImage: false,
@@ -101,29 +101,41 @@ const DEFAULT_HOME_CONTENT: HomeContent = {
     animation: 'slide',
   },
   quickAccess: { 
-    title: 'Quick Access', 
-    description: 'Jump directly to what you need',
+    title: 'Curated Knowledge Base', 
+    description: 'Precision-engineered resources to accelerate your learning journey.',
     columns: 3,
     items: [
-      { title: 'Latest Notes', description: 'Access the most recent study notes', imageId: 'placeholder-1', link: '#' },
-      { title: 'Syllabus', description: 'Download semester-wise syllabus', imageId: 'placeholder-2', link: '#' },
-      { title: 'Reference Books', description: 'Find recommended textbooks', imageId: 'placeholder-3', link: '#' },
-      { title: 'PYQ', description: 'Previous year question papers', imageId: 'placeholder-4', link: '#' },
-      { title: 'Practical', description: 'Semester-wise practical syllabus and lab details', imageId: 'placeholder-5', link: '#' },
-      { title: 'Team Work', description: 'Collaborative learning through projects and activities', imageId: 'placeholder-6', link: '#' }
+      { title: 'Modern Notes', description: 'Distilled insights from industry leaders.', imageId: 'placeholder-1', link: '#' },
+      { title: 'Core Syllabus', description: 'Strategic roadmaps for career mastery.', imageId: 'placeholder-2', link: '#' },
+      { title: 'Mastery Books', description: 'Curated literature for the deep learner.', imageId: 'placeholder-3', link: '#' },
+      { title: 'Elite PYQs', description: 'Challenge yourself with high-stakes problems.', imageId: 'placeholder-4', link: '#' },
+      { title: 'Lab Modules', description: 'Hands-on practice in the digital sandbox.', imageId: 'placeholder-5', link: '#' },
+      { title: 'Collaborative Projects', description: 'Synergize with the next generation of creators.', imageId: 'placeholder-6', link: '#' }
     ] 
   },
-  whyChooseUs: { title: '', description: '', features: [] },
-  testimonials: { title: '', description: '', reviews: [] },
+  whyChooseUs: { 
+    title: 'The Future of Learning', 
+    description: 'We don\'t just teach. We engineer your success with a platform built for deep focus.', 
+    features: [
+      { title: 'Ultra-Slim UI', description: 'Zero distractions. 100% focus on your growth.' },
+      { title: 'Real Mentors', description: 'Direct access to architects of the future.' },
+      { title: 'Career Velocity', description: 'Move from zero to elite faster than ever.' }
+    ] 
+  },
+  testimonials: { 
+    title: 'Voices of Success', 
+    description: 'Join thousands of high-achievers who transformed their path with Xmarty.', 
+    reviews: [] 
+  },
   achievements: {
-    badge: 'Proven Track Record',
-    title: 'Our Impact by the Numbers',
-    description: 'Join thousands of learners who are transforming their careers and skills',
+    badge: 'Global Excellence',
+    title: 'Performance & Impact',
+    description: 'Measuring success through the growth of our elite student body.',
     stats: [
-      { value: 50000, suffix: '+', label: 'Happy Students' },
-      { value: 50, suffix: '+', label: 'Expert Courses' },
-      { value: 1000, suffix: '+', label: 'Hours of Content' },
-      { value: 20, suffix: '+', label: 'Awards Won' },
+      { value: 50000, suffix: '+', label: 'Active Minds' },
+      { value: 120, suffix: '+', label: 'Advanced Modules' },
+      { value: 5000, suffix: '+', label: 'Daily Practice Hours' },
+      { value: 45, suffix: '+', label: 'Industry Awards' },
     ],
   },
 };

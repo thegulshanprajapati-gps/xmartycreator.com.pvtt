@@ -90,9 +90,8 @@ export default async function RootLayout({
       itemListElement: [
         { '@type': 'SiteNavigationElement', position: 1, name: 'Home', url: `${siteUrl}/` },
         { '@type': 'SiteNavigationElement', position: 2, name: 'Courses', url: `${siteUrl}/courses` },
-        { '@type': 'SiteNavigationElement', position: 3, name: 'BCECE LE', url: `${siteUrl}/bcece-le` },
-        { '@type': 'SiteNavigationElement', position: 4, name: 'About', url: `${siteUrl}/about` },
-        { '@type': 'SiteNavigationElement', position: 5, name: 'Community', url: `${siteUrl}/community` },
+        { '@type': 'SiteNavigationElement', position: 3, name: 'About', url: `${siteUrl}/about` },
+        { '@type': 'SiteNavigationElement', position: 4, name: 'Community', url: `${siteUrl}/community` },
         { '@type': 'SiteNavigationElement', position: 6, name: 'Blog', url: `${siteUrl}/blog` },
         { '@type': 'SiteNavigationElement', position: 7, name: 'Topics', url: `${siteUrl}/topic` },
         { '@type': 'SiteNavigationElement', position: 8, name: 'Updates', url: `${siteUrl}/updates` },

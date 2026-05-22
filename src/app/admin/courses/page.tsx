@@ -152,9 +152,7 @@ export default function AdminCoursesPage() {
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Courses & Tests</h1>
         <div className="flex items-center gap-2 flex-wrap justify-end">
-          <Button variant="outline" onClick={() => router.push('/admin/courses/bcece-le')}>
-            BCECE LE Page
-          </Button>
+
           <Button variant="outline" onClick={() => router.push('/admin/tests')}>
             Test Management
           </Button>
