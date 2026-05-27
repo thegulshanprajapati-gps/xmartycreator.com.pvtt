@@ -184,6 +184,7 @@ export default function AboutPageClient({ initialAboutContent }: AboutPageClient
   const [aboutContent, setAboutContent] = useState<AboutContent>(initialAboutContent);
   const [carouselApi, setCarouselApi] = useState<any>(null);
   const [isBioExpanded, setIsBioExpanded] = useState(false);
+  const [isFounderCardFlipped, setIsFounderCardFlipped] = useState(false);
 
   const { hero, stats, journey, founder, services, features, testimonials, team, faq, cta } = aboutContent;
   const heroCards = hero?.cards || [];
@@ -416,62 +417,125 @@ export default function AboutPageClient({ initialAboutContent }: AboutPageClient
                 viewport={{ once: true, amount: 0.3 }}
                 variants={slideInFromLeft}
               >
-                <div className="h-full overflow-hidden rounded-[2rem] border border-white/10 bg-[linear-gradient(180deg,rgba(15,23,42,0.98),rgba(17,24,39,0.92))] p-7 shadow-[0_30px_90px_-56px_rgba(2,6,23,1)]">
-                  <div className="flex flex-col gap-6">
-                    <div>
-                      <p className="text-sm uppercase tracking-[0.32em] text-cyan-200/80">Founder Spotlight</p>
-                      <h3 className="mt-4 text-3xl font-bold text-white">{founder.name}</h3>
-                      <p className="mt-2 text-base text-slate-400">{founder.role}</p>
-                      {founder.username ? (
-                        <p className="mt-2 text-sm font-medium text-cyan-200/80">@{founder.username.replace(/^@/, '')}</p>
-                      ) : null}
-                    </div>
-                    <div className="relative h-[320px] overflow-hidden rounded-[1.75rem] bg-gradient-to-br from-cyan-500/10 via-slate-900 to-purple-500/10 shadow-lg shadow-slate-950/30">
-                      {founderImageUrl ? (
-                        <Image
-                          src={founderImageUrl}
-                          alt={founder.name || 'Founder'}
-                          fill
-                          className="object-cover object-top"
-                        />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center text-5xl font-bold text-white">
-                          {founder.name?.split(' ').map((word) => word[0]).join('')}
-                        </div>
-                      )}
-                    </div>
-                    {founder.highlights.length > 0 && (
-                      <div className="flex flex-wrap gap-2">
-                        {founder.highlights.slice(0, 4).map((highlight, index) => (
-                          <span
-                            key={`${highlight}-${index}`}
-                            className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-slate-200"
+                <div className="group relative [perspective:1800px]">
+                  <div
+                    className={`relative min-h-[620px] rounded-[2rem] transition-transform duration-700 [transform-style:preserve-3d] ${
+                      isFounderCardFlipped ? '[transform:rotateY(180deg)]' : ''
+                    } group-hover:[transform:rotateY(180deg)]`}
+                  >
+                    <div className="absolute inset-0 overflow-hidden rounded-[2rem] border border-white/10 bg-[linear-gradient(180deg,rgba(15,23,42,0.98),rgba(17,24,39,0.92))] p-7 shadow-[0_30px_90px_-56px_rgba(2,6,23,1)] [backface-visibility:hidden]">
+                      <div className="flex h-full flex-col gap-6">
+                        <div className="flex items-center justify-between gap-3">
+                          <p className="text-sm uppercase tracking-[0.32em] text-cyan-200/80">Founder Spotlight</p>
+                          <button
+                            type="button"
+                            onClick={() => setIsFounderCardFlipped(true)}
+                            className="inline-flex rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-200 transition hover:bg-white/10 lg:hidden"
                           >
-                            {highlight}
-                          </span>
-                        ))}
+                            Flip
+                          </button>
+                        </div>
+
+                        <div className="relative h-[340px] overflow-hidden rounded-[1.75rem] bg-gradient-to-br from-cyan-500/10 via-slate-900 to-purple-500/10 shadow-lg shadow-slate-950/30">
+                          {founderImageUrl ? (
+                            <Image
+                              src={founderImageUrl}
+                              alt={founder.name || 'Founder'}
+                              fill
+                              className="object-cover object-top"
+                            />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center text-5xl font-bold text-white">
+                              {founder.name?.split(' ').map((word) => word[0]).join('')}
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="rounded-[1.5rem] border border-white/10 bg-white/5 p-5">
+                          <h3 className="text-3xl font-bold text-white">{founder.name}</h3>
+                          <p className="mt-2 text-base text-slate-400">{founder.role}</p>
+                          {founder.username ? (
+                            <p className="mt-3 text-sm font-medium text-cyan-200/80">@{founder.username.replace(/^@/, '')}</p>
+                          ) : null}
+                        </div>
+
+                        {founder.highlights.length > 0 && (
+                          <div className="flex flex-wrap gap-2">
+                            {founder.highlights.slice(0, 3).map((highlight, index) => (
+                              <span
+                                key={`${highlight}-${index}`}
+                                className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-slate-200"
+                              >
+                                {highlight}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+
+                        <p className="mt-auto text-xs uppercase tracking-[0.28em] text-slate-500">
+                          Hover to flip on desktop
+                        </p>
                       </div>
-                    )}
-                    {hasSocial && (
-                      <div className="flex flex-wrap gap-3">
-                        {socialEntries.map(([key, href]) => {
-                          const meta = getSocialMeta(href, key);
-                          const Icon = meta.icon;
-                          return (
-                            <a
-                              key={key}
-                              href={href}
-                              target="_blank"
-                              rel="noreferrer noopener"
-                              className={`inline-flex items-center gap-2 rounded-2xl border px-4 py-2 text-sm font-semibold transition hover:-translate-y-0.5 ${meta.className}`}
-                            >
-                              <Icon className="h-4 w-4" />
-                              <span>{meta.label}</span>
-                            </a>
-                          );
-                        })}
+                    </div>
+
+                    <div className="absolute inset-0 overflow-hidden rounded-[2rem] border border-cyan-400/20 bg-[linear-gradient(180deg,rgba(8,47,73,0.96),rgba(17,24,39,0.98))] p-7 shadow-[0_30px_90px_-56px_rgba(8,47,73,0.9)] [backface-visibility:hidden] [transform:rotateY(180deg)]">
+                      <div className="flex h-full flex-col gap-6">
+                        <div className="flex items-center justify-between gap-3">
+                          <div>
+                            <p className="text-sm uppercase tracking-[0.32em] text-cyan-100/80">Connect</p>
+                            <h3 className="mt-3 text-2xl font-bold text-white">Beyond the profile</h3>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setIsFounderCardFlipped(false)}
+                            className="inline-flex rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-100 transition hover:bg-white/10 lg:hidden"
+                          >
+                            Back
+                          </button>
+                        </div>
+
+                        {founder.highlights.length > 0 && (
+                          <div className="grid gap-3">
+                            {founder.highlights.slice(0, 4).map((item, index) => (
+                              <div
+                                key={`${item}-back-${index}`}
+                                className="rounded-[1.25rem] border border-white/10 bg-white/6 px-4 py-4 text-sm leading-7 text-slate-100"
+                              >
+                                {item}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {hasSocial && (
+                          <div className="flex flex-wrap gap-3">
+                            {socialEntries.map(([key, href]) => {
+                              const meta = getSocialMeta(href, key);
+                              const Icon = meta.icon;
+                              return (
+                                <a
+                                  key={key}
+                                  href={href}
+                                  target="_blank"
+                                  rel="noreferrer noopener"
+                                  className={`inline-flex items-center gap-2 rounded-2xl border px-4 py-2 text-sm font-semibold transition hover:-translate-y-0.5 ${meta.className}`}
+                                >
+                                  <Icon className="h-4 w-4" />
+                                  <span>{meta.label}</span>
+                                </a>
+                              );
+                            })}
+                          </div>
+                        )}
+
+                        <div className="mt-auto rounded-[1.5rem] border border-cyan-400/15 bg-cyan-400/8 p-5">
+                          <p className="text-xs uppercase tracking-[0.28em] text-cyan-100/70">Founder Note</p>
+                          <p className="mt-3 text-sm leading-7 text-slate-100">
+                            Explore the story cards on the right for the full mission, philosophy, and platform direction.
+                          </p>
+                        </div>
                       </div>
-                    )}
+                    </div>
                   </div>
                 </div>
               </motion.div>
