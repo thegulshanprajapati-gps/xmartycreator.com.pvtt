@@ -125,18 +125,18 @@ interface AboutPageClientProps {
 }
 
 const slideInFromLeft = {
-  hidden: { opacity: 0, x: -100 },
-  visible: { opacity: 1, x: 0, transition: { duration: 0.8, ease: 'easeOut' } },
+  hidden: { opacity: 0, x: -80 },
+  visible: { opacity: 1, x: 0, transition: { duration: 0.75, ease: 'easeOut' } },
 };
 
 const slideInFromRight = {
-  hidden: { opacity: 0, x: 100 },
-  visible: { opacity: 1, x: 0, transition: { duration: 0.8, ease: 'easeOut' } },
+  hidden: { opacity: 0, x: 80 },
+  visible: { opacity: 1, x: 0, transition: { duration: 0.75, ease: 'easeOut' } },
 };
 
 const fadeIn = {
   hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: 'easeOut' } },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.55, ease: 'easeOut' } },
 };
 
 function parseCountValue(value: string) {
@@ -159,7 +159,7 @@ function AnimatedCount({ value }: { value: string }) {
       return;
     }
 
-    let raf: number;
+    let raf = 0;
     const duration = 900;
     const start = performance.now();
 
@@ -170,7 +170,9 @@ function AnimatedCount({ value }: { value: string }) {
         ? current.toFixed(decimals)
         : Math.round(current).toLocaleString();
       setDisplay(`${formatted}${suffix}`);
-      if (progress < 1) raf = requestAnimationFrame(tick);
+      if (progress < 1) {
+        raf = requestAnimationFrame(tick);
+      }
     };
 
     raf = requestAnimationFrame(tick);
@@ -187,15 +189,10 @@ export default function AboutPageClient({ initialAboutContent }: AboutPageClient
   const [isFounderCardFlipped, setIsFounderCardFlipped] = useState(false);
 
   const { hero, stats, journey, founder, services, features, testimonials, team, faq, cta } = aboutContent;
-  const heroCards = hero?.cards || [];
   const featureCards = features.length > 0 ? features : services;
+  const heroCards = hero?.cards || [];
   const founderImageUrl = founder?.image?.imageUrl || '';
-  const socialEntries = Object.entries(founder?.socials || {}).filter(
-    ([, value]) => typeof value === 'string' && value.trim().length > 0
-  );
-  const hasSocial = socialEntries.length > 0;
-  const hasFounder = Boolean(founder?.name || founder?.role || founder?.description || founder?.quote || founderImageUrl);
-
+  const founderHighlights = founder?.highlights || [];
   const founderDescriptionHtml = useMemo(
     () => sanitizeFounderHtml(founder?.description || ''),
     [founder?.description]
@@ -204,10 +201,21 @@ export default function AboutPageClient({ initialAboutContent }: AboutPageClient
     () => sanitizeFounderHtml(founder?.bio || ''),
     [founder?.bio]
   );
-  const founderHighlights = founder?.highlights || [];
-
   const isLongBio = Boolean(founder?.bio && founder.bio.length > 260);
   const shouldClampBio = isLongBio && !isBioExpanded;
+  const socialEntries = Object.entries(founder?.socials || {}).filter(
+    ([, value]) => typeof value === 'string' && value.trim().length > 0
+  );
+  const hasSocial = socialEntries.length > 0;
+  const hasFounder = Boolean(founder?.name || founder?.role || founder?.description || founder?.quote || founderImageUrl);
+  const heroSummaryCards = heroCards.length > 0
+    ? heroCards.slice(0, 4)
+    : [
+        { title: 'Students Helped', value: stats?.[0]?.count || '12k+', description: 'Daily support across notes, notices, and exam guidance.' },
+        { title: 'Resources Shared', value: stats?.[1]?.count || '1.8k+', description: 'Focused material built for practical student needs.' },
+        { title: 'Career Updates', value: stats?.[2]?.count || '97%', description: 'Reliable updates that reduce confusion and delay.' },
+        { title: 'Community Support', value: '24/7', description: 'Learner-first help through active channels and regular responses.' },
+      ];
 
   useEffect(() => {
     const controller = new AbortController();
@@ -251,45 +259,68 @@ export default function AboutPageClient({ initialAboutContent }: AboutPageClient
   }, [testimonials.length, carouselApi]);
 
   return (
-    <div className="flex min-h-screen flex-col bg-slate-950 text-white">
-      <section className="relative isolate overflow-hidden border-b border-white/10 bg-slate-950">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(56,189,248,0.18),transparent_38%)]" />
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_88%_18%,rgba(168,85,247,0.2),transparent_34%)]" />
-        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(135deg,rgba(2,6,23,0.95),rgba(15,23,42,0.88)_45%,rgba(30,41,59,0.82))]" />
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-white/25 to-transparent" />
-        <div className="relative z-10">
-        <div className="container mx-auto px-4 py-20 sm:px-6 lg:px-8 lg:py-24">
-          <div className="mx-auto grid max-w-6xl gap-10 lg:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)] lg:items-end">
+    <div className="flex min-h-screen flex-col overflow-hidden bg-[#040817] text-white">
+      <section className="relative isolate border-b border-white/10">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_18%,rgba(34,211,238,0.18),transparent_32%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_84%_12%,rgba(168,85,247,0.24),transparent_28%)]" />
+        <div className="absolute inset-0 bg-[linear-gradient(135deg,#040817_0%,#0b132f_42%,#111d43_100%)]" />
+        <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-[#040817]" />
+        <div className="relative z-10 container mx-auto px-4 py-20 sm:px-6 lg:px-8 lg:py-28">
+          <div className="mx-auto grid max-w-7xl gap-12 lg:grid-cols-[minmax(0,1.1fr)_minmax(320px,0.9fr)] lg:items-center">
             <motion.div
               initial="hidden"
               whileInView="visible"
               viewport={{ once: true, amount: 0.3 }}
               variants={slideInFromLeft}
-              className="space-y-7"
+              className="space-y-8"
             >
-              <p className="text-sm font-semibold uppercase tracking-[0.28em] text-cyan-200/80">About</p>
-              <h1 className="max-w-4xl text-4xl font-extrabold leading-[1.02] text-white sm:text-5xl lg:text-6xl">
-                {hero?.title || 'About XmartyCreator'}
-              </h1>
-              <p className="max-w-3xl text-lg leading-8 text-slate-200/90 sm:text-xl">
-                {hero?.subtitle || 'We design thoughtful learning tools and curriculum that help students learn efficiently and confidently. Our focus is on measurable outcomes, accessibility, and community-driven support.'}
-              </p>
-
-              <div className="mt-6 flex flex-wrap items-center gap-3">
+              <div className="inline-flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/10 px-4 py-2 text-sm font-semibold text-cyan-100">
+                <Sparkles className="h-4 w-4" />
+                <span>{hero?.badge || 'About Xmarty Creator'}</span>
+              </div>
+              <div className="space-y-5">
+                <h1 className="max-w-5xl text-4xl font-black leading-[0.95] text-white sm:text-5xl lg:text-7xl">
+                  {hero?.title || 'A premium platform built around student clarity, trust, and momentum.'}
+                </h1>
+                <p className="max-w-3xl text-lg leading-8 text-slate-300 sm:text-xl">
+                  {hero?.subtitle || 'Xmarty Creator simplifies learning for ambitious students with better updates, cleaner resources, focused communities, and a more reliable digital experience.'}
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-4">
                 <Button
                   asChild
-                  className="rounded-full border border-cyan-300/25 bg-cyan-400/10 px-6 text-white hover:bg-cyan-300/15"
+                  size="lg"
+                  className="rounded-full bg-white text-slate-950 shadow-[0_22px_60px_-28px_rgba(255,255,255,0.55)] transition hover:bg-slate-100"
                 >
-                  <Link href={hero?.primaryButton?.url || '#mission'}>{hero?.primaryButton?.text || 'Our Mission'}</Link>
+                  <Link href={hero?.primaryButton?.url || '#mission'}>
+                    {hero?.primaryButton?.text || 'Discover the Mission'}
+                  </Link>
                 </Button>
                 <Button
                   asChild
-                  variant="ghost"
-                  className="rounded-full border border-white/12 px-6 text-slate-200 hover:bg-white/5 hover:text-white"
+                  size="lg"
+                  variant="outline"
+                  className="rounded-full border-white/15 bg-white/5 text-white hover:bg-white/10"
                 >
-                  <Link href={hero?.secondaryButton?.url || '/contact'}>{hero?.secondaryButton?.text || 'Contact Us'}</Link>
+                  <Link href={hero?.secondaryButton?.url || '/contact'}>
+                    {hero?.secondaryButton?.text || 'Get in Touch'}
+                  </Link>
                 </Button>
-                <span className="ml-2 text-sm text-slate-400">Founded in <strong className="text-white">{journey?.[0]?.year || '2021'}</strong></span>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-3">
+                {[
+                  { label: 'Founded', value: journey?.[0]?.year || '2021' },
+                  { label: 'Focus', value: 'Polytechnic Students' },
+                  { label: 'Approach', value: 'Premium, Fast, Clear' },
+                ].map((item) => (
+                  <div
+                    key={item.label}
+                    className="rounded-[1.6rem] border border-white/10 bg-white/5 px-5 py-5 backdrop-blur-sm"
+                  >
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">{item.label}</p>
+                    <p className="mt-3 text-lg font-semibold text-white">{item.value}</p>
+                  </div>
+                ))}
               </div>
             </motion.div>
 
@@ -300,39 +331,24 @@ export default function AboutPageClient({ initialAboutContent }: AboutPageClient
               variants={slideInFromRight}
               className="grid gap-4 sm:grid-cols-2"
             >
-              {(heroCards.length > 0
-                ? heroCards.slice(0, 4)
-                : [
-                    { title: 'Students Helped', value: stats?.[0]?.count || '12k+', description: 'Learners supported through notes, exams, and updates.' },
-                    { title: 'Resources Shared', value: stats?.[1]?.count || '1.8k', description: 'Curated study material delivered consistently.' },
-                    { title: 'Career Updates', value: stats?.[2]?.count || '97%', description: 'Relevant notices and preparation guidance.' },
-                    { title: 'Community Support', value: '24/7', description: 'Fast responses through social and student channels.' },
-                  ]).map((card, index) => (
+              {heroSummaryCards.map((card, index) => (
                 <div
                   key={`${card.title}-${index}`}
-                  className="rounded-[1.75rem] border border-white/10 bg-white/5 p-6 shadow-[0_24px_80px_-50px_rgba(15,23,42,0.95)]"
+                  className="group rounded-[2rem] border border-white/10 bg-[linear-gradient(180deg,rgba(15,23,42,0.86),rgba(9,14,33,0.96))] p-6 shadow-[0_24px_80px_-50px_rgba(2,6,23,1)] transition duration-300 hover:-translate-y-1 hover:border-cyan-300/25"
                 >
-                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-cyan-200/75">{card.title}</p>
-                  <p className="mt-4 text-4xl font-black tracking-tight text-white">{card.value}</p>
-                  <p className="mt-3 text-sm leading-7 text-slate-300">{card.description}</p>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-cyan-200/75">{card.title}</p>
+                  <p className="mt-5 text-4xl font-black tracking-tight text-white">{card.value}</p>
+                  <p className="mt-4 text-sm leading-7 text-slate-300">{card.description}</p>
                 </div>
               ))}
             </motion.div>
           </div>
         </div>
-        </div>
       </section>
 
-      <section className="relative isolate py-16 sm:py-20 lg:py-24">
+      <section className="relative py-16 sm:py-20">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="mb-12 max-w-3xl">
-            <span className="inline-flex rounded-full bg-blue-500/10 px-4 py-2 text-sm font-semibold text-blue-200">Trusted outcomes</span>
-            <h2 className="mt-6 text-4xl font-bold tracking-tight text-white sm:text-5xl">Real results, premium growth.</h2>
-            <p className="mt-4 max-w-2xl text-base leading-8 text-slate-300">
-              Data-driven trust and student success metrics from the front lines of modern learning.
-            </p>
-          </div>
-          <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="grid gap-4 lg:grid-cols-4">
             {stats.map((stat, index) => {
               const IconComponent = getIconComponent(stat.icon);
               return (
@@ -341,14 +357,18 @@ export default function AboutPageClient({ initialAboutContent }: AboutPageClient
                   initial={{ opacity: 0, y: 24 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
-                  transition={{ delay: 0.08 * index, duration: 0.55 }}
-                  className="group rounded-[2rem] border border-white/10 bg-slate-950/90 p-8 shadow-2xl shadow-slate-950/20 backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:border-white/20"
+                  transition={{ delay: 0.08 * index, duration: 0.5 }}
+                  className="rounded-[1.75rem] border border-white/10 bg-white/[0.04] p-7 shadow-[0_18px_60px_-46px_rgba(15,23,42,0.95)]"
                 >
-                  <div className="flex h-14 w-14 items-center justify-center rounded-3xl bg-gradient-to-br from-blue-500 to-purple-500 text-white shadow-lg shadow-blue-500/25">
-                    <IconComponent className="h-6 w-6" />
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex h-14 w-14 items-center justify-center rounded-3xl bg-gradient-to-br from-cyan-400 to-violet-500 text-white shadow-lg shadow-cyan-500/20">
+                      <IconComponent className="h-6 w-6" />
+                    </div>
+                    <p className="text-3xl font-black tracking-tight text-white">
+                      <AnimatedCount value={stat.count} />
+                    </p>
                   </div>
-                  <p className="mt-6 text-4xl font-semibold text-white"><AnimatedCount value={stat.count} /></p>
-                  <p className="mt-3 text-sm uppercase tracking-[0.24em] text-slate-500">{stat.label}</p>
+                  <p className="mt-6 text-sm uppercase tracking-[0.24em] text-slate-500">{stat.label}</p>
                 </motion.div>
               );
             })}
@@ -357,94 +377,81 @@ export default function AboutPageClient({ initialAboutContent }: AboutPageClient
       </section>
 
       {journey.length > 0 && (
-        <section className="relative py-20 sm:py-24 bg-slate-900/80">
+        <section className="relative py-20 sm:py-24">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="mx-auto mb-14 max-w-3xl text-center">
-              <span className="inline-flex rounded-full bg-purple-500/10 px-4 py-2 text-sm font-semibold text-purple-200">Our Journey</span>
-              <h2 className="mt-6 text-4xl font-bold tracking-tight text-white sm:text-5xl">The story behind XmartyCreator</h2>
+            <div className="mx-auto mb-14 max-w-4xl text-center">
+              <span className="inline-flex rounded-full border border-violet-400/20 bg-violet-500/10 px-4 py-2 text-sm font-semibold text-violet-200">
+                Our Journey
+              </span>
+              <h2 className="mt-6 text-4xl font-bold tracking-tight text-white sm:text-5xl">
+                The story behind Xmarty Creator
+              </h2>
               <p className="mt-4 text-base leading-8 text-slate-300">
-                A premium learning platform built step-by-step around student outcomes, reliability, and modern study experiences.
+                A steady evolution from useful student help to a sharper, more reliable learning ecosystem.
               </p>
             </div>
-            <div className="relative overflow-hidden px-2">
-              <div className="absolute left-1/2 top-0 h-full w-px -translate-x-1/2 bg-gradient-to-b from-blue-500/50 to-transparent" />
-              <div className="space-y-10 lg:grid lg:grid-cols-4 lg:gap-6 lg:space-y-0">
-                {journey.map((item, index) => {
-                  const IconComponent = getIconComponent(item.icon);
-                  return (
-                    <motion.div
-                      key={index}
-                      initial={{ opacity: 0, y: 24 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ delay: 0.08 * index, duration: 0.55 }}
-                      className="relative rounded-[2rem] border border-white/10 bg-slate-950/90 p-8 shadow-2xl shadow-slate-950/10"
-                    >
-                      <div className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 h-14 w-14 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 text-white grid place-items-center shadow-lg shadow-blue-500/25">
-                        <IconComponent className="h-6 w-6" />
+            <div className="grid gap-6 lg:grid-cols-2 xl:grid-cols-4">
+              {journey.map((item, index) => {
+                const IconComponent = getIconComponent(item.icon);
+                return (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, y: 24 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 0.07 * index, duration: 0.5 }}
+                    className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-[linear-gradient(180deg,rgba(11,17,36,0.96),rgba(6,10,25,1))] p-8"
+                  >
+                    <div className="absolute right-0 top-0 h-28 w-28 bg-[radial-gradient(circle,rgba(139,92,246,0.28),transparent_68%)]" />
+                    <div className="flex items-center justify-between gap-4">
+                      <p className="text-xs font-semibold uppercase tracking-[0.35em] text-cyan-200">{item.year}</p>
+                      <div className="grid h-12 w-12 place-items-center rounded-2xl bg-white/5 text-cyan-100">
+                        <IconComponent className="h-5 w-5" />
                       </div>
-                      <p className="mt-8 text-xs uppercase tracking-[0.35em] text-blue-200">{item.year}</p>
-                      <h3 className="mt-4 text-xl font-semibold text-white">{item.title}</h3>
-                      <p className="mt-3 text-sm leading-7 text-slate-400">{item.description}</p>
-                    </motion.div>
-                  );
-                })}
-              </div>
+                    </div>
+                    <h3 className="mt-8 text-2xl font-semibold text-white">{item.title}</h3>
+                    <p className="mt-4 text-sm leading-7 text-slate-400">{item.description}</p>
+                  </motion.div>
+                );
+              })}
             </div>
           </div>
         </section>
       )}
 
       {hasFounder && (
-        <section className="relative isolate overflow-hidden py-20 sm:py-24 bg-slate-950/60">
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.12),transparent_32%)]" />
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_bottom_right,rgba(168,85,247,0.12),transparent_34%)]" />
-          <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cyan-300/20 to-transparent" />
+        <section className="relative isolate py-20 sm:py-24">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_12%_20%,rgba(34,211,238,0.1),transparent_30%)]" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_88%_78%,rgba(168,85,247,0.14),transparent_28%)]" />
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="mb-14 grid gap-8 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
-              <div className="max-w-3xl">
-                <span className="inline-flex rounded-full border border-cyan-400/20 bg-cyan-400/10 px-4 py-2 text-sm font-semibold text-cyan-100">
-                  Leadership
-                </span>
-                <h2 className="mt-6 text-4xl font-bold tracking-tight text-white sm:text-5xl">
-                  {founder.title || 'Meet the Founder'}
-                </h2>
-                <p className="mt-4 max-w-2xl text-base leading-8 text-slate-300">
-                  The vision, discipline, and student-first thinking behind Xmarty Creator&apos;s product direction.
-                </p>
-              </div>
-              <div className="grid gap-3 sm:grid-cols-3 lg:min-w-[420px]">
-                {[
-                  { label: 'Role', value: founder.role || 'Founder' },
-                  { label: 'Community', value: stats?.[2]?.count || '1.8k+' },
-                  { label: 'Support', value: 'Student-first' },
-                ].map((item) => (
-                  <div
-                    key={item.label}
-                    className="rounded-[1.5rem] border border-white/10 bg-white/5 px-5 py-4 shadow-[0_20px_60px_-44px_rgba(2,6,23,0.95)]"
-                  >
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">{item.label}</p>
-                    <p className="mt-2 text-base font-semibold text-white">{item.value}</p>
-                  </div>
-                ))}
-              </div>
+            <div className="mb-14 max-w-4xl">
+              <span className="inline-flex rounded-full border border-cyan-400/20 bg-cyan-400/10 px-4 py-2 text-sm font-semibold text-cyan-100">
+                Meet the Founder
+              </span>
+              <h2 className="mt-6 text-4xl font-bold tracking-tight text-white sm:text-5xl">
+                Built with student pain points in mind, not generic edtech assumptions.
+              </h2>
+              <p className="mt-4 max-w-2xl text-base leading-8 text-slate-300">
+                This section shows the person, principles, and platform thinking that shape Xmarty Creator.
+              </p>
             </div>
-            <div className="grid gap-8 xl:grid-cols-[380px_minmax(0,1fr)]">
+
+            <div className="grid gap-8 xl:grid-cols-[390px_minmax(0,1fr)]">
               <motion.div
                 initial="hidden"
                 whileInView="visible"
                 viewport={{ once: true, amount: 0.3 }}
                 variants={slideInFromLeft}
               >
-                <div className="group relative [perspective:1800px]">
+                <div className="group relative [perspective:2000px]">
                   <div
-                    className={`relative min-h-[660px] rounded-[2rem] transition-transform duration-700 [transform-style:preserve-3d] ${
+                    className={`relative min-h-[690px] rounded-[2rem] transition-transform duration-700 [transform-style:preserve-3d] ${
                       isFounderCardFlipped ? '[transform:rotateY(180deg)]' : ''
                     } group-hover:[transform:rotateY(180deg)]`}
                   >
-                    <div className="absolute inset-0 overflow-hidden rounded-[2rem] border border-white/10 bg-[linear-gradient(180deg,rgba(15,23,42,0.99),rgba(17,24,39,0.94))] p-7 shadow-[0_30px_90px_-56px_rgba(2,6,23,1)] [backface-visibility:hidden]">
-                      <div className="pointer-events-none absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-cyan-300/10 to-transparent" />
-                      <div className="flex h-full flex-col gap-6">
+                    <div className="absolute inset-0 overflow-hidden rounded-[2rem] border border-white/10 bg-[linear-gradient(180deg,rgba(11,17,36,0.98),rgba(8,12,28,1))] p-7 shadow-[0_30px_90px_-56px_rgba(2,6,23,1)] [backface-visibility:hidden]">
+                      <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-cyan-300/10 to-transparent" />
+                      <div className="relative flex h-full flex-col gap-6">
                         <div className="flex items-center justify-between gap-3">
                           <p className="text-sm uppercase tracking-[0.32em] text-cyan-200/80">Founder Spotlight</p>
                           <button
@@ -456,7 +463,7 @@ export default function AboutPageClient({ initialAboutContent }: AboutPageClient
                           </button>
                         </div>
 
-                        <div className="relative h-[360px] overflow-hidden rounded-[1.75rem] border border-white/8 bg-gradient-to-br from-cyan-500/10 via-slate-900 to-purple-500/10 shadow-lg shadow-slate-950/30">
+                        <div className="relative h-[390px] overflow-hidden rounded-[1.9rem] border border-white/10 bg-slate-900">
                           {founderImageUrl ? (
                             <Image
                               src={founderImageUrl}
@@ -465,18 +472,18 @@ export default function AboutPageClient({ initialAboutContent }: AboutPageClient
                               className="object-cover object-top"
                             />
                           ) : (
-                            <div className="flex h-full w-full items-center justify-center text-5xl font-bold text-white">
+                            <div className="flex h-full w-full items-center justify-center text-6xl font-black text-white">
                               {founder.name?.split(' ').map((word) => word[0]).join('')}
                             </div>
                           )}
-                          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-slate-950 via-slate-950/50 to-transparent" />
+                          <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-slate-950 to-transparent" />
                         </div>
 
-                        <div className="rounded-[1.5rem] border border-white/10 bg-white/5 p-5">
-                          <h3 className="text-3xl font-bold text-white">{founder.name}</h3>
+                        <div className="rounded-[1.6rem] border border-white/10 bg-white/5 p-6">
+                          <h3 className="text-3xl font-black text-white">{founder.name}</h3>
                           <p className="mt-2 text-base text-slate-400">{founder.role}</p>
                           {founder.username ? (
-                            <p className="mt-3 text-sm font-medium text-cyan-200/80">@{founder.username.replace(/^@/, '')}</p>
+                            <p className="mt-4 text-sm font-semibold text-cyan-200/80">@{founder.username.replace(/^@/, '')}</p>
                           ) : null}
                         </div>
 
@@ -499,12 +506,12 @@ export default function AboutPageClient({ initialAboutContent }: AboutPageClient
                       </div>
                     </div>
 
-                    <div className="absolute inset-0 overflow-hidden rounded-[2rem] border border-cyan-400/20 bg-[linear-gradient(180deg,rgba(8,47,73,0.96),rgba(17,24,39,0.98))] p-7 shadow-[0_30px_90px_-56px_rgba(8,47,73,0.9)] [backface-visibility:hidden] [transform:rotateY(180deg)]">
+                    <div className="absolute inset-0 overflow-hidden rounded-[2rem] border border-cyan-400/20 bg-[linear-gradient(180deg,rgba(8,47,73,0.96),rgba(10,14,31,1))] p-7 shadow-[0_30px_90px_-56px_rgba(8,47,73,0.9)] [backface-visibility:hidden] [transform:rotateY(180deg)]">
                       <div className="flex h-full flex-col gap-6">
                         <div className="flex items-center justify-between gap-3">
                           <div>
-                            <p className="text-sm uppercase tracking-[0.32em] text-cyan-100/80">Connect</p>
-                            <h3 className="mt-3 text-2xl font-bold text-white">Beyond the profile</h3>
+                            <p className="text-sm uppercase tracking-[0.32em] text-cyan-100/80">Channels</p>
+                            <h3 className="mt-3 text-2xl font-bold text-white">Stay connected</h3>
                           </div>
                           <button
                             type="button"
@@ -515,21 +522,8 @@ export default function AboutPageClient({ initialAboutContent }: AboutPageClient
                           </button>
                         </div>
 
-                        {founderHighlights.length > 0 && (
-                          <div className="grid gap-3">
-                            {founderHighlights.slice(0, 4).map((item, index) => (
-                              <div
-                                key={`${item}-back-${index}`}
-                                className="rounded-[1.25rem] border border-white/10 bg-white/6 px-4 py-4 text-sm leading-7 text-slate-100"
-                              >
-                                {item}
-                              </div>
-                            ))}
-                          </div>
-                        )}
-
                         {hasSocial && (
-                          <div className="flex flex-wrap gap-3">
+                          <div className="grid gap-3">
                             {socialEntries.map(([key, href]) => {
                               const meta = getSocialMeta(href, key);
                               const Icon = meta.icon;
@@ -539,22 +533,31 @@ export default function AboutPageClient({ initialAboutContent }: AboutPageClient
                                   href={href}
                                   target="_blank"
                                   rel="noreferrer noopener"
-                                  className={`inline-flex items-center gap-2 rounded-2xl border px-4 py-2 text-sm font-semibold transition hover:-translate-y-0.5 ${meta.className}`}
+                                  className={`inline-flex items-center justify-between gap-3 rounded-[1.2rem] border px-4 py-4 text-sm font-semibold transition hover:-translate-y-0.5 ${meta.className}`}
                                 >
-                                  <Icon className="h-4 w-4" />
-                                  <span>{meta.label}</span>
+                                  <span className="inline-flex items-center gap-3">
+                                    <Icon className="h-4 w-4" />
+                                    <span>{meta.label}</span>
+                                  </span>
+                                  <ArrowRight className="h-4 w-4" />
                                 </a>
                               );
                             })}
                           </div>
                         )}
 
-                        <div className="mt-auto rounded-[1.5rem] border border-cyan-400/15 bg-cyan-400/8 p-5">
-                          <p className="text-xs uppercase tracking-[0.28em] text-cyan-100/70">Founder Note</p>
-                          <p className="mt-3 text-sm leading-7 text-slate-100">
-                            Explore the story cards on the right for the full mission, philosophy, and platform direction.
-                          </p>
-                        </div>
+                        {founderHighlights.length > 0 && (
+                          <div className="mt-auto rounded-[1.5rem] border border-white/10 bg-white/5 p-5">
+                            <p className="text-xs uppercase tracking-[0.28em] text-cyan-100/70">Core Themes</p>
+                            <div className="mt-4 grid gap-2">
+                              {founderHighlights.slice(0, 4).map((item, index) => (
+                                <p key={`${item}-theme-${index}`} className="text-sm leading-7 text-slate-100">
+                                  {item}
+                                </p>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -562,39 +565,37 @@ export default function AboutPageClient({ initialAboutContent }: AboutPageClient
               </motion.div>
 
               <motion.div
-                className="grid gap-6 xl:grid-cols-2"
                 initial="hidden"
                 whileInView="visible"
                 viewport={{ once: true, amount: 0.3 }}
                 variants={slideInFromRight}
+                className="grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(260px,0.8fr)]"
               >
-                <div className="rounded-[2rem] border border-white/10 bg-slate-900/75 p-8 shadow-[0_30px_90px_-56px_rgba(2,6,23,1)] xl:col-span-2">
+                <div className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-8 shadow-[0_24px_80px_-52px_rgba(2,6,23,1)] xl:col-span-2">
                   <span className="inline-flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/10 px-4 py-2 text-sm font-semibold text-cyan-100">
                     <Sparkles className="h-4 w-4" /> Founder Vision
                   </span>
-                  <div className="mt-5 space-y-5">
-                    <div
-                      className="founder-rich text-lg leading-9 text-slate-200"
-                      dangerouslySetInnerHTML={{ __html: founderDescriptionHtml }}
-                    />
-                  </div>
+                  <div
+                    className="founder-rich mt-6 text-lg leading-9 text-slate-200"
+                    dangerouslySetInnerHTML={{ __html: founderDescriptionHtml }}
+                  />
                 </div>
 
                 {founder.quote && (
-                  <div className="rounded-[2rem] border border-cyan-400/15 bg-[linear-gradient(180deg,rgba(8,47,73,0.28),rgba(15,23,42,0.78))] p-8 shadow-[0_24px_80px_-52px_rgba(8,47,73,0.85)]">
-                    <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-200/70">Founder Quote</p>
-                    <p className="mt-6 text-2xl font-semibold leading-10 text-white">"{founder.quote}"</p>
+                  <div className="rounded-[2rem] border border-cyan-400/15 bg-[linear-gradient(180deg,rgba(6,44,66,0.42),rgba(10,16,34,0.92))] p-8 shadow-[0_24px_80px_-52px_rgba(8,47,73,0.8)]">
+                    <p className="text-xs font-semibold uppercase tracking-[0.28em] text-cyan-200/75">Founder Quote</p>
+                    <p className="mt-5 text-2xl font-semibold leading-10 text-white">"{founder.quote}"</p>
                   </div>
                 )}
 
                 {founderHighlights.length > 0 && (
-                  <div className="rounded-[2rem] border border-white/10 bg-slate-900/70 p-8 shadow-[0_24px_80px_-52px_rgba(2,6,23,1)]">
-                    <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Key Focus</p>
-                    <div className="mt-6 grid gap-3">
+                  <div className="rounded-[2rem] border border-white/10 bg-[linear-gradient(180deg,rgba(18,24,44,0.92),rgba(8,12,28,0.98))] p-8">
+                    <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-400">Key Focus</p>
+                    <div className="mt-5 grid gap-3">
                       {founderHighlights.slice(0, 4).map((item, index) => (
                         <div
                           key={`${item}-focus-${index}`}
-                          className="rounded-[1.25rem] border border-white/10 bg-white/5 px-4 py-4 text-sm leading-7 text-slate-200"
+                          className="rounded-[1.2rem] border border-white/10 bg-white/5 px-4 py-4 text-sm leading-7 text-slate-200"
                         >
                           {item}
                         </div>
@@ -604,9 +605,9 @@ export default function AboutPageClient({ initialAboutContent }: AboutPageClient
                 )}
 
                 {founder.bio && (
-                  <div className="rounded-[2rem] border border-white/10 bg-[linear-gradient(180deg,rgba(30,41,59,0.7),rgba(15,23,42,0.82))] p-8 shadow-[0_24px_80px_-52px_rgba(2,6,23,1)] xl:col-span-2">
+                  <div className="rounded-[2rem] border border-white/10 bg-[linear-gradient(180deg,rgba(18,27,48,0.92),rgba(8,12,28,1))] p-8 xl:col-span-2">
                     <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Story</p>
+                      <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-400">Story</p>
                       <h3 className="mt-3 text-2xl font-bold text-white">What Xmarty Creator is building</h3>
                     </div>
                     <div className={`founder-rich mt-6 text-base leading-8 text-slate-300 ${shouldClampBio ? 'line-clamp-5' : ''}`} dangerouslySetInnerHTML={{ __html: founderBioHtml }} />
@@ -628,29 +629,36 @@ export default function AboutPageClient({ initialAboutContent }: AboutPageClient
       )}
 
       {featureCards.length > 0 && (
-        <section className="relative py-20 sm:py-24 bg-slate-950/80">
+        <section className="relative py-20 sm:py-24">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="mb-12 max-w-3xl text-center">
-              <span className="inline-flex rounded-full bg-purple-500/10 px-4 py-2 text-sm font-semibold text-purple-200">Why Students Trust XmartyCreator</span>
-              <h2 className="mt-6 text-4xl font-bold tracking-tight text-white sm:text-5xl">Why choose XmartyCreator?</h2>
+            <div className="mb-14 max-w-4xl">
+              <span className="inline-flex rounded-full border border-violet-400/20 bg-violet-500/10 px-4 py-2 text-sm font-semibold text-violet-200">
+                Why Students Trust Xmarty Creator
+              </span>
+              <h2 className="mt-6 text-4xl font-bold tracking-tight text-white sm:text-5xl">
+                A sharper learning experience, not just more content.
+              </h2>
+              <p className="mt-4 max-w-2xl text-base leading-8 text-slate-300">
+                Every part of the experience is designed to remove friction and improve student confidence.
+              </p>
             </div>
-            <div className="grid gap-6 xl:grid-cols-3 lg:grid-cols-2">
+            <div className="grid gap-6 lg:grid-cols-2 xl:grid-cols-3">
               {featureCards.map((feature, index) => {
                 const IconComponent = getIconComponent(feature.icon);
                 return (
                   <motion.div
                     key={index}
-                    className="rounded-[2rem] border border-white/10 bg-slate-900/90 p-8 shadow-2xl shadow-slate-950/20 transition-transform duration-300 hover:-translate-y-1"
                     initial={{ opacity: 0, y: 24 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
-                    transition={{ delay: 0.08 * index, duration: 0.45 }}
+                    transition={{ delay: 0.07 * index, duration: 0.45 }}
+                    className="group rounded-[2rem] border border-white/10 bg-white/[0.04] p-8 transition-all duration-300 hover:-translate-y-1 hover:border-cyan-300/25"
                   >
-                    <div className="inline-flex h-14 w-14 items-center justify-center rounded-3xl bg-gradient-to-br from-blue-500 to-purple-500 text-white shadow-lg shadow-blue-500/20">
+                    <div className="flex h-14 w-14 items-center justify-center rounded-3xl bg-gradient-to-br from-cyan-400 to-violet-500 text-white shadow-lg shadow-cyan-500/20">
                       <IconComponent className="h-6 w-6" />
                     </div>
-                    <h3 className="mt-6 text-xl font-semibold text-white">{feature.title}</h3>
-                    <p className="mt-3 text-sm leading-7 text-slate-400">{feature.description}</p>
+                    <h3 className="mt-6 text-2xl font-semibold text-white">{feature.title}</h3>
+                    <p className="mt-4 text-sm leading-7 text-slate-400">{feature.description}</p>
                   </motion.div>
                 );
               })}
@@ -660,29 +668,39 @@ export default function AboutPageClient({ initialAboutContent }: AboutPageClient
       )}
 
       {testimonials.length > 0 && (
-        <section className="relative py-20 sm:py-24 bg-slate-900/90">
+        <section className="relative py-20 sm:py-24">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="mb-12 max-w-3xl text-center">
-              <span className="inline-flex rounded-full bg-blue-500/10 px-4 py-2 text-sm font-semibold text-blue-200">Student stories</span>
-              <h2 className="mt-6 text-4xl font-bold tracking-tight text-white sm:text-5xl">Trusted by learners across every subject.</h2>
+            <div className="mb-14 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+              <div className="max-w-3xl">
+                <span className="inline-flex rounded-full border border-cyan-400/20 bg-cyan-400/10 px-4 py-2 text-sm font-semibold text-cyan-100">
+                  Student Stories
+                </span>
+                <h2 className="mt-6 text-4xl font-bold tracking-tight text-white sm:text-5xl">
+                  Trusted by learners across multiple goals and subjects.
+                </h2>
+              </div>
+              <p className="max-w-xl text-base leading-8 text-slate-300">
+                Real feedback from students using Xmarty Creator for updates, resources, preparation, and community support.
+              </p>
             </div>
-            <div className="relative">
-              <Carousel
-                opts={{ align: 'start', dragFree: true, containScroll: 'trimSnaps', loop: true }}
-                setApi={setCarouselApi}
-                className="relative"
-              >
-                <CarouselContent className="py-3 select-none">
-                  {testimonials.map((testimonial, index) => (
-                    <CarouselItem key={testimonial.id || index} className="md:basis-1/2 lg:basis-1/3">
-                      <motion.div
-                        className="mx-3 rounded-[2rem] border border-white/10 bg-slate-950/90 p-8 shadow-2xl shadow-slate-950/20"
-                        initial={{ opacity: 0, y: 24 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                      >
+
+            <Carousel
+              opts={{ align: 'start', dragFree: true, containScroll: 'trimSnaps', loop: true }}
+              setApi={setCarouselApi}
+              className="relative"
+            >
+              <CarouselContent className="py-3 select-none">
+                {testimonials.map((testimonial, index) => (
+                  <CarouselItem key={testimonial.id || index} className="md:basis-1/2 lg:basis-1/3">
+                    <motion.div
+                      className="mx-3 flex h-full flex-col rounded-[2rem] border border-white/10 bg-[linear-gradient(180deg,rgba(11,17,36,0.96),rgba(8,12,28,1))] p-8 shadow-[0_22px_70px_-52px_rgba(2,6,23,1)]"
+                      initial={{ opacity: 0, y: 24 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
+                    >
+                      <div className="flex items-center justify-between gap-4">
                         <div className="flex items-center gap-4">
-                          <div className="flex h-14 w-14 items-center justify-center rounded-3xl bg-blue-500/10 text-blue-200 text-lg font-bold">
+                          <div className="flex h-14 w-14 items-center justify-center rounded-3xl bg-cyan-400/10 text-lg font-bold text-cyan-100">
                             {testimonial.name?.slice(0, 2).toUpperCase()}
                           </div>
                           <div>
@@ -690,41 +708,49 @@ export default function AboutPageClient({ initialAboutContent }: AboutPageClient
                             <p className="text-sm text-slate-400">{testimonial.role} • {testimonial.course}</p>
                           </div>
                         </div>
-                        <p className="mt-6 text-sm leading-7 text-slate-300">“{testimonial.review}”</p>
                         {testimonial.rating && (
-                          <p className="mt-6 text-sm uppercase tracking-[0.3em] text-blue-300">Rating: {testimonial.rating}</p>
+                          <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-slate-300">
+                            {testimonial.rating}
+                          </span>
                         )}
-                      </motion.div>
-                    </CarouselItem>
-                  ))}
-                </CarouselContent>
-                <CarouselPrevious className="border-white/20 bg-slate-950/80 text-white shadow-lg shadow-slate-950/20" />
-                <CarouselNext className="border-white/20 bg-slate-950/80 text-white shadow-lg shadow-slate-950/20" />
-              </Carousel>
-            </div>
+                      </div>
+                      <p className="mt-8 text-base leading-8 text-slate-300">
+                        “{testimonial.review}”
+                      </p>
+                    </motion.div>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <CarouselPrevious className="border-white/20 bg-slate-950/80 text-white shadow-lg shadow-slate-950/20" />
+              <CarouselNext className="border-white/20 bg-slate-950/80 text-white shadow-lg shadow-slate-950/20" />
+            </Carousel>
           </div>
         </section>
       )}
 
       {team.length > 0 && (
-        <section className="relative py-20 sm:py-24 bg-slate-950/80">
+        <section className="relative py-20 sm:py-24">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="mb-12 max-w-3xl text-center">
-              <span className="inline-flex rounded-full bg-purple-500/10 px-4 py-2 text-sm font-semibold text-purple-200">Leadership team</span>
-              <h2 className="mt-6 text-4xl font-bold tracking-tight text-white sm:text-5xl">A team built for premium learning.</h2>
+            <div className="mb-14 max-w-3xl">
+              <span className="inline-flex rounded-full border border-violet-400/20 bg-violet-500/10 px-4 py-2 text-sm font-semibold text-violet-200">
+                Leadership Team
+              </span>
+              <h2 className="mt-6 text-4xl font-bold tracking-tight text-white sm:text-5xl">
+                The people supporting the platform behind the scenes.
+              </h2>
             </div>
-            <div className="grid gap-6 lg:grid-cols-4 md:grid-cols-2">
+            <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
               {team.map((member, index) => (
                 <motion.div
                   key={member.id || index}
-                  className="rounded-[2rem] border border-white/10 bg-slate-900/90 p-8 shadow-2xl shadow-slate-950/20 transition-transform duration-300 hover:-translate-y-1"
                   initial={{ opacity: 0, y: 24 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: 0.06 * index, duration: 0.45 }}
+                  className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-8"
                 >
-                  <div className="mb-6 flex items-center gap-4">
-                    <div className="flex h-14 w-14 items-center justify-center rounded-3xl bg-blue-500/10 text-blue-200 text-lg font-bold">
+                  <div className="flex items-center gap-4">
+                    <div className="flex h-14 w-14 items-center justify-center rounded-3xl bg-violet-500/12 text-lg font-bold text-violet-100">
                       {member.name?.slice(0, 2).toUpperCase()}
                     </div>
                     <div>
@@ -732,7 +758,7 @@ export default function AboutPageClient({ initialAboutContent }: AboutPageClient
                       <p className="text-sm text-slate-400">{member.role}</p>
                     </div>
                   </div>
-                  <p className="text-sm leading-7 text-slate-400">{member.description}</p>
+                  <p className="mt-6 text-sm leading-7 text-slate-400">{member.description}</p>
                 </motion.div>
               ))}
             </div>
@@ -743,20 +769,26 @@ export default function AboutPageClient({ initialAboutContent }: AboutPageClient
       {faq.length > 0 && (
         <section className="relative py-20 sm:py-24">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="mb-12 max-w-3xl text-center">
-              <span className="inline-flex rounded-full bg-blue-500/10 px-4 py-2 text-sm font-semibold text-blue-200">FAQs</span>
-              <h2 className="mt-6 text-4xl font-bold tracking-tight text-white sm:text-5xl">Questions answered instantly.</h2>
-              <p className="mt-4 text-base leading-8 text-slate-400">Clear, modern guidance for learners who want to move faster with confidence.</p>
-            </div>
-            <div className="space-y-4">
+            <div className="mb-14 grid gap-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+              <div>
+                <span className="inline-flex rounded-full border border-cyan-400/20 bg-cyan-400/10 px-4 py-2 text-sm font-semibold text-cyan-100">
+                  FAQs
+                </span>
+                <h2 className="mt-6 text-4xl font-bold tracking-tight text-white sm:text-5xl">
+                  Questions students usually ask before joining us.
+                </h2>
+                <p className="mt-4 max-w-xl text-base leading-8 text-slate-300">
+                  Quick answers about the platform, the community, and what learners can expect from Xmarty Creator.
+                </p>
+              </div>
               <Accordion type="single" collapsible className="space-y-4">
                 {faq.map((item, index) => (
                   <AccordionItem
                     key={index}
                     value={`faq-${index}`}
-                    className="overflow-hidden rounded-[2rem] border border-white/10 bg-slate-950/90 shadow-2xl shadow-slate-950/20"
+                    className="overflow-hidden rounded-[1.8rem] border border-white/10 bg-white/[0.04]"
                   >
-                    <AccordionTrigger className="flex w-full items-center justify-between gap-4 px-6 py-5 text-left text-base font-semibold text-white transition hover:text-blue-200">
+                    <AccordionTrigger className="flex w-full items-center justify-between gap-4 px-6 py-5 text-left text-base font-semibold text-white transition hover:text-cyan-200">
                       {item.question}
                     </AccordionTrigger>
                     <AccordionContent className="border-t border-white/10 px-6 py-5 text-sm leading-7 text-slate-300">
@@ -771,26 +803,27 @@ export default function AboutPageClient({ initialAboutContent }: AboutPageClient
       )}
 
       {cta?.title && (
-        <section className="relative overflow-hidden bg-gradient-to-br from-slate-950 via-blue-950 to-purple-950 py-20 sm:py-24 text-white">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(96,165,250,0.22),transparent_40%)]" />
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_right,rgba(168,85,247,0.18),transparent_35%)]" />
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-            <div className="grid gap-10 lg:grid-cols-[1fr_0.9fr] items-center">
+        <section className="relative isolate py-20 sm:py-24">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.14),transparent_32%)]" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_right,rgba(168,85,247,0.2),transparent_28%)]" />
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="grid gap-8 overflow-hidden rounded-[2.5rem] border border-white/10 bg-[linear-gradient(135deg,rgba(9,14,33,0.98),rgba(17,28,63,0.98))] p-8 shadow-[0_34px_100px_-64px_rgba(2,6,23,1)] lg:grid-cols-[minmax(0,1fr)_360px] lg:p-12">
               <motion.div
-                className="rounded-[2rem] border border-white/10 bg-white/5 p-10 shadow-2xl shadow-slate-950/20 backdrop-blur-xl"
                 initial="hidden"
                 whileInView="visible"
                 viewport={{ once: true, amount: 0.3 }}
                 variants={fadeIn}
               >
-                <span className="inline-flex rounded-full bg-blue-500/10 px-4 py-2 text-sm font-semibold text-blue-200">Start Today</span>
+                <span className="inline-flex rounded-full border border-cyan-400/20 bg-cyan-400/10 px-4 py-2 text-sm font-semibold text-cyan-100">
+                  Start Today
+                </span>
                 <h2 className="mt-6 text-4xl font-bold tracking-tight text-white">{cta.title}</h2>
-                <p className="mt-4 text-lg leading-8 text-slate-300">{cta.subtitle}</p>
-                <div className="mt-10 flex flex-col gap-4 sm:flex-row sm:items-center">
+                <p className="mt-4 max-w-2xl text-lg leading-8 text-slate-300">{cta.subtitle}</p>
+                <div className="mt-10 flex flex-col gap-4 sm:flex-row">
                   <Button
                     asChild
                     size="lg"
-                    className="min-w-[170px] bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-xl shadow-blue-500/20 hover:shadow-purple-500/30 transition-all duration-300"
+                    className="rounded-full bg-white text-slate-950 hover:bg-slate-100"
                   >
                     <Link href={cta.primaryButton?.url || '/courses'}>
                       {cta.primaryButton?.text || 'Explore Courses'}
@@ -798,9 +831,9 @@ export default function AboutPageClient({ initialAboutContent }: AboutPageClient
                   </Button>
                   <Button
                     asChild
-                    variant="outline"
                     size="lg"
-                    className="min-w-[170px] border-white/20 text-white hover:border-white hover:bg-white/10 transition-all duration-300"
+                    variant="outline"
+                    className="rounded-full border-white/15 bg-white/5 text-white hover:bg-white/10"
                   >
                     <Link href={cta.secondaryButton?.url || '/community'}>
                       {cta.secondaryButton?.text || 'Join Community'}
@@ -808,33 +841,37 @@ export default function AboutPageClient({ initialAboutContent }: AboutPageClient
                   </Button>
                 </div>
               </motion.div>
+
               <motion.div
-                className="hidden lg:block"
                 initial={{ opacity: 0, scale: 0.98 }}
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true, amount: 0.3 }}
+                className="rounded-[2rem] border border-white/10 bg-white/5 p-6"
               >
-                <div className="rounded-[2rem] bg-white/5 p-8 shadow-2xl shadow-slate-950/20 backdrop-blur-xl">
-                  <div className="h-72 rounded-[1.75rem] bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.18),transparent_55%)] p-6 text-slate-100">
-                    <div className="h-full rounded-[1.5rem] border border-white/10 bg-slate-950/90 p-6">
-                      <div className="flex items-center justify-between text-sm text-slate-400">
-                        <span>XmartyCreator Dashboard</span>
-                        <span className="rounded-full bg-slate-900/70 px-3 py-1 text-xs uppercase tracking-[0.28em] text-slate-200">New</span>
+                <div className="rounded-[1.6rem] border border-white/10 bg-slate-950/90 p-6">
+                  <div className="flex items-center justify-between text-sm text-slate-400">
+                    <span>Xmarty Creator</span>
+                    <span className="rounded-full bg-cyan-400/10 px-3 py-1 text-xs uppercase tracking-[0.24em] text-cyan-100">Live</span>
+                  </div>
+                  <div className="mt-8 space-y-5">
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Learning Rhythm</p>
+                      <div className="mt-3 h-3 rounded-full bg-white/5">
+                        <div className="h-full w-4/5 rounded-full bg-gradient-to-r from-cyan-400 to-violet-500" />
                       </div>
-                      <div className="mt-8 grid gap-4">
-                        <div className="h-3 rounded-full bg-slate-800">
-                          <div className="h-full w-3/4 rounded-full bg-gradient-to-r from-blue-500 to-purple-500" />
-                        </div>
-                        <div className="grid gap-2 text-sm text-slate-300">
-                          <div className="flex items-center justify-between">
-                            <span>Study streak</span>
-                            <span className="font-semibold text-white">14 days</span>
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <span>Peer response</span>
-                            <span className="font-semibold text-white">98%</span>
-                          </div>
-                        </div>
+                    </div>
+                    <div className="grid gap-4 text-sm text-slate-300">
+                      <div className="flex items-center justify-between">
+                        <span>Student response</span>
+                        <span className="font-semibold text-white">Fast</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span>Community strength</span>
+                        <span className="font-semibold text-white">{stats?.[2]?.count || '1.8k+'}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span>Resource consistency</span>
+                        <span className="font-semibold text-white">Daily</span>
                       </div>
                     </div>
                   </div>
@@ -844,6 +881,7 @@ export default function AboutPageClient({ initialAboutContent }: AboutPageClient
           </div>
         </section>
       )}
+
       <Footer />
     </div>
   );
