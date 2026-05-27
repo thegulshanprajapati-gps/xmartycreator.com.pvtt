@@ -204,6 +204,7 @@ export default function AboutPageClient({ initialAboutContent }: AboutPageClient
     () => sanitizeFounderHtml(founder?.bio || ''),
     [founder?.bio]
   );
+  const founderHighlights = founder?.highlights || [];
 
   const isLongBio = Boolean(founder?.bio && founder.bio.length > 260);
   const shouldClampBio = isLongBio && !isBioExpanded;
@@ -398,17 +399,35 @@ export default function AboutPageClient({ initialAboutContent }: AboutPageClient
         <section className="relative isolate overflow-hidden py-20 sm:py-24 bg-slate-950/60">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.12),transparent_32%)]" />
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_bottom_right,rgba(168,85,247,0.12),transparent_34%)]" />
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cyan-300/20 to-transparent" />
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="mb-12 max-w-3xl">
-              <span className="inline-flex rounded-full border border-cyan-400/20 bg-cyan-400/10 px-4 py-2 text-sm font-semibold text-cyan-100">
-                Leadership
-              </span>
-              <h2 className="mt-6 text-4xl font-bold tracking-tight text-white sm:text-5xl">
-                {founder.title || 'Meet the Founder'}
-              </h2>
-              <p className="mt-4 max-w-2xl text-base leading-8 text-slate-300">
-                A more personal look at the person behind Xmarty Creator and the standards shaping the platform.
-              </p>
+            <div className="mb-14 grid gap-8 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
+              <div className="max-w-3xl">
+                <span className="inline-flex rounded-full border border-cyan-400/20 bg-cyan-400/10 px-4 py-2 text-sm font-semibold text-cyan-100">
+                  Leadership
+                </span>
+                <h2 className="mt-6 text-4xl font-bold tracking-tight text-white sm:text-5xl">
+                  {founder.title || 'Meet the Founder'}
+                </h2>
+                <p className="mt-4 max-w-2xl text-base leading-8 text-slate-300">
+                  The vision, discipline, and student-first thinking behind Xmarty Creator&apos;s product direction.
+                </p>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-3 lg:min-w-[420px]">
+                {[
+                  { label: 'Role', value: founder.role || 'Founder' },
+                  { label: 'Community', value: stats?.[2]?.count || '1.8k+' },
+                  { label: 'Support', value: 'Student-first' },
+                ].map((item) => (
+                  <div
+                    key={item.label}
+                    className="rounded-[1.5rem] border border-white/10 bg-white/5 px-5 py-4 shadow-[0_20px_60px_-44px_rgba(2,6,23,0.95)]"
+                  >
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">{item.label}</p>
+                    <p className="mt-2 text-base font-semibold text-white">{item.value}</p>
+                  </div>
+                ))}
+              </div>
             </div>
             <div className="grid gap-8 xl:grid-cols-[380px_minmax(0,1fr)]">
               <motion.div
@@ -419,11 +438,12 @@ export default function AboutPageClient({ initialAboutContent }: AboutPageClient
               >
                 <div className="group relative [perspective:1800px]">
                   <div
-                    className={`relative min-h-[620px] rounded-[2rem] transition-transform duration-700 [transform-style:preserve-3d] ${
+                    className={`relative min-h-[660px] rounded-[2rem] transition-transform duration-700 [transform-style:preserve-3d] ${
                       isFounderCardFlipped ? '[transform:rotateY(180deg)]' : ''
                     } group-hover:[transform:rotateY(180deg)]`}
                   >
-                    <div className="absolute inset-0 overflow-hidden rounded-[2rem] border border-white/10 bg-[linear-gradient(180deg,rgba(15,23,42,0.98),rgba(17,24,39,0.92))] p-7 shadow-[0_30px_90px_-56px_rgba(2,6,23,1)] [backface-visibility:hidden]">
+                    <div className="absolute inset-0 overflow-hidden rounded-[2rem] border border-white/10 bg-[linear-gradient(180deg,rgba(15,23,42,0.99),rgba(17,24,39,0.94))] p-7 shadow-[0_30px_90px_-56px_rgba(2,6,23,1)] [backface-visibility:hidden]">
+                      <div className="pointer-events-none absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-cyan-300/10 to-transparent" />
                       <div className="flex h-full flex-col gap-6">
                         <div className="flex items-center justify-between gap-3">
                           <p className="text-sm uppercase tracking-[0.32em] text-cyan-200/80">Founder Spotlight</p>
@@ -436,7 +456,7 @@ export default function AboutPageClient({ initialAboutContent }: AboutPageClient
                           </button>
                         </div>
 
-                        <div className="relative h-[340px] overflow-hidden rounded-[1.75rem] bg-gradient-to-br from-cyan-500/10 via-slate-900 to-purple-500/10 shadow-lg shadow-slate-950/30">
+                        <div className="relative h-[360px] overflow-hidden rounded-[1.75rem] border border-white/8 bg-gradient-to-br from-cyan-500/10 via-slate-900 to-purple-500/10 shadow-lg shadow-slate-950/30">
                           {founderImageUrl ? (
                             <Image
                               src={founderImageUrl}
@@ -449,6 +469,7 @@ export default function AboutPageClient({ initialAboutContent }: AboutPageClient
                               {founder.name?.split(' ').map((word) => word[0]).join('')}
                             </div>
                           )}
+                          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-slate-950 via-slate-950/50 to-transparent" />
                         </div>
 
                         <div className="rounded-[1.5rem] border border-white/10 bg-white/5 p-5">
@@ -459,9 +480,9 @@ export default function AboutPageClient({ initialAboutContent }: AboutPageClient
                           ) : null}
                         </div>
 
-                        {founder.highlights.length > 0 && (
+                        {founderHighlights.length > 0 && (
                           <div className="flex flex-wrap gap-2">
-                            {founder.highlights.slice(0, 3).map((highlight, index) => (
+                            {founderHighlights.slice(0, 3).map((highlight, index) => (
                               <span
                                 key={`${highlight}-${index}`}
                                 className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-slate-200"
@@ -494,9 +515,9 @@ export default function AboutPageClient({ initialAboutContent }: AboutPageClient
                           </button>
                         </div>
 
-                        {founder.highlights.length > 0 && (
+                        {founderHighlights.length > 0 && (
                           <div className="grid gap-3">
-                            {founder.highlights.slice(0, 4).map((item, index) => (
+                            {founderHighlights.slice(0, 4).map((item, index) => (
                               <div
                                 key={`${item}-back-${index}`}
                                 className="rounded-[1.25rem] border border-white/10 bg-white/6 px-4 py-4 text-sm leading-7 text-slate-100"
@@ -541,46 +562,52 @@ export default function AboutPageClient({ initialAboutContent }: AboutPageClient
               </motion.div>
 
               <motion.div
-                className="grid gap-6"
+                className="grid gap-6 xl:grid-cols-2"
                 initial="hidden"
                 whileInView="visible"
                 viewport={{ once: true, amount: 0.3 }}
                 variants={slideInFromRight}
               >
-                <div className="rounded-[2rem] border border-white/10 bg-slate-900/75 p-8 shadow-[0_30px_90px_-56px_rgba(2,6,23,1)]">
+                <div className="rounded-[2rem] border border-white/10 bg-slate-900/75 p-8 shadow-[0_30px_90px_-56px_rgba(2,6,23,1)] xl:col-span-2">
                   <span className="inline-flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/10 px-4 py-2 text-sm font-semibold text-cyan-100">
                     <Sparkles className="h-4 w-4" /> Founder Vision
                   </span>
                   <div className="mt-5 space-y-5">
                     <div
-                      className="founder-rich text-base leading-8 text-slate-200"
+                      className="founder-rich text-lg leading-9 text-slate-200"
                       dangerouslySetInnerHTML={{ __html: founderDescriptionHtml }}
                     />
-                    {founder.quote && (
-                      <div className="rounded-[1.5rem] border border-cyan-400/15 bg-cyan-400/5 p-6">
-                        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-200/70">Founder Quote</p>
-                        <p className="mt-4 text-2xl font-semibold leading-10 text-white">"{founder.quote}"</p>
-                      </div>
-                    )}
                   </div>
                 </div>
 
-                {founder.bio && (
-                  <div className="rounded-[2rem] border border-white/10 bg-[linear-gradient(180deg,rgba(30,41,59,0.7),rgba(15,23,42,0.82))] p-8 shadow-[0_24px_80px_-52px_rgba(2,6,23,1)]">
-                    <div className="flex items-start justify-between gap-6">
-                      <div>
-                        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Story</p>
-                        <h3 className="mt-3 text-2xl font-bold text-white">What Xmarty Creator is building</h3>
-                      </div>
-                      {founder.highlights.length > 0 && (
-                        <div className="hidden md:grid min-w-[220px] gap-3">
-                          {founder.highlights.slice(0, 3).map((item, index) => (
-                            <div key={`${item}-desktop-${index}`} className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-200">
-                              {item}
-                            </div>
-                          ))}
+                {founder.quote && (
+                  <div className="rounded-[2rem] border border-cyan-400/15 bg-[linear-gradient(180deg,rgba(8,47,73,0.28),rgba(15,23,42,0.78))] p-8 shadow-[0_24px_80px_-52px_rgba(8,47,73,0.85)]">
+                    <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-200/70">Founder Quote</p>
+                    <p className="mt-6 text-2xl font-semibold leading-10 text-white">"{founder.quote}"</p>
+                  </div>
+                )}
+
+                {founderHighlights.length > 0 && (
+                  <div className="rounded-[2rem] border border-white/10 bg-slate-900/70 p-8 shadow-[0_24px_80px_-52px_rgba(2,6,23,1)]">
+                    <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Key Focus</p>
+                    <div className="mt-6 grid gap-3">
+                      {founderHighlights.slice(0, 4).map((item, index) => (
+                        <div
+                          key={`${item}-focus-${index}`}
+                          className="rounded-[1.25rem] border border-white/10 bg-white/5 px-4 py-4 text-sm leading-7 text-slate-200"
+                        >
+                          {item}
                         </div>
-                      )}
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {founder.bio && (
+                  <div className="rounded-[2rem] border border-white/10 bg-[linear-gradient(180deg,rgba(30,41,59,0.7),rgba(15,23,42,0.82))] p-8 shadow-[0_24px_80px_-52px_rgba(2,6,23,1)] xl:col-span-2">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Story</p>
+                      <h3 className="mt-3 text-2xl font-bold text-white">What Xmarty Creator is building</h3>
                     </div>
                     <div className={`founder-rich mt-6 text-base leading-8 text-slate-300 ${shouldClampBio ? 'line-clamp-5' : ''}`} dangerouslySetInnerHTML={{ __html: founderBioHtml }} />
                     {isLongBio && (
