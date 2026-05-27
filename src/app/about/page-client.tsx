@@ -139,11 +139,6 @@ const fadeIn = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: 'easeOut' } },
 };
 
-const scaleIn = {
-  hidden: { opacity: 0, scale: 0.96 },
-  visible: { opacity: 1, scale: 1, transition: { duration: 0.7, ease: 'easeOut' } },
-};
-
 function parseCountValue(value: string) {
   const match = value.match(/^([\d.,]+)(.*)$/);
   if (!match) return { amount: 0, suffix: value, decimals: 0 };
@@ -255,66 +250,78 @@ export default function AboutPageClient({ initialAboutContent }: AboutPageClient
 
   return (
     <div className="flex min-h-screen flex-col bg-slate-950 text-white">
-      <section className="relative overflow-hidden bg-slate-950">
-        <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-blue-950 to-purple-950 opacity-60 z-0" />
-              <div className="relative z-10">
-        <div className="container mx-auto px-4 py-20 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-5xl">
+      <section className="relative isolate overflow-hidden border-b border-white/10 bg-slate-950">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(56,189,248,0.18),transparent_38%)]" />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_88%_18%,rgba(168,85,247,0.2),transparent_34%)]" />
+        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(135deg,rgba(2,6,23,0.95),rgba(15,23,42,0.88)_45%,rgba(30,41,59,0.82))]" />
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-white/25 to-transparent" />
+        <div className="relative z-10">
+        <div className="container mx-auto px-4 py-20 sm:px-6 lg:px-8 lg:py-24">
+          <div className="mx-auto grid max-w-6xl gap-10 lg:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)] lg:items-end">
             <motion.div
               initial="hidden"
               whileInView="visible"
               viewport={{ once: true, amount: 0.3 }}
               variants={slideInFromLeft}
-              className="space-y-6"
+              className="space-y-7"
             >
-              <p className="text-sm font-semibold uppercase text-slate-400">About</p>
-              <h1 className="text-3xl font-extrabold leading-tight text-white sm:text-4xl">
+              <p className="text-sm font-semibold uppercase tracking-[0.28em] text-cyan-200/80">About</p>
+              <h1 className="max-w-4xl text-4xl font-extrabold leading-[1.02] text-white sm:text-5xl lg:text-6xl">
                 {hero?.title || 'About XmartyCreator'}
               </h1>
-              <p className="text-lg text-slate-300 max-w-3xl">
+              <p className="max-w-3xl text-lg leading-8 text-slate-200/90 sm:text-xl">
                 {hero?.subtitle || 'We design thoughtful learning tools and curriculum that help students learn efficiently and confidently. Our focus is on measurable outcomes, accessibility, and community-driven support.'}
               </p>
 
               <div className="mt-6 flex flex-wrap items-center gap-3">
                 <Button
                   asChild
-                  size="md"
-                  className="bg-white/6 text-white hover:bg-white/8 border border-white/8"
+                  className="rounded-full border border-cyan-300/25 bg-cyan-400/10 px-6 text-white hover:bg-cyan-300/15"
                 >
                   <Link href={hero?.primaryButton?.url || '#mission'}>{hero?.primaryButton?.text || 'Our Mission'}</Link>
                 </Button>
                 <Button
                   asChild
                   variant="ghost"
-                  size="md"
-                  className="text-slate-300 border border-transparent hover:text-white"
+                  className="rounded-full border border-white/12 px-6 text-slate-200 hover:bg-white/5 hover:text-white"
                 >
                   <Link href={hero?.secondaryButton?.url || '/contact'}>{hero?.secondaryButton?.text || 'Contact Us'}</Link>
                 </Button>
                 <span className="ml-2 text-sm text-slate-400">Founded in <strong className="text-white">{journey?.[0]?.year || '2021'}</strong></span>
               </div>
+            </motion.div>
 
-              <div className="mt-8 grid gap-4 sm:grid-cols-3">
-                <div className="rounded-2xl bg-slate-900/70 p-4 text-center">
-                  <p className="text-sm text-slate-400">People helped</p>
-                  <p className="mt-2 text-lg font-semibold text-white">{stats?.[0]?.count || '12k'}</p>
+            <motion.div
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, amount: 0.3 }}
+              variants={slideInFromRight}
+              className="grid gap-4 sm:grid-cols-2"
+            >
+              {(heroCards.length > 0
+                ? heroCards.slice(0, 4)
+                : [
+                    { title: 'Students Helped', value: stats?.[0]?.count || '12k+', description: 'Learners supported through notes, exams, and updates.' },
+                    { title: 'Resources Shared', value: stats?.[1]?.count || '1.8k', description: 'Curated study material delivered consistently.' },
+                    { title: 'Career Updates', value: stats?.[2]?.count || '97%', description: 'Relevant notices and preparation guidance.' },
+                    { title: 'Community Support', value: '24/7', description: 'Fast responses through social and student channels.' },
+                  ]).map((card, index) => (
+                <div
+                  key={`${card.title}-${index}`}
+                  className="rounded-[1.75rem] border border-white/10 bg-white/5 p-6 shadow-[0_24px_80px_-50px_rgba(15,23,42,0.95)]"
+                >
+                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-cyan-200/75">{card.title}</p>
+                  <p className="mt-4 text-4xl font-black tracking-tight text-white">{card.value}</p>
+                  <p className="mt-3 text-sm leading-7 text-slate-300">{card.description}</p>
                 </div>
-                <div className="rounded-2xl bg-slate-900/70 p-4 text-center">
-                  <p className="text-sm text-slate-400">Active courses</p>
-                  <p className="mt-2 text-lg font-semibold text-white">{stats?.[1]?.count || '24'}</p>
-                </div>
-                <div className="rounded-2xl bg-slate-900/70 p-4 text-center">
-                  <p className="text-sm text-slate-400">Community</p>
-                  <p className="mt-2 text-lg font-semibold text-white">{stats?.[2]?.count || '1.8k'}</p>
-                </div>
-              </div>
+              ))}
             </motion.div>
           </div>
         </div>
-              </div>
+        </div>
       </section>
 
-      <section className="relative py-16 sm:py-20 lg:py-24">
+      <section className="relative isolate py-16 sm:py-20 lg:py-24">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mb-12 max-w-3xl">
             <span className="inline-flex rounded-full bg-blue-500/10 px-4 py-2 text-sm font-semibold text-blue-200">Trusted outcomes</span>
@@ -387,92 +394,136 @@ export default function AboutPageClient({ initialAboutContent }: AboutPageClient
       )}
 
       {hasFounder && (
-        <section className="relative py-20 sm:py-24">
+        <section className="relative isolate overflow-hidden py-20 sm:py-24 bg-slate-950/60">
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.12),transparent_32%)]" />
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_bottom_right,rgba(168,85,247,0.12),transparent_34%)]" />
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid gap-10 lg:grid-cols-[360px_1fr] items-start">
+            <div className="mb-12 max-w-3xl">
+              <span className="inline-flex rounded-full border border-cyan-400/20 bg-cyan-400/10 px-4 py-2 text-sm font-semibold text-cyan-100">
+                Leadership
+              </span>
+              <h2 className="mt-6 text-4xl font-bold tracking-tight text-white sm:text-5xl">
+                {founder.title || 'Meet the Founder'}
+              </h2>
+              <p className="mt-4 max-w-2xl text-base leading-8 text-slate-300">
+                A more personal look at the person behind Xmarty Creator and the standards shaping the platform.
+              </p>
+            </div>
+            <div className="grid gap-8 xl:grid-cols-[380px_minmax(0,1fr)]">
               <motion.div
-                className="rounded-[2rem] border border-white/10 bg-slate-950/90 p-8 shadow-2xl shadow-slate-950/20 backdrop-blur-xl"
                 initial="hidden"
                 whileInView="visible"
                 viewport={{ once: true, amount: 0.3 }}
-                variants={scaleIn}
+                variants={slideInFromLeft}
               >
-                <div className="flex flex-col items-center gap-6 text-center">
-                  <div className="relative mx-auto h-44 w-44 overflow-hidden rounded-[2rem] bg-slate-900 shadow-lg shadow-slate-950/30">
-                    {founderImageUrl ? (
-                      <Image
-                        src={founderImageUrl}
-                        alt={founder.name || 'Founder'}
-                        fill
-                        className="object-cover"
-                      />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center text-4xl font-bold text-white">
-                        {founder.name?.split(' ').map((word) => word[0]).join('')}
+                <div className="h-full overflow-hidden rounded-[2rem] border border-white/10 bg-[linear-gradient(180deg,rgba(15,23,42,0.98),rgba(17,24,39,0.92))] p-7 shadow-[0_30px_90px_-56px_rgba(2,6,23,1)]">
+                  <div className="flex flex-col gap-6">
+                    <div>
+                      <p className="text-sm uppercase tracking-[0.32em] text-cyan-200/80">Founder Spotlight</p>
+                      <h3 className="mt-4 text-3xl font-bold text-white">{founder.name}</h3>
+                      <p className="mt-2 text-base text-slate-400">{founder.role}</p>
+                      {founder.username ? (
+                        <p className="mt-2 text-sm font-medium text-cyan-200/80">@{founder.username.replace(/^@/, '')}</p>
+                      ) : null}
+                    </div>
+                    <div className="relative h-[320px] overflow-hidden rounded-[1.75rem] bg-gradient-to-br from-cyan-500/10 via-slate-900 to-purple-500/10 shadow-lg shadow-slate-950/30">
+                      {founderImageUrl ? (
+                        <Image
+                          src={founderImageUrl}
+                          alt={founder.name || 'Founder'}
+                          fill
+                          className="object-cover object-top"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-5xl font-bold text-white">
+                          {founder.name?.split(' ').map((word) => word[0]).join('')}
+                        </div>
+                      )}
+                    </div>
+                    {founder.highlights.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {founder.highlights.slice(0, 4).map((highlight, index) => (
+                          <span
+                            key={`${highlight}-${index}`}
+                            className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-slate-200"
+                          >
+                            {highlight}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    {hasSocial && (
+                      <div className="flex flex-wrap gap-3">
+                        {socialEntries.map(([key, href]) => {
+                          const meta = getSocialMeta(href, key);
+                          const Icon = meta.icon;
+                          return (
+                            <a
+                              key={key}
+                              href={href}
+                              target="_blank"
+                              rel="noreferrer noopener"
+                              className={`inline-flex items-center gap-2 rounded-2xl border px-4 py-2 text-sm font-semibold transition hover:-translate-y-0.5 ${meta.className}`}
+                            >
+                              <Icon className="h-4 w-4" />
+                              <span>{meta.label}</span>
+                            </a>
+                          );
+                        })}
                       </div>
                     )}
                   </div>
-                  <div>
-                    <p className="text-sm uppercase tracking-[0.32em] text-blue-300">Founder Spotlight</p>
-                    <h3 className="mt-4 text-3xl font-bold text-white">{founder.name}</h3>
-                    <p className="mt-2 text-sm text-slate-400">{founder.role}</p>
-                  </div>
-                  <div className="grid gap-3 w-full">
-                    {founder.highlights?.map((highlight, index) => (
-                      <div key={index} className="rounded-3xl border border-white/10 bg-slate-900/80 p-4 text-left text-sm text-slate-300">
-                        {highlight}
-                      </div>
-                    ))}
-                  </div>
-                  {hasSocial && (
-                    <div className="mt-6 flex flex-wrap justify-center gap-3">
-                      {socialEntries.map(([key, href]) => {
-                        const meta = getSocialMeta(href, key);
-                        const Icon = meta.icon;
-                        return (
-                          <a
-                            key={key}
-                            href={href}
-                            target="_blank"
-                            rel="noreferrer noopener"
-                            className={`inline-flex items-center gap-2 rounded-2xl border px-4 py-2 text-sm font-semibold transition hover:-translate-y-0.5 ${meta.className}`}
-                          >
-                            <Icon className="h-4 w-4" />
-                            <span>{meta.label}</span>
-                          </a>
-                        );
-                      })}
-                    </div>
-                  )}
                 </div>
               </motion.div>
 
               <motion.div
-                className="rounded-[2rem] border border-white/10 bg-slate-950/90 p-10 shadow-2xl shadow-slate-950/20 backdrop-blur-xl"
+                className="grid gap-6"
                 initial="hidden"
                 whileInView="visible"
                 viewport={{ once: true, amount: 0.3 }}
-                variants={scaleIn}
+                variants={slideInFromRight}
               >
-                <span className="inline-flex items-center gap-2 rounded-full bg-blue-500/10 px-4 py-2 text-sm font-semibold text-blue-200">
-                  <Sparkles className="h-4 w-4" /> Founder Vision
-                </span>
-                <h2 className="mt-6 text-4xl font-bold text-white">{founder.title || founder.name}</h2>
-                <p className="mt-6 text-lg leading-8 text-slate-300">{founder.description}</p>
-                {founder.quote && (
-                  <div className="mt-10 rounded-[2rem] border border-blue-500/15 bg-gradient-to-br from-blue-500/5 to-purple-500/5 p-8 text-white">
-                    <p className="text-sm uppercase tracking-[0.28em] text-blue-200">Founder Quote</p>
-                    <p className="mt-4 text-2xl leading-9">“{founder.quote}”</p>
+                <div className="rounded-[2rem] border border-white/10 bg-slate-900/75 p-8 shadow-[0_30px_90px_-56px_rgba(2,6,23,1)]">
+                  <span className="inline-flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/10 px-4 py-2 text-sm font-semibold text-cyan-100">
+                    <Sparkles className="h-4 w-4" /> Founder Vision
+                  </span>
+                  <div className="mt-5 space-y-5">
+                    <div
+                      className="founder-rich text-base leading-8 text-slate-200"
+                      dangerouslySetInnerHTML={{ __html: founderDescriptionHtml }}
+                    />
+                    {founder.quote && (
+                      <div className="rounded-[1.5rem] border border-cyan-400/15 bg-cyan-400/5 p-6">
+                        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-200/70">Founder Quote</p>
+                        <p className="mt-4 text-2xl font-semibold leading-10 text-white">"{founder.quote}"</p>
+                      </div>
+                    )}
                   </div>
-                )}
+                </div>
+
                 {founder.bio && (
-                  <div className="mt-10 rounded-[2rem] bg-slate-900/90 p-8 text-slate-300">
-                    <div className={shouldClampBio ? 'line-clamp-5' : ''} dangerouslySetInnerHTML={{ __html: founderBioHtml }} />
+                  <div className="rounded-[2rem] border border-white/10 bg-[linear-gradient(180deg,rgba(30,41,59,0.7),rgba(15,23,42,0.82))] p-8 shadow-[0_24px_80px_-52px_rgba(2,6,23,1)]">
+                    <div className="flex items-start justify-between gap-6">
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Story</p>
+                        <h3 className="mt-3 text-2xl font-bold text-white">What Xmarty Creator is building</h3>
+                      </div>
+                      {founder.highlights.length > 0 && (
+                        <div className="hidden md:grid min-w-[220px] gap-3">
+                          {founder.highlights.slice(0, 3).map((item, index) => (
+                            <div key={`${item}-desktop-${index}`} className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-200">
+                              {item}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <div className={`founder-rich mt-6 text-base leading-8 text-slate-300 ${shouldClampBio ? 'line-clamp-5' : ''}`} dangerouslySetInnerHTML={{ __html: founderBioHtml }} />
                     {isLongBio && (
                       <button
                         type="button"
                         onClick={() => setIsBioExpanded((prev) => !prev)}
-                        className="mt-5 text-sm font-semibold text-blue-300 transition hover:text-white"
+                        className="mt-5 text-sm font-semibold text-cyan-200 transition hover:text-white"
                       >
                         {isBioExpanded ? 'Show less' : 'Read more'}
                       </button>
